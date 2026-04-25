@@ -1,0 +1,41 @@
+case:
+  id: example_case
+  title: RC low-pass filter verification
+  circuit_type: passive_filter
+  description: >
+    Verify an RC low-pass filter with source resistance and load resistance.
+
+nodes:
+  input: in
+  output: out
+  ground: "0"
+
+specifications:
+  source_resistance_ohm: 1000
+  load_resistance_ohm: 100000
+  passband_frequency_hz: 200
+  stopband_frequency_hz: 2000
+  minimum_attenuation_db_at_stopband: 20
+
+simulation:
+  type: ac
+  directive: ".ac lin 2000 10 20000"
+  input_ac_amplitude: 1
+
+measurements:
+  - name: gain_200Hz_mag
+    expression: "mag(v(out))"
+    at_hz: 200
+    requirement:
+      operator: ">="
+      value: 0.70
+
+  - name: gain_2kHz_mag
+    expression: "mag(v(out))"
+    at_hz: 2000
+    requirement:
+      operator: "<="
+      value: 0.10
+
+verdict:
+  pass_if_all_measurements_pass: true

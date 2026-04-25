@@ -1,0 +1,29 @@
+project:
+  name: Spec2Testbench
+  version: 0.1.0
+
+simulator:
+  name: ngspice
+  command: ngspice
+  batch_mode: true
+  timeout_seconds: 30
+
+paths:
+  cases_dir: cases
+  results_dir: results
+  logs_dir: results/logs
+
+llm:
+  enabled: false
+  provider: none
+  model: none
+
+pipeline:
+  enable_testbenchgen: true
+  enable_specchecker: true
+  enable_waveformchecker: false
+
+outputs:
+  summary_json: results/summary.json
+  verdicts_json: results/verdicts.json
+  report_md: results/report.md
