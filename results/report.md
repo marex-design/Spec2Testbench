@@ -2,30 +2,24 @@
 
 ## Case
 
-- Case ID: `example_case`
+- Case ID: `uc1_rc_lowpass`
 - Final verdict: **FAIL**
 - Passed: `False`
 
 ## Simulation
 
 - Success: `True`
-- Command: `ngspice -b -o results\logs\example_case.log cases\example_case\circuit.cir`
-- Circuit: `cases\example_case\circuit.cir`
-- Log: `results\logs\example_case.log`
+- Command: `None`
+- Circuit: `None`
+- Log: `results\logs\uc1_rc_lowpass_cand_03.log`
 
 ## Extracted Measurements
 
-| Measurement | Value |
-|---|---:|
-| `gain_200hz_mag` | 0.4348794 |
-| `gain_2khz_mag` | 0.04846353 |
+No measurement extracted.
 
 ## Specification Checking
 
-| Measurement | Measured | Requirement | Verdict |
-|---|---:|---:|---|
-| `gain_200hz_mag` | 0.4348794 | >= 0.7 | **FAIL** |
-| `gain_2khz_mag` | 0.04846353 | <= 0.1 | **PASS** |
+No checker result available.
 
 ## Errors
 

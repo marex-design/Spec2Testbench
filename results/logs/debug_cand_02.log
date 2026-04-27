@@ -1,0 +1,13 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * uc1 rc low-pass filter - candidate 02 (pass candidate)
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+
+No. of Data Rows : 2000
+gain_200hz_mag      =  7.008370e-01
+gain_2khz_mag       =  9.970389e-02
+Note: Simulation executed from .control section 

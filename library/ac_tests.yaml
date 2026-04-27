@@ -1,0 +1,226 @@
+category: ac
+description: >
+  AC-domain tests for analog circuits, including gain, attenuation,
+  bandwidth, phase, impedance, PSRR and CMRR.
+
+tests:
+  - id: ac_gain_at_frequency
+    name: AC gain at target frequency
+    applies_to:
+      - amplifier
+      - filter
+      - opamp
+    analysis:
+      type: ac
+      default_directive: ".ac lin 2000 10 20000"
+    required_parameters:
+      - output_node
+      - frequency_hz
+      - minimum_gain_mag
+    ngspice_template: |
+      let gain_mag = mag(v({output_node}))
+      meas ac {measurement_name} FIND gain_mag AT={frequency_hz}
+    checker:
+      operator: ">="
+      expected: "{minimum_gain_mag}"
+
+  - id: ac_attenuation_at_frequency
+    name: AC attenuation at target frequency
+    applies_to:
+      - filter
+      - amplifier
+    analysis:
+      type: ac
+      default_directive: ".ac lin 2000 10 20000"
+    required_parameters:
+      - output_node
+      - frequency_hz
+      - maximum_gain_mag
+    ngspice_template: |
+      let gain_mag = mag(v({output_node}))
+      meas ac {measurement_name} FIND gain_mag AT={frequency_hz}
+    checker:
+      operator: "<="
+      expected: "{maximum_gain_mag}"
+
+  - id: gain_db_at_frequency
+    name: Gain in dB at target frequency
+    applies_to:
+      - amplifier
+      - filter
+      - opamp
+    analysis:
+      type: ac
+      default_directive: ".ac dec 100 1 100Meg"
+    required_parameters:
+      - output_node
+      - frequency_hz
+      - minimum_gain_db
+    ngspice_template: |
+      let gain_db = db(v({output_node}))
+      meas ac {measurement_name} FIND gain_db AT={frequency_hz}
+    checker:
+      operator: ">="
+      expected: "{minimum_gain_db}"
+
+  - id: bandwidth_3db
+    name: 3 dB bandwidth
+    applies_to:
+      - amplifier
+      - filter
+      - opamp
+    analysis:
+      type: ac
+      default_directive: ".ac dec 100 1 100Meg"
+    required_parameters:
+      - output_node
+      - minimum_bandwidth_hz
+    ngspice_template: |
+      let gain_db = db(v({output_node}))
+      meas ac dc_gain_db FIND gain_db AT=1
+      meas ac {measurement_name} WHEN gain_db=dc_gain_db-3
+    checker:
+      operator: ">="
+      expected: "{minimum_bandwidth_hz}"
+
+  - id: lowpass_cutoff_frequency
+    name: Low-pass cutoff frequency
+    applies_to:
+      - lowpass_filter
+      - filter
+    analysis:
+      type: ac
+      default_directive: ".ac dec 100 1 10Meg"
+    required_parameters:
+      - output_node
+      - maximum_cutoff_hz
+    ngspice_template: |
+      let gain_db = db(v({output_node}))
+      meas ac passband_gain_db FIND gain_db AT=10
+      meas ac {measurement_name} WHEN gain_db=passband_gain_db-3
+    checker:
+      operator: "<="
+      expected: "{maximum_cutoff_hz}"
+
+  - id: unity_gain_frequency
+    name: Unity-gain frequency
+    applies_to:
+      - amplifier
+      - opamp
+    analysis:
+      type: ac
+      default_directive: ".ac dec 100 1 1Gig"
+    required_parameters:
+      - output_node
+      - minimum_ugf_hz
+    ngspice_template: |
+      let gain_db = db(v({output_node}))
+      meas ac {measurement_name} WHEN gain_db=0
+    checker:
+      operator: ">="
+      expected: "{minimum_ugf_hz}"
+
+  - id: phase_at_frequency
+    name: Phase at target frequency
+    applies_to:
+      - amplifier
+      - filter
+      - opamp
+    analysis:
+      type: ac
+      default_directive: ".ac dec 100 1 100Meg"
+    required_parameters:
+      - output_node
+      - frequency_hz
+      - phase_min_deg
+      - phase_max_deg
+    ngspice_template: |
+      let phase_deg = phase(v({output_node}))
+      meas ac {measurement_name} FIND phase_deg AT={frequency_hz}
+    checker:
+      operator: "range"
+      minimum: "{phase_min_deg}"
+      maximum: "{phase_max_deg}"
+
+  - id: input_impedance_at_frequency
+    name: Input impedance at target frequency
+    applies_to:
+      - amplifier
+      - filter
+      - matching_network
+    analysis:
+      type: ac
+      default_directive: ".ac lin 2000 10 20Meg"
+    required_parameters:
+      - input_source
+      - input_node
+      - frequency_hz
+      - minimum_zin_ohm
+    ngspice_template: |
+      let zin = v({input_node}) / (-i({input_source}))
+      let zin_mag = mag(zin)
+      meas ac {measurement_name} FIND zin_mag AT={frequency_hz}
+    checker:
+      operator: ">="
+      expected: "{minimum_zin_ohm}"
+
+  - id: output_impedance_at_frequency
+    name: Output impedance at target frequency
+    applies_to:
+      - amplifier
+      - opamp
+    analysis:
+      type: ac
+      default_directive: ".ac lin 2000 10 20Meg"
+    required_parameters:
+      - output_node
+      - test_source
+      - frequency_hz
+      - maximum_zout_ohm
+    ngspice_template: |
+      let zout = v({output_node}) / i({test_source})
+      let zout_mag = mag(zout)
+      meas ac {measurement_name} FIND zout_mag AT={frequency_hz}
+    checker:
+      operator: "<="
+      expected: "{maximum_zout_ohm}"
+
+  - id: cmrr_at_frequency
+    name: Common-mode rejection ratio
+    applies_to:
+      - differential_amplifier
+      - opamp
+    analysis:
+      type: ac
+      default_directive: ".ac dec 100 1 100Meg"
+    required_parameters:
+      - differential_gain_measurement
+      - common_mode_gain_measurement
+      - minimum_cmrr_db
+    ngspice_template: |
+      let cmrr_db = 20*log10({differential_gain_measurement}/{common_mode_gain_measurement})
+      meas ac {measurement_name} FIND cmrr_db AT={frequency_hz}
+    checker:
+      operator: ">="
+      expected: "{minimum_cmrr_db}"
+
+  - id: psrr_at_frequency
+    name: Power-supply rejection ratio
+    applies_to:
+      - amplifier
+      - opamp
+      - regulator
+    analysis:
+      type: ac
+      default_directive: ".ac dec 100 1 100Meg"
+    required_parameters:
+      - output_node
+      - supply_source
+      - frequency_hz
+      - minimum_psrr_db
+    ngspice_template: |
+      let psrr_db = -db(v({output_node}))
+      meas ac {measurement_name} FIND psrr_db AT={frequency_hz}
+    checker:
+      operator: ">="
+      expected: "{minimum_psrr_db}"

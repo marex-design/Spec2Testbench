@@ -22,18 +22,18 @@ class NgspiceSimulator:
         command = [
             self.ngspice_command,
             "-b",
-            "-o",
-            str(log_path),
             str(circuit_path),
         ]
 
         try:
-            process = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                timeout=self.timeout_seconds,
-            )
+            with log_path.open("w", encoding="utf-8") as log_file:
+                process = subprocess.run(
+                    command,
+                    stdout=log_file,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    timeout=self.timeout_seconds,
+                )
 
             return {
                 "success": process.returncode == 0,
@@ -41,8 +41,8 @@ class NgspiceSimulator:
                 "command": " ".join(command),
                 "circuit_path": str(circuit_path),
                 "log_path": str(log_path),
-                "stdout": process.stdout,
-                "stderr": process.stderr,
+                "stdout": "",
+                "stderr": "",
             }
 
         except subprocess.TimeoutExpired:

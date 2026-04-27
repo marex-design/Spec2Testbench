@@ -1,0 +1,46 @@
+{
+  "total_cases": 2,
+  "pass_at_k_count": 0,
+  "fail_at_k_count": 2,
+  "pass_at_k_rate": 0.0,
+  "cases": [
+    {
+      "case_id": "example_case",
+      "num_candidates": 1,
+      "passed_candidates": 0,
+      "failed_candidates": 1,
+      "pass_at_k": false,
+      "candidates": [
+        {
+          "candidate_id": "example_case",
+          "final_verdict": "FAIL",
+          "passed": false
+        }
+      ]
+    },
+    {
+      "case_id": "uc1_rc_lowpass",
+      "num_candidates": 3,
+      "passed_candidates": 0,
+      "failed_candidates": 3,
+      "pass_at_k": false,
+      "candidates": [
+        {
+          "candidate_id": "cand_01",
+          "final_verdict": "FAIL",
+          "passed": false
+        },
+        {
+          "candidate_id": "cand_02",
+          "final_verdict": "FAIL",
+          "passed": false
+        },
+        {
+          "candidate_id": "cand_03",
+          "final_verdict": "FAIL",
+          "passed": false
+        }
+      ]
+    }
+  ]
+}

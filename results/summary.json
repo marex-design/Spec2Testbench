@@ -1,46 +1,18 @@
 {
-  "case_id": "example_case",
+  "candidate_id": "cand_03",
+  "case_id": "uc1_rc_lowpass",
   "final_verdict": "FAIL",
   "passed": false,
   "simulation": {
     "success": true,
     "returncode": 0,
-    "command": "ngspice -b -o results\\logs\\example_case.log cases\\example_case\\circuit.cir",
-    "circuit_path": "cases\\example_case\\circuit.cir",
-    "log_path": "results\\logs\\example_case.log",
-    "stdout": "",
-    "stderr": ""
+    "log_path": "results\\logs\\uc1_rc_lowpass_cand_03.log"
   },
   "extraction": {
-    "log_path": "results\\logs\\example_case.log",
-    "success": true,
-    "measurements": {
-      "gain_200hz_mag": 0.4348794,
-      "gain_2khz_mag": 0.04846353
-    },
+    "log_path": "results\\logs\\uc1_rc_lowpass_cand_03.log",
+    "success": false,
+    "measurements": {},
     "errors": []
   },
-  "checker": {
-    "case_id": "example_case",
-    "final_verdict": "FAIL",
-    "passed": false,
-    "results": [
-      {
-        "name": "gain_200hz_mag",
-        "measured_value": 0.4348794,
-        "operator": ">=",
-        "expected_value": 0.7,
-        "passed": false,
-        "verdict": "FAIL"
-      },
-      {
-        "name": "gain_2khz_mag",
-        "measured_value": 0.04846353,
-        "operator": "<=",
-        "expected_value": 0.1,
-        "passed": true,
-        "verdict": "PASS"
-      }
-    ]
-  }
+  "checker": null
 }
