@@ -61,10 +61,13 @@ class PySpiceSimulator(ICircuitSimulator):
         """
         self.ngspice_path = ngspice_path or self._find_ngspice()
         self.timeout = timeout
-        self._ngspice_available = self._check_ngspice()    def _find_ngspice(self) -> str:
+        self._ngspice_available = self._check_ngspice()
+    
+    def _find_ngspice(self) -> str:
         """Return the hardcoded ngspice path for Windows."""
-        # Chemin direct vers ngspice installé par Chocolatey
+        # Chemin direct vers ngspice installÃ© par Chocolatey
         return r"C:\ProgramData\chocolatey\lib\ngspice\tools\Spice64\bin\ngspice.exe"
+    
     def _check_ngspice(self) -> bool:
         """Check if ngspice is available."""
         try:
@@ -346,7 +349,7 @@ class PySpiceSimulator(ICircuitSimulator):
                         elif 'v(' in var_lower or var_lower.startswith('v'):
                             # Voltage variable
                             clean_name = var_name.replace('(', '').replace(')', '')
-                            if 'ac' in str(testbench.analyses):
+                            if any(a.type == AnalysisType.AC for a in testbench.analyses):
                                 results['ac'][clean_name] = np.array(data)
                             else:
                                 results['tran'][clean_name] = np.array(data)
