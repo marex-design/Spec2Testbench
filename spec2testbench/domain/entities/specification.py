@@ -1,4 +1,3 @@
-# spec2testbench/domain/entities/specification.py
 
 """
 Specification Entity - Représente les spécifications utilisateur.
