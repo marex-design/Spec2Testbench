@@ -1,14 +1,14 @@
-# spec2testbench/infrastructure/simulator/__init__.py
-
 """
-Module Simulator - Interface avec PySpice et Ngspice.
+Module Simulator - Interface avec ngspice via WSL.
 """
 
-from .pyspice_simulator import PySpiceSimulator, SimulationError
-from .netlist_parser import NetlistParser
+from .wsl_simulator import WSLSimulator, NgspiceSimulator
+
+# Alias pour compatibilité avec le code existant
+PySpiceSimulator = WSLSimulator
 
 __all__ = [
-    'PySpiceSimulator',
-    'SimulationError',
-    'NetlistParser',
+    'WSLSimulator',
+    'NgspiceSimulator', 
+    'PySpiceSimulator'
 ]
