@@ -1,0 +1,15 @@
+README.md
+setup.py
+spec2testbench.egg-info/PKG-INFO
+spec2testbench.egg-info/SOURCES.txt
+spec2testbench.egg-info/dependency_links.txt
+spec2testbench.egg-info/entry_points.txt
+spec2testbench.egg-info/requires.txt
+spec2testbench.egg-info/top_level.txt
+tests/__init__.py
+tests/unit/__init__.py
+tests/unit/test_circuit_type.py
+tests/unit/test_specification.py
+tests/unit/test_test_category.py
+tests/unit/test_testbench.py
+tests/unit/test_verdict.py
