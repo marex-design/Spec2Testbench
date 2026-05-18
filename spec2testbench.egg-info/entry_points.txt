@@ -1,2 +1,0 @@
-[console_scripts]
-spec2testbench = spec2testbench.presentation.cli.main:app
