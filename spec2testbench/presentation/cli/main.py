@@ -1,8 +1,15 @@
-# spec2testbench/presentation/cli/main.py
 
 """
 Command Line Interface for Spec2TestBench.
-Supports multiple LLM providers: OpenAI, DeepSeek, Gemini, Anthropic.
+This module defines the CLI commands for the Spec2TestBench tool, allowing users to:
+- Verify circuits against specifications- Generate testbenches from specifications
+- Diagnose failures from waveform images
+- Draw schematics from SPICE netlists
+- Display version and configuration information
+- List available LLM providers and their status
+
+Developed by Exauce K. Maruba 
+Co-authors: Christian Marie Moanda
 """
 
 import sys
@@ -55,11 +62,11 @@ def verify(
     - gemini: Google Gemini 1.5 Pro (API key: GOOGLE_API_KEY)
     - anthropic: Claude 3 (API key: ANTHROPIC_API_KEY)
     """
-    console.print("\n[bold cyan]🔍 Spec2TestBench - Verification[/bold cyan]\n")
+    console.print("\n[bold cyan] Spec2TestBench - Verification[/bold cyan]\n")
     
     # Check if specs file exists
     if not specs.exists():
-        console.print(f"[red]❌ Specifications file not found: {specs}[/red]")
+        console.print(f"[red] Specifications file not found: {specs}[/red]")
         raise typer.Exit(1)
     
     # Check if netlist exists (if provided)
@@ -106,7 +113,7 @@ def verify(
                 model=model,
                 temperature=0.5
             )
-            console.print(f"[green]✅ LLM client initialized: {settings.llm.default_provider}[/green]")
+            console.print(f"[green] LLM client initialized: {settings.llm.default_provider}[/green]")
         except Exception as e:
             console.print(f"[yellow]⚠️ Failed to initialize LLM client: {e}[/yellow]")
             console.print("   Falling back to template-based generation\n")
@@ -131,10 +138,10 @@ def verify(
     
     if format == "markdown":
         formatter.to_markdown(report, save=True)
-        console.print(f"\n[green]✅ Markdown report generated[/green]")
+        console.print(f"\n[green] Markdown report generated[/green]")
     elif format == "json":
         formatter.to_json(report, save=True)
-        console.print(f"\n[green]✅ JSON report generated[/green]")
+        console.print(f"\n[green] JSON report generated[/green]")
     else:
         content = formatter.to_console(report)
         console.print(content)
@@ -157,7 +164,7 @@ def generate(
     
     This command only generates the testbench without running simulation.
     """
-    console.print("\n[bold cyan]📝 Spec2TestBench - TestBench Generation[/bold cyan]\n")
+    console.print("\n[bold cyan] Spec2TestBench - TestBench Generation[/bold cyan]\n")
     
     if not specs.exists():
         console.print(f"[red]❌ Specifications file not found: {specs}[/red]")
@@ -312,14 +319,14 @@ def diagnose(
         progress.remove_task(task)
     
     # Display results
-    console.print("\n[bold cyan]📊 Diagnosis Results[/bold cyan]\n")
+    console.print("\n[bold cyan] Diagnosis Results[/bold cyan]\n")
     console.print(f"  Verdict: {result.verdict.colorized_with_emoji}")
     console.print(f"  Confidence: {result.confidence:.1%}")
     console.print(f"  Waveform Type: {result.waveform_type.value}")
     console.print("")
     
     if result.anomalies:
-        console.print("[yellow]⚠️ Anomalies detected:[/yellow]")
+        console.print("[yellow] Anomalies detected:[/yellow]")
         for anomaly in result.anomalies:
             console.print(f"    • {anomaly}")
         console.print("")
@@ -337,7 +344,7 @@ def diagnose(
     if output:
         report_content = result.to_markdown()
         output.write_text(report_content, encoding="utf-8")
-        console.print(f"\n[green]✅ Diagnosis report saved to {output}[/green]")
+        console.print(f"\n[green] Diagnosis report saved to {output}[/green]")
 
 
 @app.command()
@@ -353,7 +360,7 @@ def draw(
     """
     from ...infrastructure.schematic import netlist_to_schematic
 
-    console.print("\n[bold cyan]🎨 Spec2TestBench - Schematic Drawing[/bold cyan]\n")
+    console.print("\n[bold cyan] Spec2TestBench - Schematic Drawing[/bold cyan]\n")
 
     if not netlist.exists():
         console.print(f"[red]❌ Netlist file not found: {netlist}[/red]")

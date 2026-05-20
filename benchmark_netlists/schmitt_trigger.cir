@@ -1,0 +1,14 @@
+* Simplified Schmitt Trigger
+Vin in 0 PULSE(0 5 0 1u 1u 1m 2m)
+E1 out 0 VALUE = { V(in) > 2.5 ? 5 : 0 }
+Rload out 0 10k
+.tran 1u 5m
+
+.control
+set noaskquit
+save all
+run
+.endc
+
+.end
+

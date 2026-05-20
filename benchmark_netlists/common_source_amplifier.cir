@@ -1,0 +1,7 @@
+* Single-stage common-source amplifier
+.model NMOS NMOS (level=1)
+M1 out in 0 0 NMOS w=10u l=0.18u
+R1 vdd out 10k
+Vdd vdd 0 1.8
+Vin in 0 0.9
+.end

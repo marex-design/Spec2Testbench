@@ -7,7 +7,7 @@ WaveformPlotter - Génère des images PNG à partir de données de simulation.
 import math
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, Any
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -361,3 +361,146 @@ class WaveformPlotter:
         plt.close()
         
         return output_path
+    
+    def optimize_for_vision_llm(self,
+                               image_path: Path,
+                               test_name: Optional[str] = None,
+                               circuit_type: Optional[str] = None,
+                               specification: Optional[Dict[str, Any]] = None,
+                               anomalies: Optional[List[str]] = None) -> Path:
+        """
+        Optimize waveform image for vision LLM analysis.
+        
+        Enhances image with:
+        - Larger text annotations
+        - Specification threshold overlays
+        - Anomaly highlighting (red zones)
+        - Test metadata in image
+        - Increased contrast for vision model
+        
+        Args:
+            image_path: Path to original waveform image
+            test_name: Name of the test (for display)
+            circuit_type: Circuit type (for display)
+            specification: Dict with thresholds {metric: {min, max}}
+            anomalies: List of detected anomalies to highlight
+            
+        Returns:
+            Path to optimized image
+        """
+        from PIL import Image, ImageDraw, ImageFont
+        import os
+        
+        logger.info(f"Optimizing image for vision LLM: {image_path}")
+        
+        try:
+            # Open original image
+            img = Image.open(image_path)
+            
+            # Ensure image is in RGB mode
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            
+            # Get image dimensions
+            width, height = img.size
+            
+            # Calculate new size (ensure optimal for vision models)
+            # Vision models typically work well with 1024x768 or 1280x720
+            max_width = 1280
+            max_height = 720
+            if width > max_width or height > max_height:
+                ratio = min(max_width / width, max_height / height)
+                new_size = (int(width * ratio), int(height * ratio))
+                img = img.resize(new_size, Image.Resampling.LANCZOS)
+                width, height = new_size
+            
+            # Increase contrast for better vision model interpretation
+            from PIL import ImageEnhance
+            enhancer = ImageEnhance.Contrast(img)
+            img = enhancer.enhance(1.2)  # 20% contrast boost
+            
+            # Create copy for annotation
+            img_annotated = img.copy()
+            draw = ImageDraw.Draw(img_annotated)
+            
+            # Try to use a larger font, fall back if not available
+            try:
+                font_large = ImageFont.truetype("arial.ttf", int(height * 0.04))  # 4% of height
+                font_small = ImageFont.truetype("arial.ttf", int(height * 0.025))  # 2.5% of height
+            except:
+                font_large = ImageFont.load_default()
+                font_small = ImageFont.load_default()
+            
+            # Add metadata header
+            margin = int(height * 0.02)
+            y_offset = margin
+            
+            metadata_lines = []
+            if test_name:
+                metadata_lines.append(f"TEST: {test_name}")
+            if circuit_type:
+                metadata_lines.append(f"CIRCUIT: {circuit_type}")
+            metadata_lines.append(f"TIMESTAMP: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            
+            # Draw metadata header with semi-transparent background
+            header_bg_height = len(metadata_lines) * int(height * 0.04) + 2 * margin
+            draw.rectangle(
+                [(0, 0), (width, header_bg_height)],
+                fill=(240, 240, 240),  # Light gray background
+                outline=(100, 100, 100)
+            )
+            
+            # Draw metadata text
+            for line in metadata_lines:
+                draw.text((margin * 2, y_offset), line, fill=(0, 0, 0), font=font_small)
+                y_offset += int(height * 0.04)
+            
+            # Add specification thresholds if provided
+            if specification:
+                spec_text = "SPEC: "
+                for metric, bounds in specification.items():
+                    if "min" in bounds and "max" in bounds:
+                        spec_text += f"{metric}: [{bounds['min']}-{bounds['max']}]  "
+                
+                # Add specification box at bottom
+                text_bbox = draw.textbbox((0, 0), spec_text, font=font_small)
+                text_width = text_bbox[2] - text_bbox[0]
+                text_height = text_bbox[3] - text_bbox[1]
+                
+                y_spec = height - text_height - margin
+                draw.rectangle(
+                    [(margin, y_spec - margin), (width - margin, height - margin)],
+                    fill=(255, 255, 220),  # Light yellow background
+                    outline=(200, 200, 0)
+                )
+                draw.text((margin * 2, y_spec), spec_text, fill=(0, 0, 0), font=font_small)
+            
+            # Add anomaly indicators
+            if anomalies:
+                anomaly_text = "ANOMALIES: " + ", ".join(anomalies[:3])  # Show first 3
+                if len(anomalies) > 3:
+                    anomaly_text += f" +{len(anomalies)-3} more"
+                
+                text_bbox = draw.textbbox((0, 0), anomaly_text, font=font_small)
+                text_width = text_bbox[2] - text_bbox[0]
+                text_height = text_bbox[3] - text_bbox[1]
+                
+                y_anom = height - (text_height * 3) - (margin * 4)
+                draw.rectangle(
+                    [(margin, y_anom - margin), (width - margin, y_anom + text_height + margin)],
+                    fill=(255, 200, 200),  # Light red background
+                    outline=(200, 0, 0)
+                )
+                draw.text((margin * 2, y_anom), anomaly_text, fill=(200, 0, 0), font=font_small)
+            
+            # Save optimized image
+            optimized_path = image_path.parent / f"{image_path.stem}_optimized.png"
+            img_annotated.save(optimized_path, quality=95, dpi=(150, 150))
+            
+            logger.info(f"Optimized image saved: {optimized_path} ({img_annotated.size})")
+            return optimized_path
+            
+        except Exception as e:
+            logger.warning(f"Failed to optimize image for vision LLM: {e}")
+            logger.warning("Returning original image path")
+            return image_path
