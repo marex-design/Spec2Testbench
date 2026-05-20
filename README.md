@@ -71,6 +71,7 @@ cp .env.example .env
 | `spec2testbench verify` | Vérifier un circuit |
 | `spec2testbench generate` | Générer un testbench |
 | `spec2testbench diagnose` | Diagnostiquer une forme d’onde |
+| `spec2testbench draw` | Dessiner le schéma à partir d'un netlist SPICE |
 | `spec2testbench config` | Voir la configuration |
 | `spec2testbench providers` | Voir les fournisseurs LLM |
 
@@ -101,6 +102,18 @@ spec2testbench diagnose \
   --waveform plot.png \
   --provider deepseek
 ```
+
+## Dessiner le schéma d'un circuit
+
+```bash
+spec2testbench draw \
+  --netlist netlists/amplifier.cir \
+  --output schematic.png
+```
+
+Cette commande lit le netlist SPICE et dessine un schéma qui reflète
+réellement les composants, les nœuds et les connexions du fichier.
+Des netlists différents produisent des schémas différents.
 
 ---
 

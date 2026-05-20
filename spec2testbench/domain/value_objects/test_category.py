@@ -9,6 +9,7 @@ from typing import List, Set
 
 
 class TestCategory(Enum):
+
     """
     Catégories de tests organisées en 6 groupes fonctionnels.
     
@@ -19,6 +20,7 @@ class TestCategory(Enum):
     Groupe 5: Differential (4) - Plage mode commun, gain diff, hystérésis, appariement
     Groupe 6: PVT (3)          - Corners, température, alimentation
     """
+    __test__ = False  # Pour éviter que pytest ne considère cette classe comme un test
 
     # =========================================================
     # GROUPE 1: DC TESTS (4) - Comportement statique

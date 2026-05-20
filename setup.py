@@ -16,6 +16,7 @@ setup(
         "python-dotenv>=1.0",
         "typer>=0.9",
         "rich>=13.0",
+        "schemdraw>=0.19",
     ],
     entry_points={
         "console_scripts": [

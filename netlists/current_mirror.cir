@@ -1,0 +1,8 @@
+* Simple NMOS current mirror
+.model NMOS NMOS
+M1 ref ref 0 0 NMOS
+M2 out ref 0 0 NMOS
+Iref vdd ref 100u
+Vdd vdd 0 1.8
+Vout out 0 1.0
+.end

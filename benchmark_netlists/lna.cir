@@ -1,0 +1,19 @@
+* Simplified Low Noise Amplifier
+Vdd vdd 0 DC 3.3
+Vin in 0 AC 1 SIN(0 1m 1Meg)
+Lg in gate 10n
+M1 out gate 0 0 NMOS
+Ld vdd out 100n
+Rload out 0 1k
+.model NMOS NMOS LEVEL=1 VTO=0.7 KP=5m LAMBDA=0.02 KF=0 AF=1
+.op
+.ac dec 100 1k 1Gig
+
+.control
+set noaskquit
+save all
+run
+.endc
+
+.end
+

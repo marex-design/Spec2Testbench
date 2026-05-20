@@ -9,7 +9,7 @@ import json
 import base64
 import logging
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional, Tuple, Union
 from datetime import datetime
 
 from ...domain.value_objects.verdict import Verdict
@@ -19,6 +19,7 @@ from ...domain.value_objects.multimodal_result import (
 from ...domain.interfaces.iwaveform_analyzer import IWaveformAnalyzer
 from ...domain.entities.specification import Specification
 from .waveform_plotter import WaveformPlotter
+from .llm_multimodal_client import LLMMultimodalClient, DiagnosticLevel
 
 logger = logging.getLogger(__name__)
 
@@ -93,17 +94,50 @@ class WaveformChecker(IWaveformAnalyzer):
         },
     }
     
-    def __init__(self, llm_client=None, use_llm: bool = True):
+    def __init__(self, 
+                 llm_client=None, 
+                 use_llm: bool = True,
+                 provider: Optional[str] = None,
+                 api_key: Optional[str] = None,
+                 model: Optional[str] = None):
         """
         Initialize the waveform checker.
         
         Args:
-            llm_client: LLM client with multimodal capabilities
+            llm_client: Optional LLMClient or LLMMultimodalClient instance
             use_llm: If False, use rule-based pattern matching only
+            provider: If no llm_client provided, create LLMMultimodalClient with this provider
+            api_key: API key for LLM provider
+            model: Model name for LLM provider
         """
-        self.llm_client = llm_client
         self.use_llm = use_llm
         self.plotter = WaveformPlotter()
+        
+        # Initialize LLM client if needed
+        if use_llm:
+            if llm_client:
+                # Use provided client (LLMClient or LLMMultimodalClient)
+                self.llm_client = llm_client
+                self.multimodal_client = llm_client if isinstance(llm_client, LLMMultimodalClient) else None
+            elif provider:
+                # Create LLMMultimodalClient with specified provider
+                self.multimodal_client = LLMMultimodalClient(
+                    provider=provider,
+                    api_key=api_key,
+                    model=model
+                )
+                self.llm_client = self.multimodal_client.llm_client
+            else:
+                # Default to OpenAI
+                self.multimodal_client = LLMMultimodalClient(
+                    provider="openai",
+                    api_key=api_key,
+                    model=model
+                )
+                self.llm_client = self.multimodal_client.llm_client
+        else:
+            self.llm_client = None
+            self.multimodal_client = None
     
     def analyze(self,
                 image_path: Path,
@@ -286,22 +320,71 @@ class WaveformChecker(IWaveformAnalyzer):
     def _analyze_with_llm(self, image_path: Path, context: Optional[Dict]) -> WaveformAnalysis:
         """Analyze waveform using multimodal LLM."""
         
-        # Encode image
-        image_base64 = self._encode_image(image_path)
-        
-        # Build prompt
-        prompt = self._build_analysis_prompt(context)
-        
         try:
-            response = self.llm_client.multimodal_complete(
-                prompt=prompt,
-                image_base64=image_base64,
-                response_format="json"
-            )
-            return self._parse_llm_response(response)
+            # Use specialized LLMMultimodalClient if available
+            if self.multimodal_client:
+                circuit_type = context.get("circuit_type") if context else None
+                expected_behavior = context.get("expected") if context else None
+                failed_metrics = context.get("failed_metrics") if context else None
+                
+                result = self.multimodal_client.analyze_waveform(
+                    image_path=image_path,
+                    circuit_type=circuit_type,
+                    expected_behavior=expected_behavior,
+                    failed_metrics=failed_metrics,
+                    diagnostic_level=DiagnosticLevel.STANDARD
+                )
+                
+                # Convert specialized result to WaveformAnalysis
+                return self._convert_diagnosis_to_analysis(result)
+            
+            # Fallback to raw LLMClient multimodal_complete
+            elif self.llm_client:
+                image_base64 = self._encode_image(image_path)
+                prompt = self._build_analysis_prompt(context)
+                
+                response = self.llm_client.multimodal_complete(
+                    prompt=prompt,
+                    image_base64=image_base64,
+                    response_format="json"
+                )
+                return self._parse_llm_response(response)
+            
+            else:
+                logger.warning("No LLM client available, using rule-based analysis")
+                return self._analyze_with_rules(image_path, context)
+                
         except Exception as e:
             logger.warning(f"LLM analysis failed: {e}, falling back to rule-based")
             return self._analyze_with_rules(image_path, context)
+    
+    def _convert_diagnosis_to_analysis(self, diagnosis) -> WaveformAnalysis:
+        """Convert LLMMultimodalClient diagnosis result to WaveformAnalysis."""
+        try:
+            waveform_type = WaveformType(diagnosis.waveform_type)
+        except (ValueError, AttributeError):
+            waveform_type = WaveformType.UNKNOWN
+        
+        features = []
+        for feature_name, feature_value in diagnosis.features.items():
+            if isinstance(feature_value, dict):
+                features.append(WaveformFeature(
+                    name=feature_name,
+                    value=float(feature_value.get("value", 0)),
+                    unit=feature_value.get("unit", ""),
+                    confidence=0.8,
+                    description=f"Extracted {feature_name}"
+                ))
+        
+        return WaveformAnalysis(
+            waveform_type=waveform_type,
+            features=features,
+            anomalies=diagnosis.anomalies,
+            diagnosis=diagnosis.diagnosis,
+            recommendations=diagnosis.recommendations,
+            confidence=diagnosis.confidence,
+            raw_llm_response=diagnosis.raw_response
+        )
     
     def _analyze_with_rules(self, image_path: Path, context: Optional[Dict]) -> WaveformAnalysis:
         """Analyze waveform using rule-based pattern detection (no LLM)."""
@@ -437,8 +520,135 @@ Analyze the attached waveform now. Return ONLY valid JSON.
             metrics[feature.name] = feature.value
         return metrics
     
+    def get_multimodal_client(self):
+        """
+        Get the LLMMultimodalClient for advanced analysis.
+        
+        Returns:
+            LLMMultimodalClient instance or None if not available
+        """
+        return self.multimodal_client
+    
+    def analyze_with_multimodal(self,
+                               image_path: Path,
+                               circuit_type: Optional[str] = None,
+                               expected_behavior: Optional[str] = None,
+                               failed_metrics: Optional[List[str]] = None) -> Dict[str, Any]:
+        """
+        Analyze waveform using the specialized LLMMultimodalClient.
+        
+        Provides advanced diagnostics including:
+        - Root cause analysis
+        - Actionable recommendations
+        - Anomaly detection with severity
+        
+        Args:
+            image_path: Path to waveform image
+            circuit_type: Circuit type for context
+            expected_behavior: Expected circuit behavior
+            failed_metrics: Metrics that failed specification
+            
+        Returns:
+            Dictionary with analysis results
+        """
+        if not self.multimodal_client:
+            raise RuntimeError("LLMMultimodalClient not available. Initialize with provider or llm_client.")
+        
+        try:
+            result = self.multimodal_client.analyze_waveform(
+                image_path=image_path,
+                circuit_type=circuit_type,
+                expected_behavior=expected_behavior,
+                failed_metrics=failed_metrics,
+                diagnostic_level=DiagnosticLevel.DETAILED
+            )
+            return result.to_dict()
+        except Exception as e:
+            logger.error(f"Multimodal analysis failed: {e}")
+            raise
+    
+    def detect_anomalies_multimodal(self,
+                                   image_path: Path,
+                                   circuit_type: Optional[str] = None,
+                                   thresholds: Optional[Dict[str, Dict[str, float]]] = None) -> Dict[str, Any]:
+        """
+        Detect anomalies using LLMMultimodalClient.
+        
+        Args:
+            image_path: Path to waveform image
+            circuit_type: Circuit type
+            thresholds: Specification thresholds
+            
+        Returns:
+            Dictionary with detected anomalies and recommendations
+        """
+        if not self.multimodal_client:
+            raise RuntimeError("LLMMultimodalClient not available.")
+        
+        return self.multimodal_client.detect_anomalies(
+            image_path=image_path,
+            circuit_type=circuit_type,
+            thresholds=thresholds
+        )
+    
+    def diagnose_failure_multimodal(self,
+                                   image_path: Path,
+                                   specification: Specification,
+                                   failed_metrics: List[str]) -> Dict[str, Any]:
+        """
+        Diagnose test failure using LLMMultimodalClient.
+        
+        Args:
+            image_path: Path to waveform image
+            specification: Circuit specification
+            failed_metrics: List of metrics that failed
+            
+        Returns:
+            Dictionary with root cause analysis and recommendations
+        """
+        if not self.multimodal_client:
+            raise RuntimeError("LLMMultimodalClient not available.")
+        
+        failed_spec = {m: getattr(specification, m, None) for m in failed_metrics}
+        failed_spec = {k: v for k, v in failed_spec.items() if v is not None}
+        
+        return self.multimodal_client.diagnose_failure(
+            image_path=image_path,
+            failed_specification=failed_spec,
+            circuit_type=specification.circuit_type.display_name if specification.circuit_type else None
+        )
+    
+    def optimize_waveform_image(self,
+                               image_path: Path,
+                               test_name: Optional[str] = None,
+                               circuit_type: Optional[str] = None,
+                               specification: Optional[Dict[str, Any]] = None,
+                               anomalies: Optional[List[str]] = None) -> Path:
+        """
+        Optimize waveform image for vision LLM analysis.
+        
+        Args:
+            image_path: Path to waveform image
+            test_name: Name of the test
+            circuit_type: Circuit type
+            specification: Specification thresholds
+            anomalies: Detected anomalies
+            
+        Returns:
+            Path to optimized image
+        """
+        return self.plotter.optimize_for_vision_llm(
+            image_path=image_path,
+            test_name=test_name,
+            circuit_type=circuit_type,
+            specification=specification,
+            anomalies=anomalies
+        )
+    
     def _get_llm_model_name(self) -> str:
         """Get LLM model name."""
-        if self.llm_client and hasattr(self.llm_client, 'model_name'):
+        if self.multimodal_client:
+            return self.multimodal_client.model
+        elif self.llm_client and hasattr(self.llm_client, 'model_name'):
             return self.llm_client.model_name
         return "rule-based"

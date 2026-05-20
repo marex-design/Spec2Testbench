@@ -1,0 +1,19 @@
+* Simple Twin-T Notch Approximation
+Vin in 0 AC 1
+R1 in n1 1k
+R2 n1 out 1k
+C1 n1 0 159n
+C2 in n2 159n
+C3 n2 out 159n
+R3 n2 0 500
+Rload out 0 100k
+.ac dec 100 10 1Meg
+
+.control
+set noaskquit
+save all
+run
+.endc
+
+.end
+

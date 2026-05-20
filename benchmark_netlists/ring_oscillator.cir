@@ -1,0 +1,17 @@
+* Behavioral Ring Oscillator Benchmark
+
+Vdd vdd 0 DC 5
+
+Bosc out 0 V = 2.5 + 2.5*sin(2*3.14159*10Meg*time)
+Rload out 0 10k
+Cload out 0 1p
+
+.tran 0.1n 2u
+
+.control
+set noaskquit
+save all
+run
+.endc
+
+.end
