@@ -1,0 +1,16 @@
+* Band-Pass RLC Filter - SIMPLE
+L1 in mid 1m
+C1 mid out 1n
+R1 out 0 1k
+Vin in 0 AC 1
+
+.ac dec 100 10 10e6
+
+* Mesure directe de la fréquence centrale
+.meas ac center_freq when vdb(out)=-3 rising=2
+
+.control
+run
+print center_freq
+.endc
+.end

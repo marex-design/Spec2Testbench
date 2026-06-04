@@ -1,5 +1,0 @@
-* First-order RC low-pass filter
-R1 in out 1k
-C1 out 0 1n
-Vin in 0 1
-.end

@@ -1,0 +1,15 @@
+name: "rc_lowpass_filter"
+circuit_type: "low_pass_filter"
+
+performance_targets:
+  cutoff_frequency_hz:
+    min: 100000
+    max: 200000
+    unit: "Hz"
+  attenuation_db:
+    min: 2
+    max: 5
+    unit: "dB"
+
+input_conditions:
+  test_frequency: 159000

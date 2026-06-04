@@ -1,0 +1,14 @@
+RC Low-pass Filter - FOR TFE
+R1 in out 1k
+C1 out 0 1n
+Vin in 0 AC 1
+
+.ac dec 100 10 10e6
+
+.meas ac cutoff when vdb(out)=-3
+
+.control
+run
+print cutoff
+.endc
+.end

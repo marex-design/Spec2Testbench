@@ -1,0 +1,9 @@
+name: "lowpass_rc_filter"
+circuit_type: "filter"
+description: "First-order RC low-pass filter"
+
+performance_targets:
+  cutoff_frequency_hz:
+    min: 140000
+    max: 180000
+    unit: "Hz"
