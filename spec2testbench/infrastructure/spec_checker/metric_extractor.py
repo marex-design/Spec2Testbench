@@ -157,7 +157,7 @@ class MetricExtractor:
     
     def _extract_slew_rate(self, results: Dict[str, Any]) -> Optional[float]:
         """Extract slew rate from transient analysis."""
-        tran_data = results.get("transient", {})
+        tran_data = results.get("transient") or results.get("tran", {})
         time = tran_data.get("time", [])
         voltage = tran_data.get("voltage", {})
         
@@ -181,7 +181,7 @@ class MetricExtractor:
     
     def _extract_settling_time(self, results: Dict[str, Any]) -> Optional[float]:
         """Extract settling time to 1%."""
-        tran_data = results.get("transient", {})
+        tran_data = results.get("transient") or results.get("tran", {})
         time = tran_data.get("time", [])
         voltage = tran_data.get("voltage", {})
         
