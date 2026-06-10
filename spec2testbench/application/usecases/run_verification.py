@@ -36,12 +36,9 @@ class VerificationReport:
     def overall_verdict(self) -> Verdict:
         if self.errors:
             return Verdict.ERROR
-        for result in self.spec_results:
-            if result.verdict == Verdict.FAIL:
-                return Verdict.FAIL
-            if result.verdict == Verdict.WARNING:
-                return Verdict.WARNING
-        return Verdict.PASS
+        if not self.spec_results:
+            return Verdict.PASS
+        return Verdict.worst_case([result.verdict for result in self.spec_results])
     
     @property
     def failed_metrics(self) -> List[CheckResult]:
@@ -51,8 +48,8 @@ class VerificationReport:
     def success_rate(self) -> float:
         if not self.spec_results:
             return 0.0
-        passed = sum(1 for r in self.spec_results if r.verdict == Verdict.PASS)
-        return passed / len(self.spec_results)
+        successful = sum(1 for r in self.spec_results if r.verdict.is_success)
+        return successful / len(self.spec_results)
     
     def to_summary(self) -> str:
         lines = [
@@ -70,7 +67,7 @@ class VerificationReport:
             status = f"{result.verdict.emoji} {result.verdict.value}"
             lines.append(f"  {status:10} {result.test_name}: {result.measured_str} (expected {result.expected_range})")
         if self.errors:
-            lines.append("", "Errors:")
+            lines.extend(["", "Errors:"])
             for error in self.errors:
                 lines.append(f"  ❌ {error}")
         lines.append("=" * 60)
@@ -91,7 +88,7 @@ class VerificationPipeline:
             use_llm=use_llm
         )
         self.waveform_plotter = WaveformPlotter(output_dir=settings.output.waveform_dir)
-        self.simulator = WSLSimulator()
+        self.simulator = None
     
     def verify(self,
                specification: Specification,
@@ -132,6 +129,9 @@ class VerificationPipeline:
     
     def _run_simulation_with_ngspice(self, netlist_path: Path, testbench: TestBench) -> Dict[str, Any]:
         """Run simulation with real ngspice via WSL."""
+        if self.simulator is None:
+            self.simulator = WSLSimulator()
+
         if not self.simulator.is_available:
             logger.warning("WSL simulator not available, falling back to mock")
             return self._run_mock_simulation(testbench)
@@ -151,7 +151,7 @@ class VerificationPipeline:
             'metrics': result.get('metrics', {}),
             'logs': [f"V{node}={value}" for node, value in result.get('metrics', {}).items()],
             'ac': {},
-            'tran': {},
+            'transient': {},
             'currents': {}
         }
     
@@ -163,7 +163,7 @@ class VerificationPipeline:
             'logs': ['Mock simulation - ngspice not available'],
             'metrics': {'vout': 2.5, 'vdd': 5.0},
             'ac': {'magnitude': [100], 'frequency': [1e6]},
-            'tran': {'vout': [2.5], 'time': [0]},
+            'transient': {'vout': [2.5], 'time': [0]},
             'currents': {'vdd': 1e-3}
         }
     
