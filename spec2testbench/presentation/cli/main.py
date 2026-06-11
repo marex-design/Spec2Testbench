@@ -29,7 +29,7 @@ from ...infrastructure.llm.llm_client import LLMClient, LLMProvider
 # Initialize Typer app and console
 app = typer.Typer(
     name="spec2testbench",
-    help="From Specs to SPICE Testbenches: LLM-Assisted Analog Verification",
+    help="Specs to SPICE Testbenches",
     add_completion=False,
 )
 console = Console()
@@ -147,7 +147,7 @@ def verify(
         console.print(content)
     
     # Exit with appropriate code
-    if report.overall_verdict.value == "FAIL":
+    if report.overall_verdict.value in {"FAIL", "RUN"}:
         raise typer.Exit(1)
     raise typer.Exit(0)
 
@@ -435,10 +435,10 @@ def providers():
     providers_table.add_column("Cost", style="dim")
     
     provider_info = [
-        ("deepseek", "✓" if settings.llm.deepseek_api_key else "✗", "deepseek-chat", "deepseek-vl", "💰 Économique"),
-        ("openai", "✓" if settings.llm.openai_api_key else "✗", "gpt-4-turbo", "gpt-4-turbo", "💰💰 Modéré"),
-        ("gemini", "✓" if settings.llm.google_api_key else "✗", "gemini-1.5-pro", "gemini-1.5-pro", "💰💰 Modéré"),
-        ("anthropic", "✓" if settings.llm.anthropic_api_key else "✗", "claude-3-sonnet", "claude-3-sonnet", "💰💰💰 Élevé"),
+        ("deepseek", "✓" if settings.llm.deepseek_api_key else "✗", "deepseek-chat", "deepseek-vl", ""),
+        ("openai", "✓" if settings.llm.openai_api_key else "✗", "gpt-4-turbo", "gpt-4-turbo", ""),
+        ("gemini", "✓" if settings.llm.google_api_key else "✗", "gemini-1.5-pro", "gemini-1.5-pro", ""),
+        ("anthropic", "✓" if settings.llm.anthropic_api_key else "✗", "claude-3-sonnet", "claude-3-sonnet", ""),
     ]
     
     for name, status, text_model, vision_model, cost in provider_info:

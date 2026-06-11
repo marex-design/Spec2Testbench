@@ -1,0 +1,10 @@
+name: "current_mirror"
+circuit_type: "current_mirror"
+technology: "benchmark_behavioral"
+performance_targets:
+  mean_current_a:
+    min: 1e-4
+    max: 3e-4
+    unit: "A"
+test_categories:
+  - "dc"

@@ -16,6 +16,11 @@ The contract is simple: different netlists MUST produce different figures.
 """
 
 from pathlib import Path
+import matplotlib
+
+# Render PNG schematics headlessly to avoid local Tcl/Tk GUI requirements.
+matplotlib.use("Agg")
+
 import schemdraw
 import schemdraw.elements as elm
 

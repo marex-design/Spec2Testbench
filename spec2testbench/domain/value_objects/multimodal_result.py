@@ -61,7 +61,13 @@ class MultimodalResult:
     def __init__(self, verdict, waveform_image_path, analysis=None, extracted_metrics=None,
                  violations=None, reasoning="", timestamp=None, circuit_name="",
                  test_name="", processing_time_ms=0.0, llm_model="", **kwargs):
-        self.verdict = verdict if isinstance(verdict, Verdict) else Verdict(verdict)
+        if isinstance(verdict, Verdict):
+            normalized_verdict = verdict
+        elif hasattr(verdict, "value"):
+            normalized_verdict = Verdict(verdict.value)
+        else:
+            normalized_verdict = Verdict(verdict)
+        self.verdict = normalized_verdict
         self.waveform_image_path = waveform_image_path
         self.analysis = analysis or WaveformAnalysis()
         self.extracted_metrics = extracted_metrics or {}

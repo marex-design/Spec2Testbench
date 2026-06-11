@@ -364,6 +364,17 @@ def extract_metrics_by_type(data: dict, stem: str, netlist_text: str):
                     metrics['mean_current_a'] = float(np.mean([float(np.real(np.atleast_1d(op_data[key])[0])) for key in cur_keys]))
                 except Exception:
                     metrics['mean_current_a'] = float('nan')
+                supply_match = re.search(
+                    r"^(V[\w$]+)\s+(\S+)\s+(\S+)\s+DC\s+([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)",
+                    netlist_text,
+                    re.IGNORECASE | re.MULTILINE,
+                )
+                if supply_match:
+                    try:
+                        supply_value = float(supply_match.group(4))
+                        metrics['quiescent_power_w'] = abs(metrics['mean_current_a']) * supply_value
+                    except Exception:
+                        pass
 
         if ac_data is not None and circ_type in ('filter', 'amplifier', 'mixer', 'reference', 'bandgap'):
             freq_key = next((key for key in ac_data.keys() if key.lower() == 'frequency'), None)
@@ -388,6 +399,16 @@ def extract_metrics_by_type(data: dict, stem: str, netlist_text: str):
 
                     valid = np.where(np.isfinite(gain_db))[0]
                     metrics['gain_db_at_dc'] = float(gain_db[valid[0]]) if valid.size else float('nan')
+                    try:
+                        unity_candidates = np.where(gain_db <= 0)[0]
+                        if unity_candidates.size:
+                            ugf_idx = int(unity_candidates[0])
+                            metrics['ugbw_hz'] = float(freq[ugf_idx])
+                            phase_deg = np.degrees(np.angle(gain))
+                            if ugf_idx < len(phase_deg):
+                                metrics['phase_margin_deg'] = float(max(0.0, min(180.0, 180.0 + phase_deg[ugf_idx])))
+                    except Exception:
+                        pass
 
                     try:
                         peak_idx = int(np.nanargmax(gain_db))
@@ -454,6 +475,13 @@ def extract_metrics_by_type(data: dict, stem: str, netlist_text: str):
                     idx = int(np.argmax(mags))
                     metrics['frequency_hz'] = float(xf[idx]) if xf.size > idx else float('nan')
                     metrics['amplitude_pp'] = float(np.max(v) - np.min(v))
+                    harmonics = []
+                    for order in range(1, 6):
+                        target_freq = order * metrics['frequency_hz']
+                        harmonic_idx = int(np.argmin(np.abs(xf - target_freq)))
+                        harmonics.append(float(mags[harmonic_idx]) if harmonic_idx < len(mags) else 0.0)
+                    if harmonics and harmonics[0] > 0:
+                        metrics['thd_percent'] = float(100.0 * np.sqrt(sum(h ** 2 for h in harmonics[1:])) / harmonics[0])
                 except Exception:
                     metrics['frequency_hz'] = float('nan')
                     metrics['amplitude_pp'] = float('nan')
@@ -488,6 +516,13 @@ def extract_metrics_by_type(data: dict, stem: str, netlist_text: str):
                     idx = int(np.argmax(mags)) if mags.size else 0
                     freq = float(xf[idx]) if xf.size > idx else float('nan')
                     metrics['frequency_hz'] = freq if np.isfinite(freq) and 0 < freq <= 1e11 else float('nan')
+                    if idx > 0 and idx < len(mags) and mags[idx] > 0:
+                        harmonics = []
+                        for order in range(1, 6):
+                            target_freq = order * freq
+                            harmonic_idx = int(np.argmin(np.abs(xf - target_freq)))
+                            harmonics.append(float(mags[harmonic_idx]) if harmonic_idx < len(mags) else 0.0)
+                        metrics['thd_percent'] = float(100.0 * np.sqrt(sum(h ** 2 for h in harmonics[1:])) / harmonics[0])
                 except Exception:
                     metrics['frequency_hz'] = float('nan')
 

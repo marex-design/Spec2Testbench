@@ -1,0 +1,14 @@
+* RC Relaxation Oscillator Approximation
+Vdd vdd 0 DC 5
+Bcmp out 0 V = { 0.5 * V(vdd) * (1 - tanh(1000 * (V(cap) - 0.5 * V(vdd)))) }
+Rtiming out cap 100k
+C1 cap 0 100n IC=0
+.tran 10u 20m 0 10u UIC
+
+.control
+set noaskquit
+save all
+run
+.endc
+
+.end
