@@ -1,0 +1,11 @@
+* Common-gate amplifier with resistive load
+Vdd vdd 0 DC 5
+Vin in 0 AC 1 SIN(0 10m 1k)
+Vbias gate 0 DC 2
+Rd vdd out 10k
+M1 out gate in 0 NMOS
+Rs in 0 1k
+.model NMOS NMOS LEVEL=1 VTO=1 KP=1m
+.op
+.ac dec 100 10 10Meg
+.end

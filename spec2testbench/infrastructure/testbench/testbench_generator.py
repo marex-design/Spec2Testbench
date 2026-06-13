@@ -291,9 +291,11 @@ class TestBenchGenerator(ITestBenchGenerator):
                 type=AnalysisType.DC,
                 parameters={
                     "source": "vin",
-                    "start": 0,
-                    "stop": spec.vdd,
-                    "step": spec.vdd / 100,
+                    # Use a single-point nominal bias rather than a full sweep so
+                    # vout_dc reflects the operating point used in the paper metrics.
+                    "start": spec.common_mode_voltage,
+                    "stop": spec.common_mode_voltage,
+                    "step": max(spec.vdd / 100, 1e-6),
                 }
             )
         ]
@@ -414,23 +416,32 @@ class TestBenchGenerator(ITestBenchGenerator):
         """Create transient testbench using templates."""
         delay_metric = self._first_metric_name(spec, ["propagation_delay", "propagation_delay_s"])
         frequency_metric = self._first_metric_name(spec, ["oscillator_frequency", "frequency_hz"])
-        
-        stimuli = [
-            Stimulus(
-                name="vin",
-                type="pulse",
-                parameters={
-                    "v1": spec.common_mode_voltage - spec.vdd/4,
-                    "v2": spec.common_mode_voltage + spec.vdd/4,
-                    "rise": "1n",
-                    "fall": "1n",
-                    "width": "10u",
-                    "period": "20u",
-                },
-                node_positive="in",
-                node_negative="0",
-            )
-        ]
+        oscillator_types = {
+            CircuitType.OSCILLATOR,
+            CircuitType.RING_OSCILLATOR,
+            CircuitType.COLPITTS_OSCILLATOR,
+            CircuitType.RC_PHASE_SHIFT_OSCILLATOR,
+            CircuitType.VCO,
+        }
+
+        stimuli = []
+        if spec.circuit_type not in oscillator_types:
+            stimuli = [
+                Stimulus(
+                    name="vin",
+                    type="pulse",
+                    parameters={
+                        "v1": spec.common_mode_voltage - spec.vdd/4,
+                        "v2": spec.common_mode_voltage + spec.vdd/4,
+                        "rise": "1n",
+                        "fall": "1n",
+                        "width": "10u",
+                        "period": "20u",
+                    },
+                    node_positive="in",
+                    node_negative="0",
+                )
+            ]
         
         analyses = [
             AnalysisConfig(
@@ -469,7 +480,7 @@ class TestBenchGenerator(ITestBenchGenerator):
                 unit=spec.get_metric_unit(delay_metric or "propagation_delay") or "s",
             ))
 
-        if spec.circuit_type in {CircuitType.OSCILLATOR, CircuitType.RING_OSCILLATOR, CircuitType.COLPITTS_OSCILLATOR, CircuitType.RC_PHASE_SHIFT_OSCILLATOR, CircuitType.VCO}:
+        if spec.circuit_type in oscillator_types:
             measurements.extend([
                 Measurement(
                     name=frequency_metric or "oscillator_frequency",
@@ -558,20 +569,29 @@ class TestBenchGenerator(ITestBenchGenerator):
         """Create spectral/FFT testbench using templates."""
         frequency_metric = self._first_metric_name(spec, ["fundamental_frequency", "frequency_hz"]) or "fundamental_frequency"
         thd_metric = self._first_metric_name(spec, ["thd", "thd_percent"]) or "thd"
-        
-        stimuli = [
-            Stimulus(
-                name="vin",
-                type="sin",
-                parameters={
-                    "offset": spec.common_mode_voltage,
-                    "amplitude": spec.vdd / 4,
-                    "frequency": spec.test_frequency,
-                },
-                node_positive="in",
-                node_negative="0",
-            )
-        ]
+        oscillator_types = {
+            CircuitType.OSCILLATOR,
+            CircuitType.RING_OSCILLATOR,
+            CircuitType.COLPITTS_OSCILLATOR,
+            CircuitType.RC_PHASE_SHIFT_OSCILLATOR,
+            CircuitType.VCO,
+        }
+
+        stimuli = []
+        if spec.circuit_type not in oscillator_types:
+            stimuli = [
+                Stimulus(
+                    name="vin",
+                    type="sin",
+                    parameters={
+                        "offset": spec.common_mode_voltage,
+                        "amplitude": spec.vdd / 4,
+                        "frequency": spec.test_frequency,
+                    },
+                    node_positive="in",
+                    node_negative="0",
+                )
+            ]
         
         analyses = [
             AnalysisConfig(

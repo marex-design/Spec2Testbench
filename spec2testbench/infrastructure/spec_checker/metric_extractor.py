@@ -86,9 +86,9 @@ class MetricExtractor:
         aliases = {
             "operating_point": ["vout_dc", "op_point", "op_voltage"],
             "vout_dc": ["operating_point", "op_point", "vout"],
-            "quiescent_current": ["idd", "iq", "current"],
-            "idd": ["quiescent_current", "iq", "current"],
-            "power": ["power_w", "power_mw"],
+            "quiescent_current": ["idd", "iq", "current", "mean_current_a", "supply_current_a"],
+            "idd": ["quiescent_current", "iq", "current", "mean_current_a", "supply_current_a"],
+            "power": ["power_w", "power_mw", "quiescent_power_w"],
             "dc_gain": ["dc_gain_db", "gain_db"],
             "bandwidth": ["cutoff_frequency", "cutoff_frequency_hz", "bw"],
             "unity_gain_frequency": ["ugbw", "gbw"],
@@ -341,9 +341,12 @@ class MetricExtractor:
     
     def _extract_power(self, results: Dict[str, Any]) -> Optional[float]:
         """Extract power consumption."""
-        direct_power = self._lookup_metric_value(results, ("power", "power_w", "power_mw"))
+        direct_power = self._lookup_metric_value(results, ("power", "power_w", "power_mw", "quiescent_power_w"))
         if direct_power is not None:
             return direct_power
+        mean_current = self._lookup_metric_value(results, ("mean_current_a", "quiescent_current", "idd", "iq", "current"))
+        if mean_current is not None:
+            return results.get("vdd", 1.8) * abs(mean_current)
         # Get current from VDD source
         currents = results.get("currents", {})
         idd = currents.get("vdd", currents.get("VDD", 0))
@@ -355,7 +358,7 @@ class MetricExtractor:
     
     def _extract_current(self, results: Dict[str, Any]) -> Optional[float]:
         """Extract current consumption."""
-        direct_current = self._lookup_metric_value(results, ("quiescent_current", "idd", "iq", "current"))
+        direct_current = self._lookup_metric_value(results, ("quiescent_current", "idd", "iq", "current", "mean_current_a", "supply_current_a"))
         if direct_current is not None:
             return direct_current
         currents = results.get("currents", {})

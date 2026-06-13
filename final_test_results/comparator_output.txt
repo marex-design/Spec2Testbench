@@ -1,4 +1,0 @@
-
- Spec2TestBench - Verification
-
- Specifications file not found: benchmark_specs/comparator_spec.yaml

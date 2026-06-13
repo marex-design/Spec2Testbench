@@ -1,0 +1,14 @@
+* Op-amp with active current mirror loads
+Vdd vdd 0 DC 5
+Vin_p inp 0 AC 0.5
+Vin_n inn 0 AC -0.5
+M1 n1 inp tail 0 NMOS
+M2 out inn tail 0 NMOS
+M3 n1 n1 vdd vdd PMOS
+M4 out n1 vdd vdd PMOS
+Itail tail 0 DC 200u
+.model NMOS NMOS LEVEL=1 VTO=1 KP=1m
+.model PMOS PMOS LEVEL=1 VTO=-1 KP=0.5m
+.op
+.ac dec 100 10 100Meg
+.end

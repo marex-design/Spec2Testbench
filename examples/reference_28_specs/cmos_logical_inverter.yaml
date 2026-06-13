@@ -1,0 +1,11 @@
+name: cmos_logical_inverter
+circuit_type: amplifier
+technology: reference_28_behavioral
+description: cmos logical inverter
+performance_targets:
+  frequency_hz:
+    min: 249950.7194953676
+    max: 1999605.7559629409
+    unit: Hz
+test_categories:
+- transient

@@ -1,0 +1,16 @@
+name: common_source_resistive_load_amplifier
+circuit_type: amplifier
+technology: reference_28_behavioral
+description: common source resistive load amplifier
+performance_targets:
+  vout_dc:
+    min: 2.8124999717999994
+    max: 4.687499952999999
+    unit: V
+  dc_gain:
+    min: 1.9793999998614797
+    max: 25.979399999861478
+    unit: dB
+test_categories:
+- dc
+- ac

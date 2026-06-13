@@ -1,8 +1,0 @@
-name: "rc_lowpass_filter_tfe"
-circuit_type: "filter"
-
-performance_targets:
-  cutoff:
-    min: 100000
-    max: 200000
-    unit: "Hz"

@@ -233,9 +233,14 @@ class PySpiceSimulator(ICircuitSimulator):
 
         has_existing_sources = re.search(r"^\s*[VI]\w+\s+\S+\s+\S+", existing_text, re.IGNORECASE | re.MULTILINE)
         if not has_existing_sources:
+            emitted_sources = set()
             for stimulus in testbench.stimuli:
+                source_name = f"v{stimulus.name}".lower()
+                if source_name in emitted_sources:
+                    continue
                 if not re.search(rf"^\s*V{re.escape(stimulus.name)}\b", existing_text, re.IGNORECASE | re.MULTILINE):
                     lines.append(stimulus.to_spice())
+                    emitted_sources.add(source_name)
 
         analysis_commands = {
             AnalysisType.DC: r"^\s*\.dc\b",
@@ -245,6 +250,16 @@ class PySpiceSimulator(ICircuitSimulator):
         }
         for analysis in testbench.analyses:
             pattern = analysis_commands.get(analysis.type)
+            if analysis.type == AnalysisType.DC:
+                start = analysis.parameters.get('start')
+                stop = analysis.parameters.get('stop')
+                step = analysis.parameters.get('step', 0.0)
+                if start is not None and stop is not None:
+                    try:
+                        if abs(float(stop) - float(start)) <= max(abs(float(step)), 1e-18):
+                            pattern = r"^\s*\.(dc|op)\b"
+                    except (TypeError, ValueError):
+                        pass
             if pattern and re.search(pattern, existing_text, re.IGNORECASE | re.MULTILINE):
                 continue
             lines.append(analysis.to_spice())
@@ -372,7 +387,31 @@ class PySpiceSimulator(ICircuitSimulator):
 
         current = results.get('currents', {}).get('vdd')
         supply = results.get('vdd', 0.0)
+        current_items = []
+        for key, value in results.get('currents', {}).items():
+            if value is None:
+                continue
+            try:
+                current_items.append((key.lower(), float(abs(value))))
+            except Exception:
+                continue
+
+        averaged_currents = [value for key, value in current_items if key != 'vdd']
+        if not averaged_currents and current is not None:
+            averaged_currents = [float(abs(current))]
+
+        mean_current = float(np.mean(averaged_currents)) if averaged_currents else None
+        if mean_current is not None:
+            metrics['mean_current_a'] = mean_current
+
         if current is not None:
+            metrics['supply_current_a'] = float(abs(current))
+        if mean_current is not None:
+            metrics['quiescent_current'] = mean_current
+            metrics['idd'] = mean_current
+            if supply:
+                metrics['power'] = float(abs(supply * mean_current))
+        elif current is not None:
             metrics['quiescent_current'] = float(abs(current))
             metrics['idd'] = float(abs(current))
             if supply:
@@ -581,7 +620,12 @@ class PySpiceSimulator(ICircuitSimulator):
         }
         if magnitude.size:
             ac['dc_gain_db'] = float(20 * np.log10(max(magnitude[0], 1e-30)))
-            ac['bandwidth'] = self._find_minus_3db_bandwidth(frequency, magnitude)
+            bandpass_metrics = self._find_bandpass_characteristics(frequency, magnitude)
+            if bandpass_metrics is not None:
+                ac.update(bandpass_metrics)
+                ac['peak_gain_db'] = float(20 * np.log10(max(np.max(magnitude), 1e-30)))
+            else:
+                ac['bandwidth'] = self._find_minus_3db_bandwidth(frequency, magnitude)
             ac['unity_gain_frequency'] = self._find_unity_gain_frequency(frequency, magnitude)
         if phase.size and ac.get('unity_gain_frequency') is not None:
             phase_at_ugf = self._sample_at_frequency(frequency, phase, ac['unity_gain_frequency'])
@@ -701,6 +745,43 @@ class PySpiceSimulator(ICircuitSimulator):
             if value <= target:
                 return float(frequency[index])
         return None
+
+    def _find_bandpass_characteristics(self, frequency: np.ndarray, magnitude: np.ndarray) -> Optional[Dict[str, float]]:
+        if frequency.size < 3 or magnitude.size < 3:
+            return None
+
+        peak_index = int(np.argmax(magnitude))
+        if peak_index == 0 or peak_index == magnitude.size - 1:
+            return None
+
+        peak_magnitude = float(magnitude[peak_index])
+        edge_floor = max(float(magnitude[0]), float(magnitude[-1]), 1e-30)
+        if peak_magnitude < edge_floor * np.sqrt(2.0):
+            return None
+
+        target = peak_magnitude / np.sqrt(2.0)
+        lower_cutoff = None
+        for index in range(peak_index, -1, -1):
+            if magnitude[index] <= target:
+                lower_cutoff = float(frequency[index])
+                break
+
+        upper_cutoff = None
+        for index in range(peak_index, magnitude.size):
+            if magnitude[index] <= target:
+                upper_cutoff = float(frequency[index])
+                break
+
+        if lower_cutoff is None or upper_cutoff is None or upper_cutoff <= lower_cutoff:
+            return None
+
+        return {
+            'lower_cutoff_frequency': lower_cutoff,
+            'upper_cutoff_frequency': upper_cutoff,
+            'center_frequency': float(frequency[peak_index]),
+            'bandwidth': upper_cutoff - lower_cutoff,
+            'cutoff_frequency_hz': upper_cutoff - lower_cutoff,
+        }
 
     def _find_unity_gain_frequency(self, frequency: np.ndarray, magnitude: np.ndarray) -> Optional[float]:
         if frequency.size == 0 or magnitude.size == 0:

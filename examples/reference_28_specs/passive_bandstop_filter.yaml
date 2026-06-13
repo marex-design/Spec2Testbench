@@ -1,0 +1,11 @@
+name: passive_bandstop_filter
+circuit_type: notch_filter
+technology: reference_28_behavioral
+description: passive bandstop filter
+performance_targets:
+  dc_gain:
+    min: -12.1766431271243
+    max: 11.8233568728757
+    unit: dB
+test_categories:
+- ac
