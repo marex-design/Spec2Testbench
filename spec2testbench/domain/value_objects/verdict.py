@@ -282,6 +282,54 @@ class Verdict(Enum):
 # CLASSE ASSOCIÉE: CheckResult
 # =========================================================
 
+class ValidationStatus(Enum):
+    """High-level verification outcome for end-to-end evaluation."""
+
+    FAIL = "FAIL"
+    RUN = "RUN"
+    PASS = "PASS"
+    ROBUST_PASS = "ROBUST PASS"
+
+    @property
+    def severity(self) -> int:
+        severity_map = {
+            ValidationStatus.ROBUST_PASS: 0,
+            ValidationStatus.PASS: 1,
+            ValidationStatus.RUN: 2,
+            ValidationStatus.FAIL: 3,
+        }
+        return severity_map[self]
+
+    @property
+    def emoji(self) -> str:
+        emoji_map = {
+            ValidationStatus.FAIL: "❌",
+            ValidationStatus.RUN: "⚙️",
+            ValidationStatus.PASS: "✅",
+            ValidationStatus.ROBUST_PASS: "🛡️",
+        }
+        return emoji_map[self]
+
+    @property
+    def is_success(self) -> bool:
+        return self in (ValidationStatus.PASS, ValidationStatus.ROBUST_PASS)
+
+    @property
+    def color_code(self) -> str:
+        color_map = {
+            ValidationStatus.FAIL: "\033[91m",
+            ValidationStatus.RUN: "\033[93m",
+            ValidationStatus.PASS: "\033[92m",
+            ValidationStatus.ROBUST_PASS: "\033[96m",
+        }
+        return color_map[self]
+
+    @property
+    def colorized_with_emoji(self) -> str:
+        reset = "\033[0m"
+        return f"{self.color_code}{self.emoji} {self.value}{reset}"
+
+
 from dataclasses import dataclass
 from typing import Any, Optional
 

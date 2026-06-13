@@ -1,0 +1,16 @@
+name: common_drain_resistive_load_amplifier
+circuit_type: amplifier
+technology: reference_28_behavioral
+description: common drain resistive load amplifier
+performance_targets:
+  vout_dc:
+    min: 0.28196601089942575
+    max: 0.4819660108994257
+    unit: V
+  dc_gain:
+    min: -17.148852940644957
+    max: 6.8511470593550445
+    unit: dB
+test_categories:
+- dc
+- ac

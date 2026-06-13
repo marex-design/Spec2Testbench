@@ -1,0 +1,7 @@
+* Gilbert-cell-style mixer approximation
+Vrf rf 0 SIN(0 0.1 10Meg)
+Vlo lo 0 SIN(0 1 11Meg)
+Bmix out 0 V = V(rf)*V(lo)
+Rload out 0 50
+.tran 1n 5u
+.end

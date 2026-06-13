@@ -1,0 +1,17 @@
+* Band-Pass RLC Filter - CORRECTED
+L1 in mid 1m
+C1 mid out 1n
+R1 out 0 1k
+Vin in 0 AC 1
+
+.ac dec 100 10 10e6
+
+.meas ac gain_max max vdb(out)
+.meas ac center_frequency_hz find freq when vdb(out)=gain_max
+
+.control
+run
+print gain_max
+print center_frequency_hz
+.endc
+.end

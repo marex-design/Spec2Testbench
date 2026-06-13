@@ -216,6 +216,8 @@ class AnalysisConfig:
             start = self.parameters.get('start', 0)
             stop = self.parameters.get('stop', 5)
             step = self.parameters.get('step', 0.01)
+            if abs(float(stop) - float(start)) <= max(abs(float(step)), 1e-18):
+                return ".OP"
             return f".DC {source} {start} {stop} {step}"
         
         elif self.type == AnalysisType.AC:

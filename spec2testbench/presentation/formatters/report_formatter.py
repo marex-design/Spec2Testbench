@@ -9,7 +9,7 @@ from typing import Optional
 from datetime import datetime
 
 from ...application.usecases.run_verification import VerificationReport
-from ...domain.value_objects.verdict import Verdict
+from ...domain.value_objects.verdict import Verdict, ValidationStatus
 
 
 class ReportFormatter:
@@ -43,6 +43,9 @@ class ReportFormatter:
             f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             f"**Overall Verdict:** {self._verdict_badge(report.overall_verdict)}",
             f"**Success Rate:** {report.success_rate*100:.1f}%",
+            f"**Compliance Score:** {report.compliance_score:.3f}",
+            f"**Nominal Compliance:** {report.nominal_compliance_score:.3f}",
+            f"**PVT Compliance:** {report.pvt_compliance_score:.3f}",
             "",
             "## Summary",
             "",
@@ -124,6 +127,11 @@ class ReportFormatter:
             "timestamp": report.timestamp,
             "overall_verdict": report.overall_verdict.value,
             "success_rate": report.success_rate,
+            "compliance_score": report.compliance_score,
+            "nominal_compliance_score": report.nominal_compliance_score,
+            "pvt_compliance_score": report.pvt_compliance_score,
+            "testbench_generation_success": report.testbench_generation_success,
+            "simulation_success": report.simulation_success,
             "metrics": [
                 {
                     "name": r.test_name,
@@ -180,6 +188,9 @@ class ReportFormatter:
         verdict = report.overall_verdict
         lines.append(f"\n  Overall: {verdict.colorized_with_emoji}")
         lines.append(f"  Success Rate: {report.success_rate*100:.1f}%\n")
+        lines.append(f"  Compliance Score: {report.compliance_score:.3f}")
+        lines.append(f"  Nominal Compliance: {report.nominal_compliance_score:.3f}")
+        lines.append(f"  PVT Compliance: {report.pvt_compliance_score:.3f}\n")
         
         # Results
         lines.append("  Results:")
@@ -204,16 +215,17 @@ class ReportFormatter:
         
         return "\n".join(lines)
     
-    def _verdict_badge(self, verdict: Verdict) -> str:
+    def _verdict_badge(self, verdict: ValidationStatus) -> str:
         """Generate Markdown badge for verdict."""
         colors = {
-            Verdict.PASS: "brightgreen",
-            Verdict.FAIL: "red",
-            Verdict.WARNING: "yellow",
-            Verdict.ERROR: "orange",
+            ValidationStatus.FAIL: "red",
+            ValidationStatus.RUN: "orange",
+            ValidationStatus.PASS: "brightgreen",
+            ValidationStatus.ROBUST_PASS: "blue",
         }
         color = colors.get(verdict, "lightgrey")
-        return f"![Verdict](https://img.shields.io/badge/verdict-{verdict.value}-{color})"
+        label = verdict.value.replace(" ", "%20")
+        return f"![Verdict](https://img.shields.io/badge/verdict-{label}-{color})"
     
     def _summary_table(self, report: VerificationReport) -> str:
         """Generate summary markdown table."""
@@ -229,7 +241,8 @@ class ReportFormatter:
 | ❌ Fail | {failed} |
 | ⚠️ Warning | {warnings} |
 | 🔴 Error | {errors} |
-| **Total** | **{total}** |"""
+| **Total** | **{total}** |
+| **Compliance Score** | **{report.compliance_score:.3f}** |"""
     
     def _results_table(self, report: VerificationReport) -> str:
         """Generate results markdown table."""

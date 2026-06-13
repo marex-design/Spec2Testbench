@@ -1,0 +1,14 @@
+* Three-stage common-source resistive-load amplifier
+Vdd vdd 0 DC 5
+Vin in 0 DC 1.5 AC 1 SIN(1.5 5m 1k)
+M1 n1 in 0 0 NMOS
+R1 vdd n1 20k
+M2 n2 n1 0 0 NMOS
+R2 vdd n2 20k
+M3 out n2 0 0 NMOS
+R3 vdd out 20k
+.model NMOS NMOS LEVEL=1 VTO=1 KP=0.8m
+.op
+.ac dec 100 10 10Meg
+.tran 1u 5m
+.end

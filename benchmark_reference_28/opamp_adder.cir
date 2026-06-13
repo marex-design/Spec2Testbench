@@ -1,0 +1,11 @@
+* Op-amp adder
+V1 in1 0 SIN(0 0.5 1k)
+V2 in2 0 SIN(0 0.5 2k)
+R1 in1 nminus 10k
+R2 in2 nminus 10k
+Rf out nminus 10k
+Eop out 0 0 nminus 1e5
+Rbias nminus 0 1Meg
+.tran 10u 5m
+.ac dec 100 10 100k
+.end

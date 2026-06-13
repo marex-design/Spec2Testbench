@@ -1,0 +1,8 @@
+* Op-amp differentiator
+Vin in 0 PULSE(0 1 0 1u 1u 1m 2m)
+Cin in nminus 100n
+Rf out nminus 10k
+Eop out 0 0 nminus 1e5
+Rbias nminus 0 1Meg
+.tran 1u 5m
+.end

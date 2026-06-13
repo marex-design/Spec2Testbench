@@ -4,10 +4,9 @@
 MetricExtractor - Extracts metrics from simulation results.
 """
 
-import re
 import math
 import logging
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Iterable
 
 logger = logging.getLogger(__name__)
 
@@ -38,21 +37,37 @@ class MetricExtractor:
             Metric value or None if not found
         """
         metric_lower = metric_name.lower()
+
+        direct_value = self._lookup_metric_value(results, self._candidate_names(metric_lower, metric_name))
+        if direct_value is not None:
+            return direct_value
         
         # Map metric name to extraction method
         extractors = {
+            "operating_point": self._extract_operating_point,
+            "vout_dc": self._extract_operating_point,
+            "quiescent_current": self._extract_current,
+            "idd": self._extract_current,
             "dc_gain": self._extract_dc_gain,
             "gain": self._extract_dc_gain,
             "bandwidth": self._extract_bandwidth,
+            "cutoff_frequency": self._extract_bandwidth,
             "gbw": self._extract_gbw,
+            "ugbw": self._extract_gbw,
+            "unity_gain_frequency": self._extract_gbw,
             "phase_margin": self._extract_phase_margin,
             "slew_rate": self._extract_slew_rate,
             "settling_time": self._extract_settling_time,
+            "propagation_delay": self._extract_propagation_delay,
+            "oscillator_frequency": self._extract_frequency,
+            "frequency_hz": self._extract_frequency,
+            "startup_amplitude": self._extract_startup_amplitude,
             "power": self._extract_power,
             "current": self._extract_current,
             "thd": self._extract_thd,
             "cmrr": self._extract_cmrr,
             "psrr": self._extract_psrr,
+            "pvt": self._extract_pvt_metric,
         }
         
         # Find matching extractor
@@ -66,10 +81,67 @@ class MetricExtractor:
         
         logger.warning(f"Metric '{metric_name}' not found in results")
         return None
+
+    def _candidate_names(self, metric_lower: str, metric_name: str) -> List[str]:
+        aliases = {
+            "operating_point": ["vout_dc", "op_point", "op_voltage"],
+            "vout_dc": ["operating_point", "op_point", "vout"],
+            "quiescent_current": ["idd", "iq", "current", "mean_current_a", "supply_current_a"],
+            "idd": ["quiescent_current", "iq", "current", "mean_current_a", "supply_current_a"],
+            "power": ["power_w", "power_mw", "quiescent_power_w"],
+            "dc_gain": ["dc_gain_db", "gain_db"],
+            "bandwidth": ["cutoff_frequency", "cutoff_frequency_hz", "bw"],
+            "unity_gain_frequency": ["ugbw", "gbw"],
+            "gbw": ["ugbw", "unity_gain_frequency"],
+            "phase_margin": ["phase_margin_deg"],
+            "propagation_delay": ["comparator_delay", "delay", "propagation_delay_s"],
+            "oscillator_frequency": ["frequency_hz", "fundamental_frequency"],
+            "frequency_hz": ["oscillator_frequency", "fundamental_frequency"],
+            "thd": ["thd_percent"],
+            "pvt_vout_variation": ["vout_variation"],
+            "pvt_dc_gain_variation": ["gain_variation"],
+            "pvt_power_variation": ["power_variation"],
+        }
+        return [metric_name, metric_lower, *aliases.get(metric_lower, [])]
+
+    def _lookup_metric_value(self, results: Dict[str, Any], names: Iterable[str]) -> Optional[float]:
+        containers = [
+            results.get("metrics", {}),
+            results.get("dc", {}),
+            results.get("ac", {}),
+            results.get("fourier", {}),
+            results.get("pvt", {}).get("summary", {}),
+            results,
+        ]
+
+        for container in containers:
+            if not isinstance(container, dict):
+                continue
+            for name in names:
+                value = container.get(name)
+                if isinstance(value, (int, float)):
+                    return float(value)
+        return None
+
+    def _extract_operating_point(self, results: Dict[str, Any]) -> Optional[float]:
+        dc_data = results.get("dc", {})
+        for key in ("vout_dc", "vout", "out", "operating_point"):
+            value = dc_data.get(key)
+            if isinstance(value, (int, float)):
+                return float(value)
+        metrics = results.get("metrics", {})
+        for key in ("vout_dc", "operating_point", "vout"):
+            value = metrics.get(key)
+            if isinstance(value, (int, float)):
+                return float(value)
+        return None
     
     def _extract_dc_gain(self, results: Dict[str, Any]) -> Optional[float]:
         """Extract DC gain from AC analysis."""
         ac_data = results.get("ac", {})
+        direct_gain = ac_data.get("dc_gain_db")
+        if isinstance(direct_gain, (int, float)):
+            return float(direct_gain)
         magnitude = ac_data.get("magnitude", [])
         
         if magnitude and len(magnitude) > 0:
@@ -82,6 +154,10 @@ class MetricExtractor:
     def _extract_bandwidth(self, results: Dict[str, Any]) -> Optional[float]:
         """Extract -3dB bandwidth from AC analysis."""
         ac_data = results.get("ac", {})
+        for key in ("bandwidth", "cutoff_frequency", "cutoff_frequency_hz"):
+            value = ac_data.get(key)
+            if isinstance(value, (int, float)):
+                return float(value)
         magnitude = ac_data.get("magnitude", [])
         frequency = ac_data.get("frequency", [])
         
@@ -109,6 +185,10 @@ class MetricExtractor:
     def _extract_gbw(self, results: Dict[str, Any]) -> Optional[float]:
         """Extract Gain-Bandwidth Product."""
         ac_data = results.get("ac", {})
+        for key in ("unity_gain_frequency", "ugbw", "gbw"):
+            value = ac_data.get(key)
+            if isinstance(value, (int, float)):
+                return float(value)
         magnitude = ac_data.get("magnitude", [])
         frequency = ac_data.get("frequency", [])
         
@@ -133,6 +213,9 @@ class MetricExtractor:
     def _extract_phase_margin(self, results: Dict[str, Any]) -> Optional[float]:
         """Extract phase margin at GBW."""
         ac_data = results.get("ac", {})
+        phase_margin = ac_data.get("phase_margin")
+        if isinstance(phase_margin, (int, float)):
+            return float(phase_margin)
         phase = ac_data.get("phase", [])
         frequency = ac_data.get("frequency", [])
         magnitude = ac_data.get("magnitude", [])
@@ -159,10 +242,7 @@ class MetricExtractor:
         """Extract slew rate from transient analysis."""
         tran_data = results.get("transient") or results.get("tran", {})
         time = tran_data.get("time", [])
-        voltage = tran_data.get("voltage", {})
-        
-        # Usually look at output node
-        vout = voltage.get("out", voltage.get("vout", []))
+        vout = self._get_waveform(tran_data, "out")
         
         if not time or not vout or len(time) < 2:
             return None
@@ -183,9 +263,7 @@ class MetricExtractor:
         """Extract settling time to 1%."""
         tran_data = results.get("transient") or results.get("tran", {})
         time = tran_data.get("time", [])
-        voltage = tran_data.get("voltage", {})
-        
-        vout = voltage.get("out", voltage.get("vout", []))
+        vout = self._get_waveform(tran_data, "out")
         
         if not time or not vout or len(time) < 2:
             return None
@@ -209,9 +287,66 @@ class MetricExtractor:
                 settled_count = 0
         
         return settled_time
+
+    def _extract_propagation_delay(self, results: Dict[str, Any]) -> Optional[float]:
+        tran_data = results.get("transient") or results.get("tran", {})
+        time = tran_data.get("time", [])
+        vin = self._get_waveform(tran_data, "in")
+        vout = self._get_waveform(tran_data, "out")
+
+        if not time or not vin or not vout:
+            return None
+
+        vin_threshold = (max(vin) + min(vin)) / 2
+        vout_threshold = (max(vout) + min(vout)) / 2
+        input_crossing = self._first_threshold_crossing(time, vin, vin_threshold)
+        output_crossing = self._first_threshold_crossing(time, vout, vout_threshold)
+
+        if input_crossing is None or output_crossing is None:
+            return None
+        return max(0.0, output_crossing - input_crossing)
+
+    def _extract_frequency(self, results: Dict[str, Any]) -> Optional[float]:
+        tran_data = results.get("transient") or results.get("tran", {})
+        time = tran_data.get("time", [])
+        vout = self._get_waveform(tran_data, "out")
+
+        if len(time) < 3 or len(vout) < 3:
+            return None
+
+        mean_value = sum(vout) / len(vout)
+        crossings = []
+        for index in range(1, len(vout)):
+            if vout[index - 1] <= mean_value < vout[index]:
+                crossings.append(time[index])
+
+        if len(crossings) < 2:
+            return None
+
+        periods = [crossings[index] - crossings[index - 1] for index in range(1, len(crossings))]
+        valid_periods = [period for period in periods if period > 0]
+        if not valid_periods:
+            return None
+        average_period = sum(valid_periods) / len(valid_periods)
+        return 1.0 / average_period if average_period > 0 else None
+
+    def _extract_startup_amplitude(self, results: Dict[str, Any]) -> Optional[float]:
+        tran_data = results.get("transient") or results.get("tran", {})
+        vout = self._get_waveform(tran_data, "out")
+        if len(vout) < 5:
+            return None
+        tail_start = max(0, int(len(vout) * 0.8))
+        steady_state = vout[tail_start:]
+        return (max(steady_state) - min(steady_state)) / 2
     
     def _extract_power(self, results: Dict[str, Any]) -> Optional[float]:
         """Extract power consumption."""
+        direct_power = self._lookup_metric_value(results, ("power", "power_w", "power_mw", "quiescent_power_w"))
+        if direct_power is not None:
+            return direct_power
+        mean_current = self._lookup_metric_value(results, ("mean_current_a", "quiescent_current", "idd", "iq", "current"))
+        if mean_current is not None:
+            return results.get("vdd", 1.8) * abs(mean_current)
         # Get current from VDD source
         currents = results.get("currents", {})
         idd = currents.get("vdd", currents.get("VDD", 0))
@@ -223,11 +358,17 @@ class MetricExtractor:
     
     def _extract_current(self, results: Dict[str, Any]) -> Optional[float]:
         """Extract current consumption."""
+        direct_current = self._lookup_metric_value(results, ("quiescent_current", "idd", "iq", "current", "mean_current_a", "supply_current_a"))
+        if direct_current is not None:
+            return direct_current
         currents = results.get("currents", {})
         return currents.get("vdd", currents.get("VDD", None))
     
     def _extract_thd(self, results: Dict[str, Any]) -> Optional[float]:
         """Extract Total Harmonic Distortion."""
+        direct_thd = self._lookup_metric_value(results, ("thd", "thd_percent"))
+        if direct_thd is not None:
+            return direct_thd
         fourier = results.get("fourier", {})
         harmonics = fourier.get("harmonics", [])
         
@@ -243,6 +384,15 @@ class MetricExtractor:
         thd = math.sqrt(sum_squares) / fundamental
         
         return thd * 100  # Return as percentage
+
+    def _extract_pvt_metric(self, results: Dict[str, Any]) -> Optional[float]:
+        summary = results.get("pvt", {}).get("summary", {})
+        if not isinstance(summary, dict):
+            return None
+        for value in summary.values():
+            if isinstance(value, (int, float)):
+                return float(value)
+        return None
     
     def _extract_cmrr(self, results: Dict[str, Any]) -> Optional[float]:
         """Extract Common Mode Rejection Ratio."""
@@ -291,3 +441,24 @@ class MetricExtractor:
         log_f = log_f1 + ratio * (log_f2 - log_f1)
         
         return 10 ** log_f
+
+    def _get_waveform(self, tran_data: Dict[str, Any], node: str) -> List[float]:
+        voltage = tran_data.get("voltage", {})
+        if isinstance(voltage, dict):
+            for key in (node, f"v{node}", "vout" if node == "out" else "vin"):
+                values = voltage.get(key)
+                if isinstance(values, list):
+                    return values
+
+        for key in (node, f"v{node}", "vout" if node == "out" else "vin"):
+            values = tran_data.get(key)
+            if isinstance(values, list):
+                return values
+
+        return []
+
+    def _first_threshold_crossing(self, time: List[float], values: List[float], threshold: float) -> Optional[float]:
+        for index in range(1, min(len(time), len(values))):
+            if values[index - 1] < threshold <= values[index]:
+                return time[index]
+        return None

@@ -81,6 +81,13 @@ class TestBenchGenerator(ITestBenchGenerator):
         self.llm_client = llm_client
         self.use_llm = use_llm
         self.prompts = TestBenchPrompts()
+
+    @staticmethod
+    def _first_metric_name(specification: Specification, candidates: List[str]) -> Optional[str]:
+        for candidate in candidates:
+            if specification.has_metric(candidate):
+                return candidate
+        return None
     
     def generate(self, specification: Specification) -> TestBench:
         """
@@ -265,6 +272,9 @@ class TestBenchGenerator(ITestBenchGenerator):
     
     def _create_dc_testbench(self, spec: Specification) -> TestBench:
         """Create DC testbench using templates."""
+        operating_point_metric = self._first_metric_name(spec, ["vout_dc", "operating_point"])
+        current_metric = self._first_metric_name(spec, ["quiescent_current", "idd", "current"])
+        power_metric = self._first_metric_name(spec, ["power", "power_w", "power_mw"])
         
         stimuli = [
             Stimulus(
@@ -281,33 +291,47 @@ class TestBenchGenerator(ITestBenchGenerator):
                 type=AnalysisType.DC,
                 parameters={
                     "source": "vin",
-                    "start": 0,
-                    "stop": spec.vdd,
-                    "step": spec.vdd / 100,
+                    # Use a single-point nominal bias rather than a full sweep so
+                    # vout_dc reflects the operating point used in the paper metrics.
+                    "start": spec.common_mode_voltage,
+                    "stop": spec.common_mode_voltage,
+                    "step": max(spec.vdd / 100, 1e-6),
                 }
             )
         ]
         
         measurements = [
             Measurement(
-                name="vout_dc",
+                name=operating_point_metric or "vout_dc",
                 expression="V(out)",
-                unit="V",
+                expected_min=spec.get_metric_min(operating_point_metric or "vout_dc"),
+                expected_max=spec.get_metric_max(operating_point_metric or "vout_dc"),
+                unit=spec.get_metric_unit(operating_point_metric or "vout_dc") or "V",
             ),
             Measurement(
-                name="idd",
+                name=current_metric or "idd",
                 expression="I(VDD)",
-                unit="A",
+                expected_min=spec.get_metric_min(current_metric or "idd"),
+                expected_max=spec.get_metric_max(current_metric or "idd"),
+                unit=spec.get_metric_unit(current_metric or "idd") or "A",
+            ),
+            Measurement(
+                name=power_metric or "power",
+                expression="VDD * I(VDD)",
+                expected_min=spec.get_metric_min(power_metric or "power"),
+                expected_max=spec.get_metric_max(power_metric or "power"),
+                unit=spec.get_metric_unit(power_metric or "power") or "W",
             ),
         ]
         
-        # Add gain measurement if requested
-        if spec.has_metric("dc_gain"):
+        dc_gain_metric = self._first_metric_name(spec, ["dc_gain", "dc_gain_db", "gain_db"])
+        if dc_gain_metric:
             measurements.append(Measurement(
                 name="dc_gain",
                 expression="20*log10(V(out)/V(in))",
-                expected_min=spec.get_metric_min("dc_gain"),
-                unit="dB",
+                expected_min=spec.get_metric_min(dc_gain_metric),
+                expected_max=spec.get_metric_max(dc_gain_metric),
+                unit=spec.get_metric_unit(dc_gain_metric) or "dB",
             ))
         
         return TestBench(
@@ -321,6 +345,10 @@ class TestBenchGenerator(ITestBenchGenerator):
     
     def _create_ac_testbench(self, spec: Specification) -> TestBench:
         """Create AC testbench using templates."""
+        gain_metric = self._first_metric_name(spec, ["dc_gain", "dc_gain_db", "gain_db"]) or "dc_gain"
+        bandwidth_metric = self._first_metric_name(spec, ["bandwidth", "cutoff_frequency", "cutoff_frequency_hz"]) or "bandwidth"
+        ugf_metric = self._first_metric_name(spec, ["unity_gain_frequency", "ugbw", "unity_gain_bandwidth", "gbw"]) or "unity_gain_frequency"
+        phase_margin_metric = self._first_metric_name(spec, ["phase_margin", "phase_margin_deg"]) or "phase_margin"
         
         stimuli = [
             Stimulus(
@@ -346,16 +374,32 @@ class TestBenchGenerator(ITestBenchGenerator):
         
         measurements = [
             Measurement(
-                name="dc_gain",
+                name=gain_metric,
                 expression="20*log10(V(out)/V(in))",
-                expected_min=spec.get_metric_min("dc_gain"),
-                unit="dB",
+                expected_min=spec.get_metric_min(gain_metric),
+                expected_max=spec.get_metric_max(gain_metric),
+                unit=spec.get_metric_unit(gain_metric) or "dB",
             ),
             Measurement(
-                name="gbw",
-                expression="gain * bandwidth",
-                expected_min=spec.get_metric_min("unity_gain_bandwidth"),
-                unit="Hz",
+                name=bandwidth_metric,
+                expression="-3 dB bandwidth",
+                expected_min=spec.get_metric_min(bandwidth_metric),
+                expected_max=spec.get_metric_max(bandwidth_metric),
+                unit=spec.get_metric_unit(bandwidth_metric) or "Hz",
+            ),
+            Measurement(
+                name=ugf_metric,
+                expression="unity gain frequency",
+                expected_min=spec.get_metric_min(ugf_metric),
+                expected_max=spec.get_metric_max(ugf_metric),
+                unit=spec.get_metric_unit(ugf_metric) or "Hz",
+            ),
+            Measurement(
+                name=phase_margin_metric,
+                expression="phase margin at unity gain",
+                expected_min=spec.get_metric_min(phase_margin_metric),
+                expected_max=spec.get_metric_max(phase_margin_metric),
+                unit=spec.get_metric_unit(phase_margin_metric) or "deg",
             ),
         ]
         
@@ -370,23 +414,34 @@ class TestBenchGenerator(ITestBenchGenerator):
     
     def _create_transient_testbench(self, spec: Specification) -> TestBench:
         """Create transient testbench using templates."""
-        
-        stimuli = [
-            Stimulus(
-                name="vin",
-                type="pulse",
-                parameters={
-                    "v1": spec.common_mode_voltage - spec.vdd/4,
-                    "v2": spec.common_mode_voltage + spec.vdd/4,
-                    "rise": "1n",
-                    "fall": "1n",
-                    "width": "10u",
-                    "period": "20u",
-                },
-                node_positive="in",
-                node_negative="0",
-            )
-        ]
+        delay_metric = self._first_metric_name(spec, ["propagation_delay", "propagation_delay_s"])
+        frequency_metric = self._first_metric_name(spec, ["oscillator_frequency", "frequency_hz"])
+        oscillator_types = {
+            CircuitType.OSCILLATOR,
+            CircuitType.RING_OSCILLATOR,
+            CircuitType.COLPITTS_OSCILLATOR,
+            CircuitType.RC_PHASE_SHIFT_OSCILLATOR,
+            CircuitType.VCO,
+        }
+
+        stimuli = []
+        if spec.circuit_type not in oscillator_types:
+            stimuli = [
+                Stimulus(
+                    name="vin",
+                    type="pulse",
+                    parameters={
+                        "v1": spec.common_mode_voltage - spec.vdd/4,
+                        "v2": spec.common_mode_voltage + spec.vdd/4,
+                        "rise": "1n",
+                        "fall": "1n",
+                        "width": "10u",
+                        "period": "20u",
+                    },
+                    node_positive="in",
+                    node_negative="0",
+                )
+            ]
         
         analyses = [
             AnalysisConfig(
@@ -404,9 +459,44 @@ class TestBenchGenerator(ITestBenchGenerator):
                 name="slew_rate",
                 expression="deriv(V(out))",
                 expected_min=spec.get_metric_min("slew_rate"),
-                unit="V/s",
+                expected_max=spec.get_metric_max("slew_rate"),
+                unit=spec.get_metric_unit("slew_rate") or "V/s",
+            ),
+            Measurement(
+                name="settling_time",
+                expression="time to settle within 1%",
+                expected_min=spec.get_metric_min("settling_time"),
+                expected_max=spec.get_metric_max("settling_time"),
+                unit=spec.get_metric_unit("settling_time") or "s",
             ),
         ]
+
+        if spec.circuit_type in {CircuitType.COMPARATOR, CircuitType.OPAMP_COMPARATOR, CircuitType.SCHMITT_TRIGGER, CircuitType.OPAMP_SCHMITT}:
+            measurements.append(Measurement(
+                name=delay_metric or "propagation_delay",
+                expression="delay(Vin->Vout)",
+                expected_min=spec.get_metric_min(delay_metric or "propagation_delay"),
+                expected_max=spec.get_metric_max(delay_metric or "propagation_delay"),
+                unit=spec.get_metric_unit(delay_metric or "propagation_delay") or "s",
+            ))
+
+        if spec.circuit_type in oscillator_types:
+            measurements.extend([
+                Measurement(
+                    name=frequency_metric or "oscillator_frequency",
+                    expression="fundamental frequency",
+                    expected_min=spec.get_metric_min(frequency_metric or "oscillator_frequency"),
+                    expected_max=spec.get_metric_max(frequency_metric or "oscillator_frequency"),
+                    unit=spec.get_metric_unit(frequency_metric or "oscillator_frequency") or "Hz",
+                ),
+                Measurement(
+                    name="startup_amplitude",
+                    expression="steady-state amplitude",
+                    expected_min=spec.get_metric_min("startup_amplitude"),
+                    expected_max=spec.get_metric_max("startup_amplitude"),
+                    unit=spec.get_metric_unit("startup_amplitude") or "V",
+                ),
+            ])
         
         return TestBench(
             name=f"{spec.name}_transient",
@@ -419,6 +509,9 @@ class TestBenchGenerator(ITestBenchGenerator):
     
     def _create_pvt_testbench(self, spec: Specification) -> TestBench:
         """Create PVT testbench using templates."""
+        gain_metric = self._first_metric_name(spec, ["pvt_dc_gain_variation", "gain_variation"]) or "pvt_dc_gain_variation"
+        vout_metric = self._first_metric_name(spec, ["pvt_vout_variation", "vout_variation"]) or "pvt_vout_variation"
+        power_metric = self._first_metric_name(spec, ["pvt_power_variation", "power_variation"]) or "pvt_power_variation"
         
         # PVT is special - we'll create a testbench that notes the PVT configuration
         stimuli = [
@@ -442,31 +535,63 @@ class TestBenchGenerator(ITestBenchGenerator):
             )
         ]
         
+        measurements = [
+            Measurement(
+                name=gain_metric,
+                expression="gain variation over PVT",
+                expected_max=spec.get_metric_max(gain_metric),
+                unit=spec.get_metric_unit(gain_metric) or "dB",
+            ),
+            Measurement(
+                name=vout_metric,
+                expression="Vout variation over PVT",
+                expected_max=spec.get_metric_max(vout_metric),
+                unit=spec.get_metric_unit(vout_metric) or "V",
+            ),
+            Measurement(
+                name=power_metric,
+                expression="power variation over PVT",
+                expected_max=spec.get_metric_max(power_metric),
+                unit=spec.get_metric_unit(power_metric) or "W",
+            ),
+        ]
+
         return TestBench(
             name=f"{spec.name}_pvt",
             category="pvt",
             circuit_name=spec.name,
             stimuli=stimuli,
             analyses=analyses,
-            measurements=[],
+            measurements=measurements,
         )
     
     def _create_spectral_testbench(self, spec: Specification) -> TestBench:
         """Create spectral/FFT testbench using templates."""
-        
-        stimuli = [
-            Stimulus(
-                name="vin",
-                type="sin",
-                parameters={
-                    "offset": spec.common_mode_voltage,
-                    "amplitude": spec.vdd / 4,
-                    "frequency": spec.test_frequency,
-                },
-                node_positive="in",
-                node_negative="0",
-            )
-        ]
+        frequency_metric = self._first_metric_name(spec, ["fundamental_frequency", "frequency_hz"]) or "fundamental_frequency"
+        thd_metric = self._first_metric_name(spec, ["thd", "thd_percent"]) or "thd"
+        oscillator_types = {
+            CircuitType.OSCILLATOR,
+            CircuitType.RING_OSCILLATOR,
+            CircuitType.COLPITTS_OSCILLATOR,
+            CircuitType.RC_PHASE_SHIFT_OSCILLATOR,
+            CircuitType.VCO,
+        }
+
+        stimuli = []
+        if spec.circuit_type not in oscillator_types:
+            stimuli = [
+                Stimulus(
+                    name="vin",
+                    type="sin",
+                    parameters={
+                        "offset": spec.common_mode_voltage,
+                        "amplitude": spec.vdd / 4,
+                        "frequency": spec.test_frequency,
+                    },
+                    node_positive="in",
+                    node_negative="0",
+                )
+            ]
         
         analyses = [
             AnalysisConfig(
@@ -487,10 +612,17 @@ class TestBenchGenerator(ITestBenchGenerator):
         
         measurements = [
             Measurement(
-                name="thd",
+                name=thd_metric,
                 expression="sqrt(sum(H2^2 + H3^2 + ...))/H1",
-                expected_max=spec.get_metric_max("thd"),
-                unit="%",
+                expected_max=spec.get_metric_max(thd_metric),
+                unit=spec.get_metric_unit(thd_metric) or "%",
+            ),
+            Measurement(
+                name=frequency_metric,
+                expression="FFT fundamental frequency",
+                expected_min=spec.get_metric_min(frequency_metric),
+                expected_max=spec.get_metric_max(frequency_metric),
+                unit=spec.get_metric_unit(frequency_metric) or "Hz",
             ),
         ]
         

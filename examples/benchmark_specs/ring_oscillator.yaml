@@ -1,15 +1,14 @@
 name: "ring_oscillator"
 circuit_type: "ring_oscillator"
-technology: "CMOS_45nm"
+technology: "benchmark_behavioral"
 performance_targets:
   frequency_hz:
-    min: 100e6
+    min: 9e6
+    max: 11e6
     unit: "Hz"
-  phase_noise_dbc:
-    max: -100
-    unit: "dBc/Hz"
-input_conditions:
-  vdd: 1.2
+  thd_percent:
+    max: 5
+    unit: "%"
 test_categories:
   - "transient"
   - "spectral"

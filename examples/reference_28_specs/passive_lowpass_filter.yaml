@@ -1,0 +1,15 @@
+name: passive_lowpass_filter
+circuit_type: low_pass_filter
+technology: reference_28_behavioral
+description: passive lowpass filter
+performance_targets:
+  cutoff_frequency_hz:
+    min: 249.9999999999986
+    max: 1999.9999999999889
+    unit: Hz
+  thd_percent:
+    max: 5.0
+    unit: '%'
+test_categories:
+- ac
+- spectral

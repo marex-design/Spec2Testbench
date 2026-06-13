@@ -1,0 +1,11 @@
+* RC shift oscillator approximation
+Bosc out 0 V = sin(2*3.14159*1k*time)
+R1 out n1 10k
+C1 n1 0 10n
+R2 n1 n2 10k
+C2 n2 0 10n
+R3 n2 n3 10k
+C3 n3 0 10n
+Rload out 0 100k
+.tran 10u 20m
+.end
