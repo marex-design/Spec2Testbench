@@ -1,0 +1,27 @@
+* TestBench: analogcoder_pro_p15_amplifier_full_testbench
+* Circuit: analogcoder_pro_p15_amplifier
+* Category: full
+*
+.OPTIONS POST=2 PROBE
+
+* AnalogCoder-Pro p15: A single-stage amplifier (common-source with PMOS diode-connected load (gate and drain are shorted))
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p15\p15.py
+* AnalogCoder-Pro type: Amplifier
+* Inputs: Vin
+* Outputs: Vout
+
+.MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5)
+.MODEL pmos_model PMOS (LEVEL=1 KP=5e-05 VTO=-0.5)
+
+Vdd Vdd 0 5
+Vin Vin 0 DC 1 AC 1n
+M1 Vout Vin 0 0 nmos_model W=5e-05 L=1e-06
+M2 Vout Vout Vdd Vdd pmos_model W=5e-05 L=1e-06
+
+.OP
+.AC DEC 100 1 1G
+
+.TEMP 27.0
+.TRAN 1n 50u 0
+
+.END
