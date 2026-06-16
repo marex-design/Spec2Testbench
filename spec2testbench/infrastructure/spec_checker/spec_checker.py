@@ -49,6 +49,7 @@ class SpecChecker(ISpecChecker):
     
     # Warning margin (percentage close to limit that triggers WARNING)
     WARNING_MARGIN = 0.05  # 5%
+    ABSOLUTE_TOLERANCE = 1e-12
     
     def __init__(self, warning_margin: float = 0.05):
         """
@@ -278,16 +279,20 @@ class SpecChecker(ISpecChecker):
         
         # Check against minimum
         if expected_min is not None:
+            if self._within_numeric_tolerance(measured, expected_min):
+                measured = expected_min
             if measured < expected_min:
-                margin = (expected_min - measured) / expected_min
+                margin = self._relative_margin(expected_min - measured, expected_min)
                 if margin < self.warning_margin:
                     return Verdict.WARNING, f"{metric_name} = {measured:.4g} {unit} (close to min {expected_min} {unit})"
                 return Verdict.FAIL, f"{metric_name} = {measured:.4g} {unit} < {expected_min} {unit}"
         
         # Check against maximum
         if expected_max is not None:
+            if self._within_numeric_tolerance(measured, expected_max):
+                measured = expected_max
             if measured > expected_max:
-                margin = (measured - expected_max) / expected_max
+                margin = self._relative_margin(measured - expected_max, expected_max)
                 if margin < self.warning_margin:
                     return Verdict.WARNING, f"{metric_name} = {measured:.4g} {unit} (close to max {expected_max} {unit})"
                 return Verdict.FAIL, f"{metric_name} = {measured:.4g} {unit} > {expected_max} {unit}"
@@ -299,6 +304,11 @@ class SpecChecker(ISpecChecker):
         """Convert value with unit to SI base unit."""
         if value is None:
             return None
+        if isinstance(value, str):
+            try:
+                value = float(value)
+            except ValueError:
+                return None
         
         unit_lower = unit.lower().strip()
         
@@ -308,6 +318,18 @@ class SpecChecker(ISpecChecker):
                 return value * factor
         
         return value
+
+    @staticmethod
+    def _relative_margin(delta: float, reference: float) -> float:
+        denominator = abs(reference)
+        if denominator <= 1e-30:
+            return float("inf") if abs(delta) > 0 else 0.0
+        return abs(delta) / denominator
+
+    @classmethod
+    def _within_numeric_tolerance(cls, measured: float, expected: float) -> bool:
+        scale = max(abs(measured), abs(expected), 1.0)
+        return abs(measured - expected) <= cls.ABSOLUTE_TOLERANCE * scale
     
     def _get_metric_category(self, metric_name: str) -> str:
         """Determine category from metric name."""

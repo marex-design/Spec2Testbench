@@ -1,0 +1,39 @@
+* TestBench: analogcoder_pro_p28_schmitt_full_testbench
+* Circuit: analogcoder_pro_p28_schmitt
+* Category: full
+*
+.OPTIONS POST=2 PROBE
+
+* AnalogCoder-Pro p28: A non-inverting Schmitt trigger with positive feedback op-map
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p28\p28.py
+* AnalogCoder-Pro type: Schmitt
+* Inputs: Vin
+* Outputs: Vout
+
+* Opamp subcircuit imported from AnalogCoder-Pro opamp.py
+.SUBCKT Opamp Vinp Vinn Vout
+.MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5)
+.MODEL pmos_model PMOS (LEVEL=1 KP=5e-05 VTO=-0.5)
+Vdd Vdd 0 5
+Vbias Vbias 0 1.5
+M1 Voutp Vinp Source3 Source3 nmos_model W=5e-05 L=1e-06
+M2 Vout Vinn Source3 Source3 nmos_model W=5e-05 L=1e-06
+M3 Source3 Vbias 0 0 nmos_model W=0.0001 L=1e-06
+M4 Voutp Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06
+M5 Vout Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06
+.ENDS Opamp
+
+Vdd Vdd 0 5
+Vref Vref 0 2.5
+Vin Vin 0 2.7
+R1 Vin Vp 10k
+R2 Vout Vp 100k
+R3 Vp Vref 10k
+Xop Vp Vref Vout Opamp
+
+.TRAN 10U 20M
+
+.TEMP 27.0
+Vvin Vin 0 PULSE(1.25 3.75 0 1n 1n 10u 20u)
+
+.END

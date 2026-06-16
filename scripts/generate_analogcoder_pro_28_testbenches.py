@@ -14,9 +14,9 @@ from spec2testbench.domain.entities.specification import Specification
 from spec2testbench.infrastructure.simulator.pyspice_simulator import PySpiceSimulator
 from spec2testbench.infrastructure.testbench import TestBenchGenerator
 
-SPEC_DIR = ROOT / "examples" / "analogcoder_pro_28_specs"
-NETLIST_DIR = ROOT / "benchmark_analogcoder_pro_28"
-OUT_DIR = ROOT / "testbenches" / "analogcoder_pro_28"
+SPEC_DIR = ROOT / "examples" / "benchmark_specs"
+NETLIST_DIR = ROOT / "benchmark"
+OUT_DIR = ROOT / "testbenches" / "benchmark"
 
 
 def source_task_id(specification: Specification) -> int:
@@ -88,3 +88,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

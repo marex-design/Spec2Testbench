@@ -1,8 +1,0 @@
-* Non-inverting Schmitt trigger
-Vin in 0 PULSE(0 5 0 1u 1u 1m 2m)
-R1 out nplus 100k
-R2 nplus 0 100k
-Eop out 0 in nplus 1e6
-Rload out 0 10k
-.tran 1u 5m
-.end

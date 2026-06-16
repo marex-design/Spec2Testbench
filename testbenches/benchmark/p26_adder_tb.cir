@@ -1,0 +1,41 @@
+* TestBench: analogcoder_pro_p26_adder_full_testbench
+* Circuit: analogcoder_pro_p26_adder
+* Category: full
+*
+.OPTIONS POST=2 PROBE
+
+* AnalogCoder-Pro p26: An Opamp adder to make Vout=-(Vin1+Vin2)
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p26\p26.py
+* AnalogCoder-Pro type: Adder
+* Inputs: Vin1, Vin2
+* Outputs: Vout
+
+* Opamp subcircuit imported from AnalogCoder-Pro opamp.py
+.SUBCKT Opamp Vinp Vinn Vout
+.MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5)
+.MODEL pmos_model PMOS (LEVEL=1 KP=5e-05 VTO=-0.5)
+Vdd Vdd 0 5
+Vbias Vbias 0 1.5
+M1 Voutp Vinp Source3 Source3 nmos_model W=5e-05 L=1e-06
+M2 Vout Vinn Source3 Source3 nmos_model W=5e-05 L=1e-06
+M3 Source3 Vbias 0 0 nmos_model W=0.0001 L=1e-06
+M4 Voutp Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06
+M5 Vout Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06
+.ENDS Opamp
+
+Vdd Vdd 0 5
+Vref Vref 0 2.5
+Vin1 Vin1 0 3
+Vin2 Vin2 0 3
+R1 Vin1 Vsum 10k
+R2 Vin2 Vsum 10k
+Rf Vout Vsum 10k
+Xop Vref Vsum Vout Opamp
+
+.OP
+.TRAN 10U 20M
+
+.TEMP 27.0
+Vvin Vin1 0 2.5
+
+.END

@@ -109,6 +109,16 @@ class Specification:
     def test_frequency(self) -> float:
         """Fréquence de test pour analyses AC (Hz)."""
         return self.input_conditions.get("input_frequency", 1e6)
+
+    @property
+    def input_nodes(self) -> List[str]:
+        raw_nodes = self.input_conditions.get("input_nodes", [])
+        return self._normalize_node_list(raw_nodes)
+
+    @property
+    def output_nodes(self) -> List[str]:
+        raw_nodes = self.input_conditions.get("output_nodes", [])
+        return self._normalize_node_list(raw_nodes)
     
     # =========================================================
     # MÉTHODES D'ACCÈS AUX MÉTRIQUES
@@ -131,6 +141,8 @@ class Specification:
         # Si c'est un nombre simple, le convertir en dict
         if isinstance(target, (int, float)):
             return {"min": target}
+        if isinstance(target, dict):
+            return self._normalize_metric_target(target)
         
         return target
     
@@ -221,7 +233,7 @@ class Specification:
         circuit_type = CircuitType(circuit_type_str)
         
         # Extraire les performance targets
-        perf_targets = data.get("performance_targets", {})
+        perf_targets = cls._normalize_performance_targets(data.get("performance_targets", {}))
         
         # Extraire les input conditions
         input_conditions = data.get("input_conditions", {})
@@ -245,7 +257,7 @@ class Specification:
         except ValueError:
             temperature_range = TemperatureRange.COMMERCIAL
         
-        supply_variation = pvt_config.get("supply_variation", 0.10)
+        supply_variation = cls._coerce_numeric(pvt_config.get("supply_variation", 0.10))
         
         return cls(
             name=data.get("name", "unnamed_circuit"),
@@ -296,16 +308,43 @@ class Specification:
         return cls(
             name=data.get("name", "unnamed"),
             circuit_type=circuit_type,
-            performance_targets=data.get("performance_targets", {}),
+            performance_targets=cls._normalize_performance_targets(data.get("performance_targets", {})),
             input_conditions=data.get("input_conditions", {}),
             test_categories=data.get("test_categories", []),
             process_corners=process_corners,
             temperature_range=temperature_range,
-            supply_variation=data.get("supply_variation", 0.10),
+            supply_variation=cls._coerce_numeric(data.get("supply_variation", 0.10)),
             technology=data.get("technology", "CMOS_45nm"),
             description=data.get("description", ""),
             raw_specs=data.get("raw_specs", ""),
         )
+
+    @staticmethod
+    def _coerce_numeric(value: Any) -> Any:
+        if isinstance(value, str):
+            try:
+                return float(value)
+            except ValueError:
+                return value
+        return value
+
+    @classmethod
+    def _normalize_metric_target(cls, target: Dict[str, Any]) -> Dict[str, Any]:
+        normalized = dict(target)
+        for key in ("min", "max", "typ", "weight"):
+            if key in normalized:
+                normalized[key] = cls._coerce_numeric(normalized[key])
+        return normalized
+
+    @classmethod
+    def _normalize_performance_targets(cls, targets: Dict[str, Any]) -> Dict[str, Any]:
+        normalized: Dict[str, Any] = {}
+        for metric_name, target in (targets or {}).items():
+            if isinstance(target, dict):
+                normalized[metric_name] = cls._normalize_metric_target(target)
+            else:
+                normalized[metric_name] = cls._coerce_numeric(target)
+        return normalized
     
     # =========================================================
     # MÉTHODES POUR LLM
@@ -397,3 +436,13 @@ class Specification:
     
     def __repr__(self) -> str:
         return f"Specification(name='{self.name}', circuit_type={self.circuit_type})"
+
+    @staticmethod
+    def _normalize_node_list(raw_nodes: Any) -> List[str]:
+        if isinstance(raw_nodes, str):
+            candidates = [item.strip() for item in raw_nodes.split(",")]
+        elif isinstance(raw_nodes, list):
+            candidates = [str(item).strip() for item in raw_nodes]
+        else:
+            return []
+        return [node for node in candidates if node and node != "-"]

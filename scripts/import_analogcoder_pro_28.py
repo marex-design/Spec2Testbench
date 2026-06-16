@@ -19,8 +19,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "analogcoder" / "AnalogCoderPro-master"
 PROBLEM_SET = SOURCE / "problem_set.tsv"
 SAMPLE_DESIGNS = SOURCE / "sample_design"
-NETLIST_OUT = ROOT / "benchmark_analogcoder_pro_28"
-SPEC_OUT = ROOT / "examples" / "analogcoder_pro_28_specs"
+NETLIST_OUT = ROOT / "benchmark"
+SPEC_OUT = ROOT / "examples" / "benchmark_specs"
 
 
 TYPE_TO_SPEC2TESTBENCH = {
@@ -430,7 +430,7 @@ def spec_payload(problem: Problem, netlist_name: str) -> dict[str, Any]:
             "level": problem.level,
             "type": problem.type_name,
             "submodule_name": problem.submodule_name,
-            "netlist": f"benchmark_analogcoder_pro_28/{netlist_name}",
+            "netlist": f"benchmark/{netlist_name}",
         },
         "performance_targets": DEFAULT_TARGETS.get(problem.type_name, {"operating_point": {"min": 0.0, "max": 5.0, "unit": "V"}}),
         "input_conditions": {

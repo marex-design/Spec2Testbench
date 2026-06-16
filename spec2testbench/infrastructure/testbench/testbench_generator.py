@@ -88,6 +88,14 @@ class TestBenchGenerator(ITestBenchGenerator):
             if specification.has_metric(candidate):
                 return candidate
         return None
+
+    @staticmethod
+    def _primary_input_node(specification: Specification, default: str = "in") -> str:
+        return specification.input_nodes[0] if specification.input_nodes else default
+
+    @staticmethod
+    def _primary_output_node(specification: Specification, default: str = "out") -> str:
+        return specification.output_nodes[0] if specification.output_nodes else default
     
     def generate(self, specification: Specification) -> TestBench:
         """
@@ -281,7 +289,7 @@ class TestBenchGenerator(ITestBenchGenerator):
                 name="vin",
                 type="dc",
                 parameters={"value": spec.common_mode_voltage},
-                node_positive="in",
+                node_positive=self._primary_input_node(spec),
                 node_negative="0",
             )
         ]
@@ -355,7 +363,7 @@ class TestBenchGenerator(ITestBenchGenerator):
                 name="vin",
                 type="ac",
                 parameters={"magnitude": 1, "phase": 0},
-                node_positive="in",
+                node_positive=self._primary_input_node(spec),
                 node_negative="0",
             )
         ]
@@ -433,12 +441,12 @@ class TestBenchGenerator(ITestBenchGenerator):
                     parameters={
                         "v1": spec.common_mode_voltage - spec.vdd/4,
                         "v2": spec.common_mode_voltage + spec.vdd/4,
-                        "rise": "1n",
-                        "fall": "1n",
-                        "width": "10u",
-                        "period": "20u",
-                    },
-                    node_positive="in",
+                    "rise": "1n",
+                    "fall": "1n",
+                    "width": "10u",
+                    "period": "20u",
+                },
+                    node_positive=self._primary_input_node(spec),
                     node_negative="0",
                 )
             ]
@@ -588,7 +596,7 @@ class TestBenchGenerator(ITestBenchGenerator):
                         "amplitude": spec.vdd / 4,
                         "frequency": spec.test_frequency,
                     },
-                    node_positive="in",
+                    node_positive=self._primary_input_node(spec),
                     node_negative="0",
                 )
             ]
@@ -606,6 +614,7 @@ class TestBenchGenerator(ITestBenchGenerator):
                 parameters={
                     "fundamental_frequency": spec.test_frequency,
                     "num_harmonics": 9,
+                    "output_node": self._primary_output_node(spec),
                 }
             ),
         ]

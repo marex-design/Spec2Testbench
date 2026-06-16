@@ -239,6 +239,12 @@ class AnalysisConfig:
             source = self.parameters.get('input_source', 'VIN')
             points = self.parameters.get('points_per_summary', 10)
             return f".NOISE {output} {source} {points}"
+
+        elif self.type == AnalysisType.FOURIER:
+            fundamental = self.parameters.get('fundamental_frequency', 1e6)
+            output_node = self.parameters.get('output_node', 'out')
+            node_expr = output_node if str(output_node).upper().startswith("V(") else f"V({output_node})"
+            return f".FOUR {fundamental} {node_expr}"
         
         else:
             return f"* Analysis {self.type.value} not yet implemented"

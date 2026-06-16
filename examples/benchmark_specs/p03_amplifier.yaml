@@ -1,0 +1,34 @@
+name: analogcoder_pro_p03_amplifier
+circuit_type: amplifier
+technology: AnalogCoder-Pro/PySpice generic Level-1 models
+description: A common-drain amplifier (a.k.a. a source follower) with resistive load R (output Vout at the source)
+source:
+  benchmark: AnalogCoder-Pro
+  task_id: 3
+  level: Easy
+  type: Amplifier
+  submodule_name: CommonDrainAmp
+  netlist: benchmark/p03_amplifier.cir
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+  dc_gain_db:
+    min: -700.0
+    unit: dB
+  quiescent_current:
+    max: 0.05
+    unit: A
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: Vin
+  output_nodes: Vout
+  testbench_note: 'NA'
+  expected_behavior: 'NA'
+test_categories:
+  - dc
+  - ac
+  - transient

@@ -1,0 +1,27 @@
+* TestBench: analogcoder_pro_p08_currentmirror_full_testbench
+* Circuit: analogcoder_pro_p08_currentmirror
+* Category: full
+*
+.OPTIONS POST=2 PROBE
+
+* AnalogCoder-Pro p8: A simple NMOS constant current source with resistive load R
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p8\p8.py
+* AnalogCoder-Pro type: CurrentMirror
+* Inputs: Vbias
+* Outputs: Vout
+
+.MODEL nmos NMOS (LEVEL=1 VTO=0.5 KP=0.0002)
+
+Vdd Vdd 0 5
+Vbias Vbias 0 1
+M1 Vout Vbias 0 0 nmos W=1e-05 L=1e-06
+Rload Vout Vdd 10000
+
+.OP
+.DC Vdd 0 5 0.1
+
+.TEMP 27.0
+Vvin Vbias 0 2.5
+.TRAN 1n 50u 0
+
+.END

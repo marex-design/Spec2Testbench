@@ -16,7 +16,7 @@ from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, field
 import numpy as np
 
-from ...domain.entities.testbench import TestBench, AnalysisType
+from ...domain.entities.testbench import TestBench, AnalysisType, Stimulus
 from ...domain.interfaces.icircuit_simulator import ICircuitSimulator
 
 logger = logging.getLogger(__name__)
@@ -138,7 +138,10 @@ class PySpiceSimulator(ICircuitSimulator):
             simulation_results['success'] = result['success']
             
             # Extract metrics
-            if result['success']:
+            has_structured_results = any(
+                simulation_results.get(key) for key in ('dc', 'ac', 'tran', 'transient', 'fourier')
+            )
+            if result['success'] or has_structured_results:
                 metrics = self.extract_metrics(simulation_results, testbench)
                 simulation_results['metrics'] = metrics
             
@@ -210,6 +213,7 @@ class PySpiceSimulator(ICircuitSimulator):
     
     def _generate_spice_deck(self, netlist_path: Path, testbench: TestBench) -> str:
         """Generate complete SPICE deck."""
+        stimuli = self._collapse_stimuli(testbench.stimuli, testbench.analyses)
         lines = [
             f"* TestBench: {testbench.name}",
             f"* Circuit: {testbench.circuit_name}",
@@ -223,6 +227,8 @@ class PySpiceSimulator(ICircuitSimulator):
             existing_text = netlist_path.read_text(encoding="utf-8", errors="ignore")
             existing_text = re.sub(r"(?is)\.control\b.*?\.endc", "", existing_text)
             existing_text = re.sub(r"^\s*\.end\s*$", "", existing_text, flags=re.IGNORECASE | re.MULTILINE).strip()
+            existing_text = self._apply_stimulus_overrides(existing_text, stimuli)
+            existing_text = self._apply_analysis_overrides(existing_text, testbench.analyses)
             if existing_text:
                 lines.extend(["", existing_text])
         else:
@@ -231,16 +237,14 @@ class PySpiceSimulator(ICircuitSimulator):
         if not re.search(r"^\s*\.temp\b", existing_text, re.IGNORECASE | re.MULTILINE):
             lines.extend(["", f".TEMP {testbench.temperature}"])
 
-        has_existing_sources = re.search(r"^\s*[VI]\w+\s+\S+\s+\S+", existing_text, re.IGNORECASE | re.MULTILINE)
-        if not has_existing_sources:
-            emitted_sources = set()
-            for stimulus in testbench.stimuli:
-                source_name = f"v{stimulus.name}".lower()
-                if source_name in emitted_sources:
-                    continue
-                if not re.search(rf"^\s*V{re.escape(stimulus.name)}\b", existing_text, re.IGNORECASE | re.MULTILINE):
-                    lines.append(stimulus.to_spice())
-                    emitted_sources.add(source_name)
+        emitted_sources = set()
+        for stimulus in stimuli:
+            source_name = f"v{stimulus.name}".lower()
+            if source_name in emitted_sources:
+                continue
+            if not re.search(rf"^\s*V{re.escape(stimulus.name)}\b", existing_text, re.IGNORECASE | re.MULTILINE):
+                lines.append(stimulus.to_spice())
+                emitted_sources.add(source_name)
 
         analysis_commands = {
             AnalysisType.DC: r"^\s*\.dc\b",
@@ -266,6 +270,82 @@ class PySpiceSimulator(ICircuitSimulator):
 
         lines.extend(["", ".END"])
         return "\n".join(lines)
+
+    def _collapse_stimuli(self, stimuli: List[Stimulus], analyses: List[Any]) -> List[Stimulus]:
+        analysis_types = {analysis.type for analysis in analyses}
+        preferred_types = self._preferred_stimulus_types(analysis_types)
+
+        grouped: Dict[str, List[Stimulus]] = {}
+        order: List[str] = []
+        for stimulus in stimuli:
+            key = stimulus.name.lower()
+            if key not in grouped:
+                grouped[key] = []
+                order.append(key)
+            grouped[key].append(stimulus)
+
+        collapsed: List[Stimulus] = []
+        for key in order:
+            candidates = grouped[key]
+            chosen = candidates[-1]
+            for preferred in preferred_types:
+                match = next((candidate for candidate in reversed(candidates) if candidate.type == preferred), None)
+                if match is not None:
+                    chosen = match
+                    break
+            collapsed.append(chosen)
+        return collapsed
+
+    def _preferred_stimulus_types(self, analysis_types: set[AnalysisType]) -> List[str]:
+        if AnalysisType.AC in analysis_types:
+            return ["ac", "dc", "pulse", "sin"]
+        if AnalysisType.FOURIER in analysis_types:
+            return ["sin", "pulse", "dc", "ac"]
+        if AnalysisType.TRANSIENT in analysis_types:
+            return ["pulse", "sin", "dc", "ac"]
+        return ["dc", "ac", "pulse", "sin"]
+
+    def _apply_stimulus_overrides(self, existing_text: str, stimuli: List[Stimulus]) -> str:
+        updated_text = existing_text
+        for stimulus in stimuli:
+            replacement = stimulus.to_spice()
+            candidate_names = [
+                f"V{stimulus.name}",
+                str(stimulus.name),
+                f"V{stimulus.node_positive}",
+                str(stimulus.node_positive),
+            ]
+            count = 0
+            for candidate in dict.fromkeys(name for name in candidate_names if name):
+                pattern = rf"(?im)^\s*{re.escape(candidate)}\b.*$"
+                updated_text, count = re.subn(pattern, replacement, updated_text, count=1)
+                if count:
+                    logger.debug(
+                        "Overrode existing source %s with generated stimulus %s",
+                        candidate,
+                        stimulus.name,
+                    )
+                    break
+            if count:
+                continue
+        return updated_text
+
+    def _apply_analysis_overrides(self, existing_text: str, analyses: List[AnalysisType]) -> str:
+        updated_text = existing_text
+        patterns = {
+            AnalysisType.DC: r"(?im)^\s*\.(dc|op)\b.*$",
+            AnalysisType.AC: r"(?im)^\s*\.ac\b.*$",
+            AnalysisType.TRANSIENT: r"(?im)^\s*\.tran\b.*$",
+            AnalysisType.FOURIER: r"(?im)^\s*\.four(ier)?\b.*$",
+        }
+        for analysis in analyses:
+            pattern = patterns.get(analysis.type)
+            if not pattern:
+                continue
+            updated_text, count = re.subn(pattern, analysis.to_spice(), updated_text, count=1)
+            if count:
+                logger.debug("Overrode existing %s analysis", analysis.type.value)
+        return updated_text
     
     def _run_ngspice(self, spice_file: Path, raw_file: Path) -> Dict[str, Any]:
         """

@@ -1,0 +1,32 @@
+* TestBench: analogcoder_pro_p02_amplifier_full_testbench
+* Circuit: analogcoder_pro_p02_amplifier
+* Category: full
+*
+.OPTIONS POST=2 PROBE
+
+* AnalogCoder-Pro p2: A three-stage amplifier with single input and output (each stage is common-source with resistive load)
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p2\p2.py
+* AnalogCoder-Pro type: Amplifier
+* Inputs: Vin
+* Outputs: Vout
+
+.MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5)
+
+Vdd Vdd 0 5
+Vin Vin 0 DC 1.0 AC 1n
+Vbias_M2_gate Bias_M2 Drain1 2
+M1 Drain1 Vin 0 0 nmos_model W=5e-05 L=1e-06
+R1 Drain1 Vdd 10000
+M2 Drain2 Bias_M2 Drain1 0 nmos_model W=5e-05 L=1e-06
+R2 Drain2 Vdd 10000
+M3 Vout Drain2 0 0 nmos_model W=5e-05 L=1e-06
+R3 Vout Vdd 10000
+
+.OP
+.AC DEC 100 1 1G
+
+.TEMP 27.0
+Vvin Vin 0 2.5
+.TRAN 1n 50u 0
+
+.END

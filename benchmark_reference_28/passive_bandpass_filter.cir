@@ -1,8 +1,0 @@
-* Passive band-pass filter
-Vin in 0 AC 1
-C1 in n1 159n
-R1 n1 0 1k
-R2 n1 out 1k
-C2 out 0 159n
-.ac dec 100 10 1Meg
-.end
