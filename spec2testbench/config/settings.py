@@ -8,6 +8,8 @@ class LLMSettings:
     openai_model: str = field(default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4-turbo-preview"))
     deepseek_api_key: str = field(default_factory=lambda: os.getenv("DEEPSEEK_API_KEY", ""))
     deepseek_model: str = field(default_factory=lambda: os.getenv("DEEPSEEK_MODEL", "deepseek-chat"))
+    groq_api_key: str = field(default_factory=lambda: os.getenv("GROQ_API_KEY", ""))
+    groq_model: str = field(default_factory=lambda: os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"))
     google_api_key: str = field(default_factory=lambda: os.getenv("GOOGLE_API_KEY", ""))
     google_model: str = field(default_factory=lambda: os.getenv("GOOGLE_MODEL", "gemini-1.5-pro"))
     anthropic_api_key: str = field(default_factory=lambda: os.getenv("ANTHROPIC_API_KEY", ""))
@@ -19,6 +21,7 @@ class LLMSettings:
         keys = {
             "openai": self.openai_api_key,
             "deepseek": self.deepseek_api_key,
+            "groq": self.groq_api_key,
             "google": self.google_api_key,
             "anthropic": self.anthropic_api_key,
         }
@@ -29,6 +32,7 @@ class LLMSettings:
         models = {
             "openai": self.openai_model,
             "deepseek": self.deepseek_model,
+            "groq": self.groq_model,
             "google": self.google_model,
             "anthropic": self.anthropic_model,
         }

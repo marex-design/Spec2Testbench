@@ -1,8 +1,10 @@
 import csv
 import json
+import os
+import re
+import sys
 import time
 from pathlib import Path
-import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -13,10 +15,18 @@ from spec2testbench.domain.entities.specification import Specification
 from spec2testbench.infrastructure.llm.llm_client import LLMClient
 
 
-CASE_LIST = Path("examples/benchmark_specs/llm_eval_cases.json")
-OUT_CSV = Path("results/llm_mode_comparison.csv")
-OUT_MD = Path("results/llm_mode_comparison.md")
-OUT_JSON = Path("results/llm_mode_comparison.json")
+SPEC_DIR = Path("examples/benchmark_specs")
+NETLIST_DIR = Path("benchmark/analogcoder_pro")
+RESULTS_DIR = Path("results")
+CASE_FILTER = os.getenv("CASE_FILTER", "").strip()
+CASE_LIMIT = int(os.getenv("CASE_LIMIT", "0") or "0")
+
+NON_TEXT_MODEL_PATTERNS = [
+    r"^whisper",
+    r"prompt-guard",
+    r"safeguard",
+    r"orpheus",
+]
 
 
 def build_llm_client():
@@ -51,6 +61,32 @@ def normalize_specification(specification: Specification) -> Specification:
     return specification
 
 
+def is_text_generation_model(model_name: str) -> bool:
+    lowered = model_name.lower()
+    return not any(re.search(pattern, lowered) for pattern in NON_TEXT_MODEL_PATTERNS)
+
+
+def discover_cases():
+    cases = []
+    for spec_path in sorted(SPEC_DIR.glob("p*.yaml")):
+        stem = spec_path.stem
+        if CASE_FILTER and CASE_FILTER not in stem:
+            continue
+        netlist_path = NETLIST_DIR / f"{stem}.cir"
+        if not netlist_path.exists():
+            raise FileNotFoundError(f"Missing benchmark netlist for {spec_path}: {netlist_path}")
+        cases.append(
+            {
+                "name": stem,
+                "spec": str(spec_path),
+                "netlist": str(netlist_path),
+            }
+        )
+    if CASE_LIMIT > 0:
+        return cases[:CASE_LIMIT]
+    return cases
+
+
 def run_case(case: dict, use_llm: bool, llm_client):
     spec_path = Path(case["spec"])
     netlist_path = Path(case["netlist"])
@@ -72,6 +108,8 @@ def run_case(case: dict, use_llm: bool, llm_client):
         return {
             "case": case["name"],
             "mode": "llm" if use_llm else "baseline",
+            "provider": settings.llm.default_provider if use_llm else "none",
+            "model": settings.llm.get_model() if use_llm else "template",
             "status": status,
             "testbench_generation_success": bool(report.testbench),
             "simulation_success": report.simulation_success,
@@ -94,6 +132,8 @@ def run_case(case: dict, use_llm: bool, llm_client):
         return {
             "case": case["name"],
             "mode": "llm" if use_llm else "baseline",
+            "provider": settings.llm.default_provider if use_llm else "none",
+            "model": settings.llm.get_model() if use_llm else "template",
             "status": "ERROR",
             "testbench_generation_success": False,
             "simulation_success": False,
@@ -113,53 +153,28 @@ def run_case(case: dict, use_llm: bool, llm_client):
         }
 
 
-def main():
-    cases = json.loads(CASE_LIST.read_text(encoding="utf-8"))
-    llm_client = build_llm_client()
+def write_outputs(rows, cases):
+    RESULTS_DIR.mkdir(exist_ok=True)
+    provider = settings.llm.default_provider
+    model_slug = re.sub(r"[^a-zA-Z0-9._-]+", "_", settings.llm.get_model())
+    out_csv = RESULTS_DIR / f"llm_mode_comparison_{provider}_{model_slug}.csv"
+    out_md = RESULTS_DIR / f"llm_mode_comparison_{provider}_{model_slug}.md"
+    out_json = RESULTS_DIR / f"llm_mode_comparison_{provider}_{model_slug}.json"
 
-    rows = []
-    for case in cases:
-        print(f"Running baseline: {case['name']}")
-        rows.append(run_case(case, use_llm=False, llm_client=None))
-
-        if llm_client is None:
-            rows.append({
-                "case": case["name"],
-                "mode": "llm",
-                "status": "SKIPPED",
-                "testbench_generation_success": False,
-                "simulation_success": False,
-                "overall_verdict": "SKIPPED",
-                "success_rate": 0.0,
-                "compliance_score": 0.0,
-                "nominal_compliance_score": 0.0,
-                "pvt_compliance_score": 0.0,
-                "has_pvt_coverage": False,
-                "measurement_count": 0,
-                "failed_metric_count": 0,
-                "measurement_names": "",
-                "analysis_types": "",
-                "stimulus_types": "",
-                "elapsed_s": 0.0,
-                "error": "LLM provider not configured",
-            })
-            continue
-
-        print(f"Running llm: {case['name']}")
-        rows.append(run_case(case, use_llm=True, llm_client=llm_client))
-
-    with OUT_CSV.open("w", newline="", encoding="utf-8") as handle:
+    with out_csv.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
 
     summary = {"cases": cases, "rows": rows}
-    OUT_JSON.write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    out_json.write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     lines = [
         "# LLM vs Baseline Comparison",
         "",
-        f"- Provider configured: {'yes' if llm_client is not None else 'no'}",
+        f"- Provider: {provider}",
+        f"- Model: {settings.llm.get_model()}",
+        f"- Cases: {len(cases)}",
         "",
         "| Case | Mode | Status | Verdict | Success Rate | Compliance | PVT Compliance | Measurements | Failed Metrics | Elapsed (s) |",
         "|---|---|---|---|---|---|---|---|---|---|",
@@ -170,11 +185,36 @@ def main():
             f"{row['success_rate']:.2f} | {row['compliance_score']:.2f} | {row['pvt_compliance_score']:.2f} | "
             f"{row['measurement_count']} | {row['failed_metric_count']} | {row['elapsed_s']:.2f} |"
         )
-    OUT_MD.write_text("\n".join(lines), encoding="utf-8")
+    out_md.write_text("\n".join(lines), encoding="utf-8")
 
-    print(f"Comparison CSV: {OUT_CSV}")
-    print(f"Comparison JSON: {OUT_JSON}")
-    print(f"Comparison Markdown: {OUT_MD}")
+    print(f"Comparison CSV: {out_csv}")
+    print(f"Comparison JSON: {out_json}")
+    print(f"Comparison Markdown: {out_md}")
+
+
+def main():
+    cases = discover_cases()
+    llm_client = build_llm_client()
+    model_name = settings.llm.get_model()
+
+    if llm_client is None:
+        raise RuntimeError("No LLM provider configured. Set LLM_PROVIDER and the matching API key.")
+
+    if not is_text_generation_model(model_name):
+        raise RuntimeError(
+            f"Configured model '{model_name}' is not suitable for text testbench generation. "
+            "Use an instruction/chat model instead."
+        )
+
+    rows = []
+    for case in cases:
+        print(f"Running baseline: {case['name']}")
+        rows.append(run_case(case, use_llm=False, llm_client=None))
+
+        print(f"Running llm: {case['name']}")
+        rows.append(run_case(case, use_llm=True, llm_client=llm_client))
+
+    write_outputs(rows, cases)
 
 
 if __name__ == "__main__":

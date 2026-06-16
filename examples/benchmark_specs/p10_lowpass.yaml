@@ -1,4 +1,4 @@
-name: analogcoder_pro_p10_lowpass
+﻿name: analogcoder_pro_p10_lowpass
 circuit_type: low_pass_filter
 technology: AnalogCoder-Pro/PySpice generic Level-1 models
 description: a passive low-pass filter
@@ -8,7 +8,7 @@ source:
   level: Hard
   type: LowPass
   submodule_name: Unknown
-  netlist: benchmark/p10_lowpass.cir
+  netlist: benchmark/analogcoder_pro/p10_lowpass.cir
 performance_targets:
   cutoff_frequency_hz:
     min: 1.0
@@ -25,3 +25,4 @@ input_conditions:
 test_categories:
   - ac
   - transient
+

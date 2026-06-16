@@ -1,4 +1,4 @@
-name: analogcoder_pro_p17_currentmirror
+﻿name: analogcoder_pro_p17_currentmirror
 circuit_type: current_mirror
 technology: AnalogCoder-Pro/PySpice generic Level-1 models
 description: A cascode current mirror with 4 mosfets (2 stacked at input side with diode-connected, 2 stacked at output side), reference current source input Iref (connected to Vdd) and resistive load R
@@ -8,7 +8,7 @@ source:
   level: Medium
   type: CurrentMirror
   submodule_name: CascodeCurrentMirror
-  netlist: benchmark/p17_currentmirror.cir
+  netlist: benchmark/analogcoder_pro/p17_currentmirror.cir
 performance_targets:
   operating_point:
     min: 0.0
@@ -28,3 +28,4 @@ input_conditions:
 test_categories:
   - dc
   - transient
+

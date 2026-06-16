@@ -1,4 +1,4 @@
-name: analogcoder_pro_p09_comparator
+﻿name: analogcoder_pro_p09_comparator
 circuit_type: comparator
 technology: AnalogCoder-Pro/PySpice generic Level-1 models
 description: 'an op-amp comparator to make the output high when Vin > Vref and low when Vin < Vref'
@@ -8,7 +8,7 @@ source:
   level: Hard
   type: Comparator
   submodule_name: Unknown
-  netlist: benchmark/p09_comparator.cir
+  netlist: benchmark/analogcoder_pro/p09_comparator.cir
 performance_targets:
   propagation_delay:
     max: 0.001
@@ -23,3 +23,4 @@ input_conditions:
   expected_behavior: Vout should transition sharply from low to high when the input voltage exceeds the reference voltage, producing a digital signal with two states.
 test_categories:
   - transient
+

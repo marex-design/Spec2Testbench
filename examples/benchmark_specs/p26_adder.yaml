@@ -1,4 +1,4 @@
-name: analogcoder_pro_p26_adder
+﻿name: analogcoder_pro_p26_adder
 circuit_type: composite
 technology: AnalogCoder-Pro/PySpice generic Level-1 models
 description: An Opamp adder to make Vout=-(Vin1+Vin2)
@@ -8,7 +8,7 @@ source:
   level: Hard
   type: Adder
   submodule_name: Unknown
-  netlist: benchmark/p26_adder.cir
+  netlist: benchmark/analogcoder_pro/p26_adder.cir
 performance_targets:
   operating_point:
     min: 0.0
@@ -25,3 +25,4 @@ input_conditions:
 test_categories:
   - dc
   - transient
+

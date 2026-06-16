@@ -1,14 +1,14 @@
-name: analogcoder_pro_p19_mixer
+﻿name: analogcoder_pro_p19_mixer
 circuit_type: mixer
 technology: AnalogCoder-Pro/PySpice generic Level-1 models
-description: A Gilbert cell mixer to make Voutp - Voutn ∝ (Vrfp - Vrfn) × (Vlop - Vlon)
+description: A Gilbert cell mixer to make Voutp - Voutn âˆ (Vrfp - Vrfn) Ã— (Vlop - Vlon)
 source:
   benchmark: AnalogCoder-Pro
   task_id: 19
   level: Hard
   type: Mixer
   submodule_name: Unknown
-  netlist: benchmark/p19_mixer.cir
+  netlist: benchmark/analogcoder_pro/p19_mixer.cir
 performance_targets:
   thd_percent:
     max: 100.0
@@ -27,3 +27,4 @@ input_conditions:
 test_categories:
   - transient
   - spectral
+

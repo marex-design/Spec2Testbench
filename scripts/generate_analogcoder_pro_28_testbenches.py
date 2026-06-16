@@ -15,7 +15,7 @@ from spec2testbench.infrastructure.simulator.pyspice_simulator import PySpiceSim
 from spec2testbench.infrastructure.testbench import TestBenchGenerator
 
 SPEC_DIR = ROOT / "examples" / "benchmark_specs"
-NETLIST_DIR = ROOT / "benchmark"
+NETLIST_DIR = ROOT / "benchmark" / "analogcoder_pro"
 OUT_DIR = ROOT / "testbenches" / "benchmark"
 
 

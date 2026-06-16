@@ -1,4 +1,4 @@
-name: analogcoder_pro_p20_opamp
+﻿name: analogcoder_pro_p20_opamp
 circuit_type: opamp
 technology: AnalogCoder-Pro/PySpice generic Level-1 models
 description: 'A two-stage differential opamp (first stage: common-source with an active load and a tail current, second stage: common-source with an active load)'
@@ -8,7 +8,7 @@ source:
   level: Hard
   type: Opamp
   submodule_name: OpampResistanceLoad
-  netlist: benchmark/p20_opamp.cir
+  netlist: benchmark/analogcoder_pro/p20_opamp.cir
 performance_targets:
   dc_gain_db:
     min: -700.0
@@ -31,3 +31,4 @@ test_categories:
   - dc
   - ac
   - transient
+

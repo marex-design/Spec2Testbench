@@ -4,7 +4,7 @@
 Prompts for LLM-based testbench generation.
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, List
 from ....domain.entities.specification import Specification
 
 
@@ -16,105 +16,53 @@ class TestBenchPrompts:
         
         category_requirements = self._get_category_requirements(category)
         context = specification.to_prompt_context()
+        naming_contract = self._build_naming_contract(specification, category)
         
         prompt = '''
-You are an expert analog circuit verification engineer specializing in SPICE simulation.
+You are an analog verification engineer.
 
-## TASK
-Generate a complete PySpice testbench for ''' + category.upper() + ''' verification of the following circuit.
+TASK
+Generate a JSON testbench for ''' + category.upper() + ''' only.
 
-## CIRCUIT SPECIFICATIONS
+CIRCUIT SPECIFICATIONS
 ''' + context + '''
 
-## TEST CATEGORY: ''' + category.upper() + '''
-
-### Requirements for ''' + category.upper() + ''' testing:
-
+CATEGORY REQUIREMENTS
 ''' + category_requirements + '''
 
-## OUTPUT FORMAT
-Return a JSON object with the following structure:
+FRAMEWORK CONTRACT
+''' + naming_contract + '''
 
+RETURN ONLY THIS JSON SHAPE
 {
   "testbench_name": "string",
-  "description": "Brief description of this test",
+  "description": "string",
   "stimuli": [
     {
-      "name": "stimulus_name",
+      "name": "string",
       "type": "dc|ac|pulse|sin|pwl",
-      "node_positive": "1",
-      "node_negative": "0",
-      "parameters": {
-        "value": 1.2,
-        "magnitude": 1,
-        "frequency": 1e6
-      }
+      "node_positive": "string",
+      "node_negative": "string",
+      "parameters": {}
     }
   ],
   "analyses": [
     {
-      "type": "dc|ac|tran|noise|disto",
-      "parameters": {
-        "start": 0,
-        "stop": 5,
-        "step": 0.01
-      }
+      "type": "dc|ac|tran|fourier|pvt",
+      "parameters": {}
     }
   ],
   "measurements": [
     {
-      "name": "measurement_name",
-      "expression": "20*log10(V(out)/V(in))",
-      "expected_min": 60,
+      "name": "allowed_measurement_name",
+      "expression": "string",
+      "expected_min": null,
       "expected_max": null,
-      "unit": "dB",
-      "node": "out"
+      "unit": "string",
+      "node": "string"
     }
   ]
 }
-
-## EXAMPLE FOR AC AMPLIFIER TEST
-
-{
-  "testbench_name": "ac_gain_bandwidth_test",
-  "description": "Measure open-loop gain and bandwidth",
-  "stimuli": [
-    {
-      "name": "vin",
-      "type": "ac",
-      "node_positive": "in",
-      "node_negative": "0",
-      "parameters": {"magnitude": 1, "phase": 0}
-    }
-  ],
-  "analyses": [
-    {
-      "type": "ac",
-      "parameters": {
-        "sweep_type": "dec",
-        "points_per_decade": 10,
-        "start_freq": 1,
-        "stop_freq": 1e9
-      }
-    }
-  ],
-  "measurements": [
-    {
-      "name": "dc_gain",
-      "expression": "20*log10(V(out)/V(in))",
-      "expected_min": 60,
-      "unit": "dB"
-    },
-    {
-      "name": "gbw",
-      "expression": "gain * bandwidth",
-      "expected_min": 100e6,
-      "unit": "Hz"
-    }
-  ]
-}
-
-Generate the testbench now. Return ONLY valid JSON.
 '''
         return prompt
     
@@ -152,6 +100,67 @@ If a value is not specified, omit it.
 Return ONLY valid JSON.
 '''
         return prompt
+
+    def _build_naming_contract(self, specification: Specification, category: str) -> str:
+        allowed_measurements = self._allowed_measurements(specification, category)
+        allowed_analysis_types = self._allowed_analysis_types(category)
+        allowed_stimuli = self._allowed_stimulus_types(category)
+        input_nodes = specification.input_nodes or ["in"]
+        output_nodes = specification.output_nodes or ["out"]
+
+        lines = [
+            "Strict rules:",
+            f"- Allowed measurement names: {', '.join(allowed_measurements)}.",
+            f"- Allowed input nodes: {', '.join(input_nodes)}.",
+            f"- Allowed output nodes: {', '.join(output_nodes)}.",
+            f"- Allowed analysis types: {', '.join(allowed_analysis_types)}.",
+            f"- Allowed stimulus types: {', '.join(allowed_stimuli)}.",
+            "- Reuse exact spec names; do not invent synonyms or duplicate equivalent measurements.",
+            "- Use node 0 for ground.",
+            "- Set expected_min, expected_max, and unit from the specification whenever available.",
+            "- If a metric is not allowed, omit it.",
+            "- Return raw JSON only.",
+        ]
+        return "\n".join(lines)
+
+    def _allowed_measurements(self, specification: Specification, category: str) -> List[str]:
+        category_defaults = {
+            "dc": ["operating_point", "quiescent_current", "power", "dc_gain", "dc_gain_db"],
+            "ac": ["dc_gain", "dc_gain_db", "bandwidth", "unity_gain_frequency", "phase_margin"],
+            "transient": ["slew_rate", "settling_time", "propagation_delay", "frequency_hz", "startup_amplitude"],
+            "spectral": ["thd_percent", "fundamental_frequency", "frequency_hz", "sfdr_db"],
+            "pvt": ["pvt_dc_gain_variation", "pvt_vout_variation", "pvt_power_variation"],
+            "differential": ["differential_gain", "common_mode_gain", "cmrr", "input_common_mode_range"],
+        }
+        names = list(specification.performance_targets.keys())
+        for candidate in category_defaults.get(category, []):
+            if candidate not in names:
+                names.append(candidate)
+        return names
+
+    @staticmethod
+    def _allowed_analysis_types(category: str) -> List[str]:
+        mapping = {
+            "dc": ["dc"],
+            "ac": ["ac"],
+            "transient": ["tran"],
+            "spectral": ["tran", "fourier"],
+            "pvt": ["pvt"],
+            "differential": ["ac", "tran"],
+        }
+        return mapping.get(category, ["dc", "ac", "tran"])
+
+    @staticmethod
+    def _allowed_stimulus_types(category: str) -> List[str]:
+        mapping = {
+            "dc": ["dc"],
+            "ac": ["ac"],
+            "transient": ["pulse"],
+            "spectral": ["sin"],
+            "pvt": ["dc"],
+            "differential": ["ac", "pulse"],
+        }
+        return mapping.get(category, ["dc", "ac", "pulse"])
     
     def _get_category_requirements(self, category: str) -> str:
         """Get specific requirements for a test category."""

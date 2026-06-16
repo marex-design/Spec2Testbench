@@ -1,4 +1,4 @@
-name: analogcoder_pro_p04_amplifier
+﻿name: analogcoder_pro_p04_amplifier
 circuit_type: amplifier
 technology: AnalogCoder-Pro/PySpice generic Level-1 models
 description: A single-stage common-gate amplifier with resistive load R (input signal Vin must be applied at the source terminal)
@@ -8,7 +8,7 @@ source:
   level: Easy
   type: Amplifier
   submodule_name: CommonGateAmp
-  netlist: benchmark/p04_amplifier.cir
+  netlist: benchmark/analogcoder_pro/p04_amplifier.cir
 performance_targets:
   operating_point:
     min: 0.0
@@ -32,3 +32,4 @@ test_categories:
   - dc
   - ac
   - transient
+

@@ -1,4 +1,4 @@
-name: analogcoder_pro_p01_amplifier
+﻿name: analogcoder_pro_p01_amplifier
 circuit_type: amplifier
 technology: AnalogCoder-Pro/PySpice generic Level-1 models
 description: a single-stage common-source amplifier with resistive load R
@@ -8,7 +8,7 @@ source:
   level: Easy
   type: Amplifier
   submodule_name: SingleStageAmp
-  netlist: benchmark/p01_amplifier.cir
+  netlist: benchmark/analogcoder_pro/p01_amplifier.cir
 performance_targets:
   operating_point:
     min: 0.0
@@ -32,3 +32,4 @@ test_categories:
   - dc
   - ac
   - transient
+

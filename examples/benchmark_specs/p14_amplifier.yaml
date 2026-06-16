@@ -1,4 +1,4 @@
-name: analogcoder_pro_p14_amplifier
+﻿name: analogcoder_pro_p14_amplifier
 circuit_type: amplifier
 technology: AnalogCoder-Pro/PySpice generic Level-1 models
 description: A two-stage amplifier with a Miller compensation capacitor
@@ -8,7 +8,7 @@ source:
   level: Medium
   type: Amplifier
   submodule_name: TwoStageOpampMiller
-  netlist: benchmark/p14_amplifier.cir
+  netlist: benchmark/analogcoder_pro/p14_amplifier.cir
 performance_targets:
   operating_point:
     min: 0.0
@@ -32,3 +32,4 @@ test_categories:
   - dc
   - ac
   - transient
+

@@ -1,4 +1,4 @@
-name: analogcoder_pro_p07_inverter
+﻿name: analogcoder_pro_p07_inverter
 circuit_type: amplifier
 technology: AnalogCoder-Pro/PySpice generic Level-1 models
 description: A logical inverter with 1 NMOS and 1 PMOS
@@ -8,7 +8,7 @@ source:
   level: Easy
   type: Inverter
   submodule_name: LogicalInverter
-  netlist: benchmark/p07_inverter.cir
+  netlist: benchmark/analogcoder_pro/p07_inverter.cir
 performance_targets:
   operating_point:
     min: 0.0
@@ -28,3 +28,4 @@ input_conditions:
 test_categories:
   - dc
   - transient
+

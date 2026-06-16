@@ -1,4 +1,4 @@
-name: analogcoder_pro_p21_opamp
+﻿name: analogcoder_pro_p21_opamp
 circuit_type: opamp
 technology: AnalogCoder-Pro/PySpice generic Level-1 models
 description: A single-stage telescopic cascode opamp with two outputs (4 nmos as cascode input pair, 4 pmos as cascode loads, and 1 tail current)
@@ -8,7 +8,7 @@ source:
   level: Hard
   type: Opamp
   submodule_name: SingleStageDiffOpamp
-  netlist: benchmark/p21_opamp.cir
+  netlist: benchmark/analogcoder_pro/p21_opamp.cir
 performance_targets:
   dc_gain_db:
     min: -700.0
@@ -31,3 +31,4 @@ test_categories:
   - dc
   - ac
   - transient
+

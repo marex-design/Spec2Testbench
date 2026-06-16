@@ -1,4 +1,4 @@
-name: analogcoder_pro_p22_oscillator
+﻿name: analogcoder_pro_p22_oscillator
 circuit_type: oscillator
 technology: AnalogCoder-Pro/PySpice generic Level-1 models
 description: An RC phase-shift oscillator
@@ -8,7 +8,7 @@ source:
   level: Hard
   type: Oscillator
   submodule_name: Unknown
-  netlist: benchmark/p22_oscillator.cir
+  netlist: benchmark/analogcoder_pro/p22_oscillator.cir
 performance_targets:
   oscillator_frequency:
     min: 1.0
@@ -27,3 +27,4 @@ input_conditions:
 test_categories:
   - transient
   - spectral
+

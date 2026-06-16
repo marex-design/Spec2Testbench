@@ -166,9 +166,9 @@ class TestBenchGenerator(ITestBenchGenerator):
             data = json.loads(response)
         except Exception as e:
             raise GenerationError(f"LLM generation failed: {e}")
-        
+
         # Parse response into TestBench
-        return self._parse_llm_response(data, specification.name, category)
+        return self._parse_llm_response(data, specification, category)
     
     def _generate_with_templates(self, specification: Specification, category: str) -> TestBench:
         """Generate testbench using templates (no LLM, deterministic)."""
@@ -220,15 +220,21 @@ class TestBenchGenerator(ITestBenchGenerator):
             merged.stimuli.extend(tb.stimuli)
             merged.analyses.extend(tb.analyses)
             merged.measurements.extend(tb.measurements)
+
+        merged.stimuli = self._deduplicate_stimulus_objects(merged.stimuli)
+        merged.analyses = self._deduplicate_analysis_objects(merged.analyses)
+        merged.measurements = self._deduplicate_measurement_objects(merged.measurements)
         
         return merged
     
-    def _parse_llm_response(self, data: dict, circuit_name: str, category: str) -> TestBench:
+    def _parse_llm_response(self, data: dict, specification: Specification, category: str) -> TestBench:
         """Parse LLM JSON response into TestBench entity."""
+        circuit_name = specification.name
+        normalized = self._normalize_llm_payload(data, specification, category)
         
         # Create stimuli
         stimuli = []
-        for s in data.get("stimuli", []):
+        for s in normalized.get("stimuli", []):
             stimuli.append(Stimulus(
                 name=s.get("name", f"stim_{len(stimuli)}"),
                 type=s.get("type", "dc"),
@@ -239,7 +245,7 @@ class TestBenchGenerator(ITestBenchGenerator):
         
         # Create analyses
         analyses = []
-        for a in data.get("analyses", []):
+        for a in normalized.get("analyses", []):
             analysis_type = a.get("type", "dc")
             # Convert string to AnalysisType enum
             try:
@@ -254,7 +260,7 @@ class TestBenchGenerator(ITestBenchGenerator):
         
         # Create measurements
         measurements = []
-        for m in data.get("measurements", []):
+        for m in normalized.get("measurements", []):
             measurements.append(Measurement(
                 name=m.get("name", f"meas_{len(measurements)}"),
                 expression=m.get("expression", ""),
@@ -263,16 +269,260 @@ class TestBenchGenerator(ITestBenchGenerator):
                 unit=m.get("unit", ""),
                 node=m.get("node"),
             ))
+
+        stimuli = self._deduplicate_stimulus_objects(stimuli)
+        analyses = self._deduplicate_analysis_objects(analyses)
+        measurements = self._deduplicate_measurement_objects(measurements)
         
         return TestBench(
-            name=data.get("testbench_name", f"{circuit_name}_{category}"),
+            name=normalized.get("testbench_name", f"{circuit_name}_{category}"),
             category=category,
             circuit_name=circuit_name,
             stimuli=stimuli,
             analyses=analyses,
             measurements=measurements,
-            description=data.get("description", ""),
+            description=normalized.get("description", ""),
         )
+
+    def _normalize_llm_payload(self, data: Dict[str, Any], specification: Specification, category: str) -> Dict[str, Any]:
+        """Map LLM-friendly names back to benchmark/spec-aligned names before verification."""
+        normalized = dict(data)
+        normalized["stimuli"] = [
+            self._normalize_stimulus(stimulus, specification, category)
+            for stimulus in data.get("stimuli", [])
+        ]
+        normalized["analyses"] = self._prune_analysis_dicts(data.get("analyses", []), category)
+        normalized["measurements"] = [
+            self._normalize_measurement(measurement, specification, category)
+            for measurement in data.get("measurements", [])
+        ]
+        normalized["stimuli"] = self._prune_stimulus_dicts(normalized["stimuli"], category)
+        normalized["measurements"] = self._prune_measurement_dicts(normalized["measurements"], specification, category)
+        return normalized
+
+    def _normalize_stimulus(self, stimulus: Dict[str, Any], specification: Specification, category: str) -> Dict[str, Any]:
+        normalized = dict(stimulus)
+        input_node = self._primary_input_node(specification)
+        node_positive = str(normalized.get("node_positive", input_node)).strip().lower()
+        if node_positive in {"vin", "input", "inp", "in_plus"}:
+            normalized["node_positive"] = input_node
+        elif not normalized.get("node_positive"):
+            normalized["node_positive"] = input_node
+
+        if not normalized.get("node_negative"):
+            normalized["node_negative"] = "0"
+
+        stimulus_type = str(normalized.get("type", "")).strip().lower()
+        if category == "ac" and stimulus_type == "dc":
+            normalized["type"] = "ac"
+        elif category in {"transient", "spectral"} and stimulus_type == "dc":
+            normalized["type"] = "pulse" if category == "transient" else "sin"
+        return normalized
+
+    def _normalize_measurement(self, measurement: Dict[str, Any], specification: Specification, category: str) -> Dict[str, Any]:
+        normalized = dict(measurement)
+        original_name = str(normalized.get("name", "")).strip()
+        canonical_name = self._canonical_metric_name(original_name, specification, category)
+        normalized["name"] = canonical_name
+
+        if canonical_name in specification.performance_targets:
+            normalized["expected_min"] = specification.get_metric_min(canonical_name)
+            normalized["expected_max"] = specification.get_metric_max(canonical_name)
+            normalized["unit"] = specification.get_metric_unit(canonical_name) or normalized.get("unit", "")
+
+        output_node = self._primary_output_node(specification)
+        node = normalized.get("node")
+        if not node or str(node).strip().lower() in {"out", "vout", "output", "vout_midpoint", "vout_op"}:
+            normalized["node"] = output_node
+
+        return normalized
+
+    def _canonical_metric_name(self, metric_name: str, specification: Specification, category: str) -> str:
+        raw = metric_name.strip().lower()
+        compact = raw.replace(" ", "_").replace("-", "_")
+        compact = compact.replace("%", "percent")
+
+        direct_aliases = {
+            "vout": "operating_point",
+            "vout_dc": "operating_point",
+            "vout_midpoint": "operating_point",
+            "vout_op": "operating_point",
+            "idd": "quiescent_current",
+            "current": "quiescent_current",
+            "gbw": "unity_gain_frequency",
+            "ugbw": "unity_gain_frequency",
+            "unity_gain_bandwidth": "unity_gain_frequency",
+            "cutoff_frequency": "bandwidth",
+            "cutoff_frequency_hz": "bandwidth",
+            "settling_time_1percent": "settling_time",
+            "settling_time_1pct": "settling_time",
+            "propagation_delay_s": "propagation_delay",
+            "oscillator_frequency": "frequency_hz",
+            "fundamental_frequency": "frequency_hz",
+            "thd": "thd_percent",
+        }
+
+        if compact in direct_aliases:
+            candidate = direct_aliases[compact]
+            if specification.has_metric(candidate):
+                return candidate
+
+        if specification.has_metric(compact):
+            return compact
+
+        if category == "dc":
+            for candidate in ("operating_point", "vout_dc", "quiescent_current", "idd", "power"):
+                if compact.startswith(candidate) and specification.has_metric(candidate):
+                    return candidate
+
+        if category == "ac":
+            for candidate in ("dc_gain", "dc_gain_db", "bandwidth", "unity_gain_frequency", "phase_margin"):
+                if candidate in compact and specification.has_metric(candidate):
+                    return candidate
+
+        if category == "transient":
+            for candidate in ("slew_rate", "settling_time", "propagation_delay", "frequency_hz", "startup_amplitude"):
+                if candidate in compact and specification.has_metric(candidate):
+                    return candidate
+
+        if category == "spectral":
+            for candidate in ("thd_percent", "frequency_hz", "fundamental_frequency"):
+                if candidate in compact and specification.has_metric(candidate):
+                    return candidate
+
+        return metric_name or f"meas_{category}"
+
+    def _prune_stimulus_dicts(self, stimuli: List[Dict[str, Any]], category: str) -> List[Dict[str, Any]]:
+        if not stimuli:
+            return []
+        preferred_type = {
+            "dc": "dc",
+            "ac": "ac",
+            "transient": "pulse",
+            "spectral": "sin",
+            "pvt": "dc",
+            "differential": "ac",
+        }.get(category)
+        if preferred_type:
+            preferred = [stimulus for stimulus in stimuli if str(stimulus.get("type", "")).strip().lower() == preferred_type]
+            if preferred:
+                return [preferred[0]]
+        return [stimuli[0]]
+
+    def _prune_analysis_dicts(self, analyses: List[Dict[str, Any]], category: str) -> List[Dict[str, Any]]:
+        if not analyses:
+            return []
+        allowed = {
+            "dc": {"dc"},
+            "ac": {"ac"},
+            "transient": {"tran"},
+            "spectral": {"tran", "fourier"},
+            "pvt": {"pvt"},
+            "differential": {"ac", "tran"},
+        }.get(category, {"dc", "ac", "tran"})
+        filtered = [
+            dict(analysis)
+            for analysis in analyses
+            if str(analysis.get("type", "")).strip().lower() in allowed
+        ]
+        if not filtered:
+            return analyses[:1]
+        if category == "spectral":
+            kept: List[Dict[str, Any]] = []
+            seen = set()
+            for analysis in filtered:
+                analysis_type = str(analysis.get("type", "")).strip().lower()
+                if analysis_type in seen:
+                    continue
+                seen.add(analysis_type)
+                kept.append(analysis)
+            return kept
+        return [filtered[0]]
+
+    def _prune_measurement_dicts(
+        self,
+        measurements: List[Dict[str, Any]],
+        specification: Specification,
+        category: str,
+    ) -> List[Dict[str, Any]]:
+        if not measurements:
+            return []
+        allowed_targets = set(specification.performance_targets.keys())
+        category_core = {
+            "dc": {"operating_point", "vout_dc", "quiescent_current", "idd", "power", "dc_gain", "dc_gain_db"},
+            "ac": {"dc_gain", "dc_gain_db", "bandwidth", "unity_gain_frequency", "phase_margin"},
+            "transient": {"slew_rate", "settling_time", "propagation_delay", "frequency_hz", "startup_amplitude"},
+            "spectral": {"thd_percent", "fundamental_frequency", "frequency_hz"},
+            "pvt": {"pvt_dc_gain_variation", "pvt_vout_variation", "pvt_power_variation"},
+            "differential": {"differential_gain", "cmrr", "common_mode_gain"},
+        }.get(category, set())
+        kept: List[Dict[str, Any]] = []
+        seen = set()
+        for measurement in measurements:
+            name = str(measurement.get("name", "")).strip()
+            lowered = name.lower()
+            if lowered in seen:
+                continue
+            if name in allowed_targets:
+                kept.append(measurement)
+                seen.add(lowered)
+                continue
+            if name in category_core and any(target in category_core for target in allowed_targets):
+                kept.append(measurement)
+                seen.add(lowered)
+        if kept:
+            return kept
+        fallback: List[Dict[str, Any]] = []
+        for measurement in measurements:
+            name = str(measurement.get("name", "")).strip().lower()
+            if name in seen:
+                continue
+            seen.add(name)
+            fallback.append(measurement)
+        return fallback[:3]
+
+    @staticmethod
+    def _deduplicate_stimulus_objects(stimuli: List[Stimulus]) -> List[Stimulus]:
+        unique: List[Stimulus] = []
+        seen = set()
+        for stimulus in stimuli:
+            parameters = tuple(sorted((str(key), str(value)) for key, value in stimulus.parameters.items()))
+            key = (
+                stimulus.type,
+                stimulus.node_positive,
+                stimulus.node_negative,
+                parameters,
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(stimulus)
+        return unique
+
+    @staticmethod
+    def _deduplicate_analysis_objects(analyses: List[AnalysisConfig]) -> List[AnalysisConfig]:
+        unique: List[AnalysisConfig] = []
+        seen = set()
+        for analysis in analyses:
+            parameters = tuple(sorted((str(key), str(value)) for key, value in analysis.parameters.items()))
+            key = (analysis.type.value, parameters)
+            if key in seen:
+                continue
+            seen.add(key)
+            unique.append(analysis)
+        return unique
+
+    @staticmethod
+    def _deduplicate_measurement_objects(measurements: List[Measurement]) -> List[Measurement]:
+        unique: List[Measurement] = []
+        seen_names = set()
+        for measurement in measurements:
+            key = measurement.name.strip().lower()
+            if key in seen_names:
+                continue
+            seen_names.add(key)
+            unique.append(measurement)
+        return unique
     
     # =========================================================
     # TEMPLATE-BASED GENERATION METHODS

@@ -17,6 +17,7 @@ class LLMProvider(Enum):
     """Supported LLM providers."""
     OPENAI = "openai"
     DEEPSEEK = "deepseek"
+    GROQ = "groq"
     GEMINI = "gemini"
     ANTHROPIC = "anthropic"
 
@@ -34,7 +35,7 @@ class LLMClient:
     
     # API endpoints
     DEEPSEEK_API_URL = "https://api.deepseek.com/v1"
-    DEEPSEEK_VISION_URL = "https://api.deepseek.com/v1/chat/completions"
+    GROQ_API_URL = "https://api.groq.com/openai/v1"
     
     def __init__(self, 
                  provider: str = "openai",
@@ -46,7 +47,7 @@ class LLMClient:
         Initialize LLM client.
         
         Args:
-            provider: 'openai', 'deepseek', 'gemini', or 'anthropic'
+            provider: 'openai', 'deepseek', 'groq', 'gemini', or 'anthropic'
             api_key: API key for the provider
             model: Model name (uses provider default if None)
             temperature: Sampling temperature (0-1)
@@ -67,6 +68,7 @@ class LLMClient:
         defaults = {
             LLMProvider.OPENAI: "gpt-4-turbo-preview",
             LLMProvider.DEEPSEEK: "deepseek-chat",
+            LLMProvider.GROQ: "llama-3.3-70b-versatile",
             LLMProvider.GEMINI: "gemini-1.5-pro",
             LLMProvider.ANTHROPIC: "claude-3-sonnet-20240229",
         }
@@ -84,6 +86,13 @@ class LLMClient:
             self.client = OpenAI(
                 api_key=api_key,
                 base_url=self.DEEPSEEK_API_URL
+            )
+
+        elif self.provider == LLMProvider.GROQ:
+            from openai import OpenAI
+            self.client = OpenAI(
+                api_key=api_key,
+                base_url=self.GROQ_API_URL
             )
         
         elif self.provider == LLMProvider.GEMINI:
@@ -118,6 +127,9 @@ class LLMClient:
         
         elif self.provider == LLMProvider.DEEPSEEK:
             return self._complete_deepseek(prompt, response_format, system_prompt)
+
+        elif self.provider == LLMProvider.GROQ:
+            return self._complete_groq(prompt, response_format, system_prompt)
         
         elif self.provider == LLMProvider.GEMINI:
             return self._complete_gemini(prompt, response_format, system_prompt)
@@ -147,6 +159,9 @@ class LLMClient:
         
         elif self.provider == LLMProvider.DEEPSEEK:
             return self._multimodal_deepseek(prompt, image_base64, response_format)
+
+        elif self.provider == LLMProvider.GROQ:
+            return self._multimodal_groq(prompt, image_base64, response_format)
         
         elif self.provider == LLMProvider.GEMINI:
             return self._multimodal_gemini(prompt, image_base64, response_format)
@@ -262,7 +277,59 @@ class LLMClient:
         
         response = self.client.chat.completions.create(**kwargs)
         return response.choices[0].message.content
-    
+
+    # =========================================================
+    # GROQ IMPLEMENTATION
+    # =========================================================
+
+    def _complete_groq(self, prompt: str, response_format: Optional[str], system_prompt: Optional[str]) -> str:
+        """Groq completion (OpenAI-compatible)."""
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        kwargs = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+
+        if response_format == "json":
+            kwargs["response_format"] = {"type": "json_object"}
+
+        response = self.client.chat.completions.create(**kwargs)
+        return response.choices[0].message.content
+
+    def _multimodal_groq(self, prompt: str, image_base64: str, response_format: Optional[str]) -> str:
+        """Groq multimodal using OpenAI-compatible image messages."""
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/png;base64,{image_base64}"}
+                    }
+                ]
+            }
+        ]
+
+        kwargs = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+        }
+
+        if response_format == "json":
+            kwargs["response_format"] = {"type": "json_object"}
+
+        response = self.client.chat.completions.create(**kwargs)
+        return response.choices[0].message.content
+
     # =========================================================
     # GEMINI IMPLEMENTATION
     # =========================================================
@@ -360,7 +427,7 @@ def create_llm_client(provider: str = "openai", **kwargs) -> LLMClient:
     Create an LLM client with the specified provider.
     
     Args:
-        provider: 'openai', 'deepseek', 'gemini', or 'anthropic'
+        provider: 'openai', 'deepseek', 'groq', 'gemini', or 'anthropic'
         **kwargs: Additional arguments (api_key, model, temperature, max_tokens)
         
     Returns:
