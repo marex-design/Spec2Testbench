@@ -10,8 +10,8 @@ from spec2testbench.application.usecases.run_verification import VerificationPip
 from spec2testbench.domain.entities.specification import Specification
 
 
-BENCH_DIR = Path("benchmark_reference_28")
-SPEC_DIR = Path("examples/reference_28_specs")
+BENCH_DIR = Path("benchmark/analogcoder_pro")
+SPEC_DIR = Path("examples/benchmark_specs")
 OUT_CSV = Path("results/reference_28_framework_campaign.csv")
 OUT_MD = Path("results/reference_28_framework_campaign.md")
 OUT_JSON = Path("results/reference_28_framework_campaign.json")
@@ -37,7 +37,7 @@ def main():
     for spec_path in sorted(SPEC_DIR.glob("*.yaml")):
         spec = normalize_specification(Specification.from_yaml(spec_path))
         netlist_path = BENCH_DIR / f"{spec_path.stem}.cir"
-        print(f"Running framework verify --no-llm: {spec_path.stem}")
+        print(f"[baseline] {spec_path.stem}")
         report = pipeline.verify(spec, netlist_path=netlist_path)
 
         measurement_names = ",".join(measurement.name for measurement in (report.testbench.measurements if report.testbench else []))
@@ -79,9 +79,10 @@ def main():
         )
     OUT_MD.write_text("\n".join(lines), encoding="utf-8")
 
-    print(f"CSV: {OUT_CSV}")
-    print(f"JSON: {OUT_JSON}")
-    print(f"Markdown: {OUT_MD}")
+    print("Campaign complete.")
+    print(f"CSV report: {OUT_CSV}")
+    print(f"JSON report: {OUT_JSON}")
+    print(f"Markdown report: {OUT_MD}")
 
 
 if __name__ == "__main__":

@@ -187,9 +187,10 @@ def write_outputs(rows, cases):
         )
     out_md.write_text("\n".join(lines), encoding="utf-8")
 
-    print(f"Comparison CSV: {out_csv}")
-    print(f"Comparison JSON: {out_json}")
-    print(f"Comparison Markdown: {out_md}")
+    print("Comparison complete.")
+    print(f"CSV report: {out_csv}")
+    print(f"JSON report: {out_json}")
+    print(f"Markdown report: {out_md}")
 
 
 def main():
@@ -208,10 +209,10 @@ def main():
 
     rows = []
     for case in cases:
-        print(f"Running baseline: {case['name']}")
+        print(f"[baseline] {case['name']}")
         rows.append(run_case(case, use_llm=False, llm_client=None))
 
-        print(f"Running llm: {case['name']}")
+        print(f"[llm] {case['name']}")
         rows.append(run_case(case, use_llm=True, llm_client=llm_client))
 
     write_outputs(rows, cases)

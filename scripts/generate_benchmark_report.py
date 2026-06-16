@@ -97,7 +97,7 @@ def main():
         lines.append("- None")
 
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"Benchmark summary saved to: {REPORT_MD}")
+    print(f"Benchmark summary: {REPORT_MD}")
 
 
 if __name__ == "__main__":
