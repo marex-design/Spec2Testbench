@@ -59,6 +59,9 @@ class MetricExtractor:
             "slew_rate": self._extract_slew_rate,
             "settling_time": self._extract_settling_time,
             "propagation_delay": self._extract_propagation_delay,
+            "v_t_plus": self._extract_v_t_plus,
+            "v_t_minus": self._extract_v_t_minus,
+            "hysteresis_width": self._extract_hysteresis_width,
             "oscillator_frequency": self._extract_frequency,
             "frequency_hz": self._extract_frequency,
             "startup_amplitude": self._extract_startup_amplitude,
@@ -95,6 +98,9 @@ class MetricExtractor:
             "gbw": ["ugbw", "unity_gain_frequency"],
             "phase_margin": ["phase_margin_deg"],
             "propagation_delay": ["comparator_delay", "delay", "propagation_delay_s"],
+            "v_t_plus": ["vt_plus", "threshold_rising", "upper_threshold"],
+            "v_t_minus": ["vt_minus", "threshold_falling", "lower_threshold"],
+            "hysteresis_width": ["hysteresis", "schmitt_hysteresis"],
             "oscillator_frequency": ["frequency_hz", "fundamental_frequency"],
             "frequency_hz": ["oscillator_frequency", "fundamental_frequency"],
             "thd": ["thd_percent"],
@@ -289,6 +295,9 @@ class MetricExtractor:
         return settled_time
 
     def _extract_propagation_delay(self, results: Dict[str, Any]) -> Optional[float]:
+        direct_delay = self._lookup_metric_value(results, ("propagation_delay", "propagation_delay_s", "comparator_delay", "delay"))
+        if direct_delay is not None:
+            return direct_delay
         tran_data = results.get("transient") or results.get("tran", {})
         time = tran_data.get("time", [])
         vin = self._get_waveform(tran_data, "in")
@@ -297,14 +306,45 @@ class MetricExtractor:
         if not time or not vin or not vout:
             return None
 
-        vin_threshold = (max(vin) + min(vin)) / 2
-        vout_threshold = (max(vout) + min(vout)) / 2
-        input_crossing = self._first_threshold_crossing(time, vin, vin_threshold)
-        output_crossing = self._first_threshold_crossing(time, vout, vout_threshold)
-
-        if input_crossing is None or output_crossing is None:
+        transitions = self._extract_transition_metrics(time, vin, vout)
+        propagation_delay = transitions.get("propagation_delay")
+        if propagation_delay is None:
             return None
-        return max(0.0, output_crossing - input_crossing)
+        return float(propagation_delay)
+
+    def _extract_v_t_plus(self, results: Dict[str, Any]) -> Optional[float]:
+        direct_value = self._lookup_metric_value(results, ("v_t_plus", "vt_plus", "threshold_rising", "upper_threshold"))
+        if direct_value is not None:
+            return direct_value
+        tran_data = results.get("transient") or results.get("tran", {})
+        transitions = self._extract_transition_metrics(
+            tran_data.get("time", []),
+            self._get_waveform(tran_data, "in"),
+            self._get_waveform(tran_data, "out"),
+        )
+        return transitions.get("v_t_plus")
+
+    def _extract_v_t_minus(self, results: Dict[str, Any]) -> Optional[float]:
+        direct_value = self._lookup_metric_value(results, ("v_t_minus", "vt_minus", "threshold_falling", "lower_threshold"))
+        if direct_value is not None:
+            return direct_value
+        tran_data = results.get("transient") or results.get("tran", {})
+        transitions = self._extract_transition_metrics(
+            tran_data.get("time", []),
+            self._get_waveform(tran_data, "in"),
+            self._get_waveform(tran_data, "out"),
+        )
+        return transitions.get("v_t_minus")
+
+    def _extract_hysteresis_width(self, results: Dict[str, Any]) -> Optional[float]:
+        direct_value = self._lookup_metric_value(results, ("hysteresis_width", "schmitt_hysteresis", "hysteresis"))
+        if direct_value is not None:
+            return direct_value
+        v_t_plus = self._extract_v_t_plus(results)
+        v_t_minus = self._extract_v_t_minus(results)
+        if v_t_plus is None or v_t_minus is None:
+            return None
+        return abs(v_t_plus - v_t_minus)
 
     def _extract_frequency(self, results: Dict[str, Any]) -> Optional[float]:
         tran_data = results.get("transient") or results.get("tran", {})
@@ -462,3 +502,53 @@ class MetricExtractor:
             if values[index - 1] < threshold <= values[index]:
                 return time[index]
         return None
+
+    def _extract_transition_metrics(self, time: List[float], vin: List[float], vout: List[float]) -> Dict[str, float]:
+        if len(time) < 2 or len(vin) < 2 or len(vout) < 2:
+            return {}
+
+        sample_count = min(len(time), len(vin), len(vout))
+        time = time[:sample_count]
+        vin = vin[:sample_count]
+        vout = vout[:sample_count]
+        vout_threshold = (max(vout) + min(vout)) / 2
+
+        output_events = []
+        for index in range(1, sample_count):
+            previous = vout[index - 1]
+            current = vout[index]
+            if previous < vout_threshold <= current:
+                output_events.append(("rising", index))
+            elif previous > vout_threshold >= current:
+                output_events.append(("falling", index))
+
+        if not output_events:
+            return {}
+
+        transition_metrics: Dict[str, float] = {}
+        input_slopes = [vin[index] - vin[index - 1] for index in range(1, sample_count)]
+
+        for direction, index in output_events:
+            vin_at_transition = float(vin[index])
+            if direction == "rising" and "v_t_plus" not in transition_metrics:
+                transition_metrics["v_t_plus"] = vin_at_transition
+            if direction == "falling" and "v_t_minus" not in transition_metrics:
+                transition_metrics["v_t_minus"] = vin_at_transition
+
+            output_time = float(time[index])
+            desired_sign = 1 if direction == "rising" else -1
+            input_index = None
+            for candidate in range(index, 0, -1):
+                slope = input_slopes[candidate - 1]
+                if desired_sign * slope > 0:
+                    input_index = candidate
+                    break
+            if input_index is not None and "propagation_delay" not in transition_metrics:
+                transition_metrics["propagation_delay"] = max(0.0, output_time - float(time[input_index]))
+
+        v_t_plus = transition_metrics.get("v_t_plus")
+        v_t_minus = transition_metrics.get("v_t_minus")
+        if v_t_plus is not None and v_t_minus is not None:
+            transition_metrics["hysteresis_width"] = abs(v_t_plus - v_t_minus)
+
+        return transition_metrics

@@ -1,8 +1,10 @@
 from spec2testbench.application.usecases.run_verification import VerificationPipeline, VerificationReport
 from spec2testbench.domain.entities.specification import Specification
+from spec2testbench.domain.entities.testbench import AnalysisConfig, AnalysisType, Stimulus, TestBench
 from spec2testbench.domain.value_objects.circuit_type import CircuitType
 from spec2testbench.domain.value_objects.verdict import CheckResult, Verdict, ValidationStatus
 from spec2testbench.infrastructure.spec_checker.metric_extractor import MetricExtractor
+from spec2testbench.infrastructure.simulator.pyspice_simulator import PySpiceSimulator
 from spec2testbench.infrastructure.testbench import TestBenchGenerator as FrameworkTestBenchGenerator
 
 
@@ -210,3 +212,70 @@ def test_verification_report_computes_compliance_scores():
     assert abs(report.nominal_compliance_score - ((2.0 * 1.0 + 1.0 * 0.75) / 3.0)) < 1e-9
     assert report.pvt_compliance_score == 1.0
     assert report.overall_verdict == ValidationStatus.PASS
+
+
+def test_ac_stimulus_preserves_dc_bias_when_collapsed():
+    simulator = PySpiceSimulator()
+    stimuli = [
+        Stimulus(name="vin", type="dc", parameters={"value": 2.5}, node_positive="Vin", node_negative="0"),
+        Stimulus(name="vin", type="ac", parameters={"magnitude": 1}, node_positive="Vin", node_negative="0"),
+    ]
+    analyses = [AnalysisConfig(type=AnalysisType.AC, parameters={"start_freq": 1, "stop_freq": 1e3})]
+
+    collapsed = simulator._collapse_stimuli(stimuli, analyses)
+
+    assert len(collapsed) == 1
+    assert collapsed[0].type == "ac"
+    assert collapsed[0].parameters["dc_value"] == 2.5
+    assert collapsed[0].to_spice() == "Vvin Vin 0 DC 2.5 AC 1"
+
+
+def test_extract_metrics_prefers_supply_current_for_quiescent_current():
+    simulator = PySpiceSimulator()
+    results = {
+        "currents": {
+            "ivvin": 0.0,
+            "ivdd": -0.000225,
+            "vdd": -0.000225,
+        },
+        "dc": {
+            "vout_dc": 2.75,
+            "operating_point": 2.75,
+        },
+        "ac": {},
+        "fourier": {},
+        "vdd": 5.0,
+    }
+
+    metrics = simulator.extract_metrics(results, TestBench(name="demo", category="dc"))
+
+    assert metrics["supply_current_a"] == 0.000225
+    assert metrics["quiescent_current"] == 0.000225
+    assert metrics["idd"] == 0.000225
+
+
+def test_pwl_stimulus_renders_valid_spice():
+    stimulus = Stimulus(
+        name="vin",
+        type="pwl",
+        parameters={"points": [("0", 0.8), ("20u", 4.2), ("40u", 0.8)]},
+        node_positive="Vin",
+        node_negative="0",
+    )
+
+    assert stimulus.to_spice() == "Vvin Vin 0 PWL(0 0.8 20u 4.2 40u 0.8)"
+
+
+def test_metric_extractor_extracts_schmitt_hysteresis_metrics():
+    extractor = MetricExtractor()
+    results = {
+        "transient": {
+            "time": [0.0, 1.0, 2.0, 3.0, 4.0],
+            "vin": [1.0, 2.0, 3.0, 2.4, 2.2],
+            "vout": [0.0, 0.0, 5.0, 5.0, 0.0],
+        }
+    }
+
+    assert extractor.extract(results, "v_t_plus") == 3.0
+    assert extractor.extract(results, "v_t_minus") == 2.2
+    assert abs(extractor.extract(results, "hysteresis_width") - 0.8) < 1e-12

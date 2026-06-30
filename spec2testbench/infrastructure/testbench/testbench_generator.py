@@ -681,32 +681,55 @@ class TestBenchGenerator(ITestBenchGenerator):
             CircuitType.RC_PHASE_SHIFT_OSCILLATOR,
             CircuitType.VCO,
         }
+        schmitt_types = {
+            CircuitType.SCHMITT_TRIGGER,
+            CircuitType.OPAMP_SCHMITT,
+        }
 
         stimuli = []
         if spec.circuit_type not in oscillator_types:
-            stimuli = [
-                Stimulus(
-                    name="vin",
-                    type="pulse",
-                    parameters={
-                        "v1": spec.common_mode_voltage - spec.vdd/4,
-                        "v2": spec.common_mode_voltage + spec.vdd/4,
-                    "rise": "1n",
-                    "fall": "1n",
-                    "width": "10u",
-                    "period": "20u",
-                },
-                    node_positive=self._primary_input_node(spec),
-                    node_negative="0",
-                )
-            ]
+            if spec.circuit_type in schmitt_types:
+                low_level = max(spec.vss, spec.common_mode_voltage - spec.vdd / 3)
+                high_level = min(spec.vdd, spec.common_mode_voltage + spec.vdd / 3)
+                stimuli = [
+                    Stimulus(
+                        name="vin",
+                        type="pwl",
+                        parameters={
+                            "points": [
+                                ("0", low_level),
+                                ("20u", high_level),
+                                ("40u", low_level),
+                            ]
+                        },
+                        node_positive=self._primary_input_node(spec),
+                        node_negative="0",
+                    )
+                ]
+            else:
+                stimuli = [
+                    Stimulus(
+                        name="vin",
+                        type="pulse",
+                        parameters={
+                            "v1": spec.common_mode_voltage - spec.vdd/4,
+                            "v2": spec.common_mode_voltage + spec.vdd/4,
+                            "rise": "1n",
+                            "fall": "1n",
+                            "width": "10u",
+                            "period": "20u",
+                        },
+                        node_positive=self._primary_input_node(spec),
+                        node_negative="0",
+                    )
+                ]
         
         analyses = [
             AnalysisConfig(
                 type=AnalysisType.TRANSIENT,
                 parameters={
-                    "step_time": "1n",
-                    "end_time": "50u",
+                    "step_time": "100n" if spec.circuit_type in schmitt_types else "1n",
+                    "end_time": "40u" if spec.circuit_type in schmitt_types else "50u",
                     "start_time": 0,
                 }
             )
@@ -737,6 +760,12 @@ class TestBenchGenerator(ITestBenchGenerator):
                 expected_max=spec.get_metric_max(delay_metric or "propagation_delay"),
                 unit=spec.get_metric_unit(delay_metric or "propagation_delay") or "s",
             ))
+        if spec.circuit_type in schmitt_types:
+            measurements.extend([
+                Measurement(name="v_t_plus", expression="Vin at rising output transition", unit="V"),
+                Measurement(name="v_t_minus", expression="Vin at falling output transition", unit="V"),
+                Measurement(name="hysteresis_width", expression="abs(v_t_plus - v_t_minus)", unit="V"),
+            ])
 
         if spec.circuit_type in oscillator_types:
             measurements.extend([

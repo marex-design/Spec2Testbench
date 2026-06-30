@@ -1,0 +1,33 @@
+name: ind08_charge_pump
+circuit_type: charge_pump
+technology: SKY130 open-source PDK
+description: Charge-pump benchmark for transient output behavior under alternating UP and DN control.
+source:
+  benchmark: industrial_sky130
+  pdk: sky130
+  netlist: benchmark/industrial/netlists/ind08_charge_pump.cir
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 1.8
+    unit: V
+  quiescent_current:
+    max: 0.02
+    unit: A
+input_conditions:
+  vdd: 1.8
+  vss: 0.0
+  vcm: 0.9
+  input_frequency: 1000000.0
+  input_nodes: up, dn, vbiasn, vbiasp
+  output_nodes: out
+  testbench_note: UP and DN pulses drive a nominal charge-pump output node.
+  expected_behavior: The output should charge and discharge without rail-to-rail instability.
+test_categories:
+  - dc
+  - transient
+pvt_config:
+  corners:
+    - tt
+  temperature_range: commercial
+  supply_variation: 0.05

@@ -1,0 +1,24 @@
+* SKY130 industrial benchmark: two-stage OTA
+.include ../models/sky130_tt.spice
+
+VDD vdd 0 1.8
+VBN vbiasn 0 0.70
+VBP vbiasp 0 1.10
+VINP inp 0 0.9
+VINN inn 0 0.9
+
+IREF tail 0 DC 20u
+CLOAD out 0 1p
+CC out n1 300f
+RLEAK out 0 50Meg
+
+M1 n1 inp tail 0 sky130_fd_pr__nfet_01v8 L=0.15u W=2.0u
+M2 n2 inn tail 0 sky130_fd_pr__nfet_01v8 L=0.15u W=2.0u
+M3 tail vbiasn 0 0 sky130_fd_pr__nfet_01v8 L=1.0u W=4.0u
+M4 n1 n2 vdd vdd sky130_fd_pr__pfet_01v8 L=0.15u W=4.0u
+M5 n2 n2 vdd vdd sky130_fd_pr__pfet_01v8 L=0.15u W=4.0u
+M6 out n2 vssx 0 sky130_fd_pr__nfet_01v8 L=0.15u W=5.0u
+M7 vssx vbiasn 0 0 sky130_fd_pr__nfet_01v8 L=1.0u W=8.0u
+M8 out vbiasp vdd vdd sky130_fd_pr__pfet_01v8 L=0.50u W=8.0u
+
+.end

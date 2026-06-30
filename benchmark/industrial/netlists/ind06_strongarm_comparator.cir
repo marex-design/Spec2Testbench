@@ -1,0 +1,21 @@
+* SKY130 industrial benchmark: strongarm-style comparator
+.include ../models/sky130_tt.spice
+
+VDD vdd 0 1.8
+VINP inp 0 PULSE(0.88 0.92 5n 100p 100p 10n 20n)
+VINN inn 0 0.90
+VCLK clk 0 PULSE(0 1.8 1n 50p 50p 5n 10n)
+
+CLOADP outp 0 5f
+CLOADN outn 0 5f
+
+M1 outp inn tail 0 sky130_fd_pr__nfet_01v8 L=0.15u W=1.5u
+M2 outn inp tail 0 sky130_fd_pr__nfet_01v8 L=0.15u W=1.5u
+M3 tail clk 0 0 sky130_fd_pr__nfet_01v8 L=0.15u W=3.0u
+M4 outp outn vdd vdd sky130_fd_pr__pfet_01v8 L=0.15u W=2.5u
+M5 outn outp vdd vdd sky130_fd_pr__pfet_01v8 L=0.15u W=2.5u
+M6 outp clk vdd vdd sky130_fd_pr__pfet_01v8 L=0.15u W=1.8u
+M7 outn clk vdd vdd sky130_fd_pr__pfet_01v8 L=0.15u W=1.8u
+
+.tran 20p 60n
+.end

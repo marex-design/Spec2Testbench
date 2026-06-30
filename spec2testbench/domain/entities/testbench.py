@@ -115,7 +115,15 @@ class Stimulus:
         
         elif self.type == "ac":
             mag = self.parameters.get('magnitude', 1)
-            return f"V{self.name} {self.node_positive} {self.node_negative} AC {mag}"
+            phase = self.parameters.get('phase')
+            dc_value = self.parameters.get('dc_value')
+            line = f"V{self.name} {self.node_positive} {self.node_negative}"
+            if dc_value is not None:
+                line += f" DC {dc_value}"
+            line += f" AC {mag}"
+            if phase not in (None, 0, 0.0, "0", "0.0"):
+                line += f" {phase}"
+            return line
         
         elif self.type == "pulse":
             v1 = self.parameters.get('v1', 0)
@@ -132,6 +140,13 @@ class Stimulus:
             amplitude = self.parameters.get('amplitude', 1)
             frequency = self.parameters.get('frequency', 1e6)
             return f"V{self.name} {self.node_positive} {self.node_negative} SIN({offset} {amplitude} {frequency})"
+
+        elif self.type == "pwl":
+            points = self.parameters.get('points', [])
+            if not points:
+                return f"V{self.name} {self.node_positive} {self.node_negative} 0"
+            pwl_str = " ".join([f"{t} {v}" for t, v in points])
+            return f"V{self.name} {self.node_positive} {self.node_negative} PWL({pwl_str})"
         
         else:
             return f"V{self.name} {self.node_positive} {self.node_negative} {self.parameters.get('value', 0)}"

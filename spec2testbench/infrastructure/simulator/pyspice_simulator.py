@@ -213,20 +213,23 @@ class PySpiceSimulator(ICircuitSimulator):
     
     def _generate_spice_deck(self, netlist_path: Path, testbench: TestBench) -> str:
         """Generate complete SPICE deck."""
-        stimuli = self._collapse_stimuli(testbench.stimuli, testbench.analyses)
+        existing_text = ""
+        if netlist_path and netlist_path.exists():
+            existing_text = netlist_path.read_text(encoding="utf-8", errors="ignore")
+        stimuli = self._collapse_stimuli(testbench.stimuli, testbench.analyses, existing_text)
         lines = [
             f"* TestBench: {testbench.name}",
             f"* Circuit: {testbench.circuit_name}",
             f"* Category: {testbench.category}",
             "*",
             ".OPTIONS POST=2 PROBE",
+            ".OPTIONS FILETYPE=ASCII",
         ]
 
-        existing_text = ""
         if netlist_path and netlist_path.exists():
-            existing_text = netlist_path.read_text(encoding="utf-8", errors="ignore")
             existing_text = re.sub(r"(?is)\.control\b.*?\.endc", "", existing_text)
             existing_text = re.sub(r"^\s*\.end\s*$", "", existing_text, flags=re.IGNORECASE | re.MULTILINE).strip()
+            existing_text = self._resolve_relative_includes(existing_text, netlist_path)
             existing_text = self._apply_stimulus_overrides(existing_text, stimuli)
             existing_text = self._apply_analysis_overrides(existing_text, testbench.analyses)
             if existing_text:
@@ -271,7 +274,38 @@ class PySpiceSimulator(ICircuitSimulator):
         lines.extend(["", ".END"])
         return "\n".join(lines)
 
-    def _collapse_stimuli(self, stimuli: List[Stimulus], analyses: List[Any]) -> List[Stimulus]:
+    def _resolve_relative_includes(self, existing_text: str, netlist_path: Path) -> str:
+        """
+        Rewrite relative .include/.lib paths so they remain valid after the
+        combined deck is emitted into a temporary directory for ngspice.
+        """
+        base_dir = netlist_path.parent.resolve()
+
+        def replace_include(match: re.Match[str]) -> str:
+            directive = match.group("directive")
+            quote = match.group("quote") or ""
+            path_text = (match.group("path") or "").strip()
+            suffix = match.group("suffix") or ""
+            if not path_text:
+                return match.group(0)
+            if path_text.startswith("$"):
+                return match.group(0)
+
+            include_path = Path(path_text)
+            if not include_path.is_absolute():
+                include_path = (base_dir / include_path).resolve()
+            normalized = include_path.as_posix()
+            quoted = f'"{normalized}"' if quote or " " in normalized else normalized
+            return f".{directive} {quoted}{suffix}"
+
+        pattern = re.compile(
+            r"(?im)^\s*\.(?P<directive>include|lib)\s+"
+            r"(?P<quote>[\"'])?(?P<path>[^\"'\s]+)(?(quote)(?P=quote))"
+            r"(?P<suffix>\s+.*)?$"
+        )
+        return pattern.sub(replace_include, existing_text)
+
+    def _collapse_stimuli(self, stimuli: List[Stimulus], analyses: List[Any], existing_text: str = "") -> List[Stimulus]:
         analysis_types = {analysis.type for analysis in analyses}
         preferred_types = self._preferred_stimulus_types(analysis_types)
 
@@ -293,8 +327,67 @@ class PySpiceSimulator(ICircuitSimulator):
                 if match is not None:
                     chosen = match
                     break
+            chosen = self._merge_bias_into_stimulus(chosen, candidates, existing_text)
             collapsed.append(chosen)
         return collapsed
+
+    def _merge_bias_into_stimulus(self, chosen: Stimulus, candidates: List[Stimulus], existing_text: str) -> Stimulus:
+        if chosen.type != "ac":
+            return chosen
+
+        parameters = dict(chosen.parameters)
+        if parameters.get("dc_value") is not None:
+            return Stimulus(
+                name=chosen.name,
+                type=chosen.type,
+                parameters=parameters,
+                node_positive=chosen.node_positive,
+                node_negative=chosen.node_negative,
+            )
+
+        dc_candidate = next(
+            (candidate for candidate in reversed(candidates) if candidate.type == "dc" and "value" in candidate.parameters),
+            None,
+        )
+        if dc_candidate is not None:
+            parameters["dc_value"] = dc_candidate.parameters.get("value")
+        else:
+            existing_dc = self._extract_dc_bias_from_netlist(existing_text, chosen.name)
+            if existing_dc is not None:
+                parameters["dc_value"] = existing_dc
+            else:
+                parameters["dc_value"] = 0.0
+                logger.warning(
+                    "No DC bias found for AC stimulus %s; falling back to 0.0 V",
+                    chosen.name,
+                )
+
+        return Stimulus(
+            name=chosen.name,
+            type=chosen.type,
+            parameters=parameters,
+            node_positive=chosen.node_positive,
+            node_negative=chosen.node_negative,
+        )
+
+    def _extract_dc_bias_from_netlist(self, existing_text: str, stimulus_name: str) -> Optional[float]:
+        if not existing_text:
+            return None
+
+        pattern = re.compile(
+            rf"(?im)^\s*V{re.escape(stimulus_name)}\b\s+\S+\s+\S+\s+(?P<body>.+?)\s*$"
+        )
+        match = pattern.search(existing_text)
+        if not match:
+            return None
+
+        body = match.group("body").strip()
+        dc_match = re.search(r"(?i)\bDC\s+([^\s]+)", body)
+        raw_value = dc_match.group(1) if dc_match else body.split()[0]
+        try:
+            return float(raw_value)
+        except ValueError:
+            return None
 
     def _preferred_stimulus_types(self, analysis_types: set[AnalysisType]) -> List[str]:
         if AnalysisType.AC in analysis_types:
@@ -465,10 +558,11 @@ class PySpiceSimulator(ICircuitSimulator):
             if key in dc:
                 metrics[key] = float(dc[key])
 
-        current = results.get('currents', {}).get('vdd')
+        currents = results.get('currents', {})
+        current = currents.get('vdd')
         supply = results.get('vdd', 0.0)
         current_items = []
-        for key, value in results.get('currents', {}).items():
+        for key, value in currents.items():
             if value is None:
                 continue
             try:
@@ -476,26 +570,34 @@ class PySpiceSimulator(ICircuitSimulator):
             except Exception:
                 continue
 
-        averaged_currents = [value for key, value in current_items if key != 'vdd']
-        if not averaged_currents and current is not None:
-            averaged_currents = [float(abs(current))]
-
-        mean_current = float(np.mean(averaged_currents)) if averaged_currents else None
-        if mean_current is not None:
-            metrics['mean_current_a'] = mean_current
-
-        if current is not None:
-            metrics['supply_current_a'] = float(abs(current))
-        if mean_current is not None:
-            metrics['quiescent_current'] = mean_current
-            metrics['idd'] = mean_current
+        supply_current = self._select_supply_current(currents)
+        if supply_current is not None:
+            metrics['supply_current_a'] = supply_current
+            metrics['quiescent_current'] = supply_current
+            metrics['idd'] = supply_current
             if supply:
-                metrics['power'] = float(abs(supply * mean_current))
-        elif current is not None:
-            metrics['quiescent_current'] = float(abs(current))
-            metrics['idd'] = float(abs(current))
-            if supply:
-                metrics['power'] = float(abs(supply * current))
+                metrics['power'] = float(abs(supply * supply_current))
+        else:
+            averaged_currents = [value for key, value in current_items if key != 'vdd']
+            if not averaged_currents and current is not None:
+                averaged_currents = [float(abs(current))]
+
+            mean_current = float(np.mean(averaged_currents)) if averaged_currents else None
+            if mean_current is not None:
+                metrics['mean_current_a'] = mean_current
+                logger.warning(
+                    "Falling back to averaged branch current for quiescent_current; no supply current identified"
+                )
+                metrics['quiescent_current'] = mean_current
+                metrics['idd'] = mean_current
+                if supply:
+                    metrics['power'] = float(abs(supply * mean_current))
+            elif current is not None:
+                metrics['supply_current_a'] = float(abs(current))
+                metrics['quiescent_current'] = float(abs(current))
+                metrics['idd'] = float(abs(current))
+                if supply:
+                    metrics['power'] = float(abs(supply * current))
 
         tran = results.get('transient') or results.get('tran', {})
         vout = tran.get('vout', [])
@@ -508,6 +610,8 @@ class PySpiceSimulator(ICircuitSimulator):
             if not np.isnan(sr) and not np.isinf(sr):
                 metrics['slew_rate_v_s'] = float(sr)
                 metrics['slew_rate'] = float(sr)
+            schmitt_metrics = self._extract_schmitt_metrics(tran)
+            metrics.update({key: value for key, value in schmitt_metrics.items() if value is not None})
 
         fourier = results.get('fourier', {})
         if 'thd' in fourier:
@@ -526,6 +630,71 @@ class PySpiceSimulator(ICircuitSimulator):
                     break
         
         return metrics
+
+    def _extract_schmitt_metrics(self, transient: Dict[str, Any]) -> Dict[str, float]:
+        time = transient.get('time', [])
+        vin = transient.get('vin', [])
+        vout = transient.get('vout', [])
+        if len(time) < 2 or len(vin) < 2 or len(vout) < 2:
+            return {}
+
+        sample_count = min(len(time), len(vin), len(vout))
+        time = time[:sample_count]
+        vin = vin[:sample_count]
+        vout = vout[:sample_count]
+        vout_threshold = (max(vout) + min(vout)) / 2.0
+        input_slopes = [vin[index] - vin[index - 1] for index in range(1, sample_count)]
+
+        metrics: Dict[str, float] = {}
+        crossings: List[Tuple[str, int]] = []
+        for index in range(1, sample_count):
+            previous = vout[index - 1]
+            current = vout[index]
+            if previous < vout_threshold <= current:
+                crossings.append(("rising", index))
+            elif previous > vout_threshold >= current:
+                crossings.append(("falling", index))
+
+        for direction, index in crossings:
+            vin_value = float(vin[index])
+            if direction == "rising" and "v_t_plus" not in metrics:
+                metrics["v_t_plus"] = vin_value
+            if direction == "falling" and "v_t_minus" not in metrics:
+                metrics["v_t_minus"] = vin_value
+
+            output_time = float(time[index])
+            expected_sign = 1 if direction == "rising" else -1
+            input_index = None
+            for candidate in range(index, 0, -1):
+                slope = input_slopes[candidate - 1]
+                if expected_sign * slope > 0:
+                    input_index = candidate
+                    break
+            if input_index is not None and "propagation_delay" not in metrics:
+                metrics["propagation_delay"] = max(0.0, output_time - float(time[input_index]))
+                metrics["propagation_delay_s"] = metrics["propagation_delay"]
+
+        if "v_t_plus" in metrics and "v_t_minus" in metrics:
+            metrics["hysteresis_width"] = abs(metrics["v_t_plus"] - metrics["v_t_minus"])
+
+        return metrics
+
+    def _select_supply_current(self, currents: Dict[str, Any]) -> Optional[float]:
+        priority_tokens = ('ivdd', 'vdd', 'ivdda', 'vdda', 'ivcc', 'vcc', 'supply')
+        normalized = []
+        for key, value in (currents or {}).items():
+            if value is None:
+                continue
+            try:
+                normalized.append((str(key).lower(), float(abs(value))))
+            except Exception:
+                continue
+
+        for token in priority_tokens:
+            for key, value in normalized:
+                if key == token or token in key:
+                    return value
+        return None
 
     def _extract_rawfile_plots(self, raw: Any) -> Dict[str, Dict[str, np.ndarray]]:
         parsed_plots: Dict[str, Dict[str, np.ndarray]] = {}

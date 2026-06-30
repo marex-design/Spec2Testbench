@@ -25,6 +25,20 @@ console = Console()
 VALID_PROVIDERS = ["openai", "deepseek", "groq", "gemini", "anthropic"]
 
 
+def _safe_console_print(message: str, style: Optional[str] = None) -> None:
+    try:
+        if style:
+            console.print(message, style=style)
+        else:
+            console.print(message)
+    except UnicodeEncodeError:
+        sanitized = message.encode("ascii", errors="replace").decode("ascii")
+        if style:
+            console.print(sanitized, style=style)
+        else:
+            console.print(sanitized)
+
+
 def _set_provider(provider: Optional[str]) -> None:
     if not provider:
         return
@@ -58,7 +72,7 @@ def verify(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
 ):
     """Verify a circuit against specifications."""
-    console.print("\n[bold cyan]Spec2TestBench - Verification[/bold cyan]\n")
+    _safe_console_print("\nSpec2TestBench - Verification\n", style="bold cyan")
 
     if not specs.exists():
         console.print(f"[red]Specifications file not found: {specs}[/red]")
@@ -96,25 +110,29 @@ def verify(
             console.print("   Falling back to template-based generation\n")
             use_llm = False
 
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console,
-    ) as progress:
-        task = progress.add_task("Running verification...", total=None)
-        pipeline = VerificationPipeline(use_llm=use_llm, llm_client=llm_client)
-        report = pipeline.verify_from_yaml(specs, netlist)
-        progress.remove_task(task)
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Running verification...", total=None)
+            pipeline = VerificationPipeline(use_llm=use_llm, llm_client=llm_client)
+            report = pipeline.verify_from_yaml(specs, netlist)
+            progress.remove_task(task)
+    except Exception as exc:
+        _safe_console_print(f"\nVerification failed: {exc}\n", style="red")
+        raise typer.Exit(1)
 
     formatter = ReportFormatter(output_dir=settings.output.report_dir)
     if format == "markdown":
         formatter.to_markdown(report, save=True)
-        console.print("\n[green]Markdown report generated[/green]")
+        _safe_console_print("\nMarkdown report generated\n", style="green")
     elif format == "json":
         formatter.to_json(report, save=True)
-        console.print("\n[green]JSON report generated[/green]")
+        _safe_console_print("\nJSON report generated\n", style="green")
     else:
-        console.print(formatter.to_console(report))
+        _safe_console_print(formatter.to_console(report))
 
     if report.overall_verdict.value in {"FAIL", "RUN"}:
         raise typer.Exit(1)

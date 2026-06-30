@@ -1,0 +1,36 @@
+name: ind09_ring_vco
+circuit_type: vco
+technology: SKY130 open-source PDK
+description: Current-starved ring VCO benchmark for startup, oscillation frequency, and spectral evidence.
+source:
+  benchmark: industrial_sky130
+  pdk: sky130
+  netlist: benchmark/industrial/netlists/ind09_ring_vco.cir
+performance_targets:
+  frequency_hz:
+    min: 1000.0
+    unit: Hz
+  startup_amplitude:
+    min: 0.01
+    unit: V
+  thd_percent:
+    max: 100.0
+    unit: "%"
+input_conditions:
+  vdd: 1.8
+  vss: 0.0
+  vcm: 0.9
+  input_frequency: 10000000.0
+  input_nodes: vctrl
+  output_nodes: out
+  testbench_note: Self-oscillating VCO benchmark under nominal control bias.
+  expected_behavior: The ring should start oscillating and produce measurable frequency evidence.
+test_categories:
+  - transient
+  - spectral
+  - pvt
+pvt_config:
+  corners:
+    - tt
+  temperature_range: commercial
+  supply_variation: 0.05

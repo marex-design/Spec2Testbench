@@ -23,8 +23,22 @@ Benchmark design goals:
 - More realistic transistor counts than the current pedagogical benchmark
 - Native support for nominal and PVT evaluation
 
-Expected future structure:
+Current first executable subset:
+- `ind01_two_stage_ota`
+- `ind06_strongarm_comparator`
+- `ind08_charge_pump`
+- `ind09_ring_vco`
+
+Additional files used by this subset:
+- `models/sky130_tt.spice`: local bridge file pointing to a user-installed SKY130 model library
+
+Current structure:
 - `manifest.csv`: benchmark inventory and metadata
-- `netlists/`: SPICE netlists or extracted subcircuits
+- `models/`: local PDK bridge files
+- `netlists/`: SKY130-oriented benchmark netlists
 - `specs/`: benchmark-aligned YAML specifications
-- `notes/`: source provenance, assumptions, and references
+- `notes/`: provenance, assumptions, and benchmark notes
+
+How to activate real SKY130 simulation:
+1. Edit `models/sky130_tt.spice` to point to your local SKY130 `.lib` file.
+2. Run `python scripts/run_industrial_sky130_campaign.py`.

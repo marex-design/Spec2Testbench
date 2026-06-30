@@ -1,0 +1,23 @@
+* SKY130 industrial benchmark: current-starved ring VCO
+.include ../models/sky130_tt.spice
+
+VDD vdd 0 1.8
+VCTRL vctrl 0 0.90
+CLOAD out 0 15f
+
+.subckt starved_inv in out vdd vss vctrl
+M1 nint in vss vss sky130_fd_pr__nfet_01v8 L=0.15u W=1.2u
+M2 out nint vss vss sky130_fd_pr__nfet_01v8 L=0.15u W=1.8u
+M3 psrc vctrl vdd vdd sky130_fd_pr__pfet_01v8 L=0.50u W=2.0u
+M4 out in psrc vdd sky130_fd_pr__pfet_01v8 L=0.15u W=2.5u
+.ends starved_inv
+
+XINV1 n1 n2 vdd 0 vctrl starved_inv
+XINV2 n2 n3 vdd 0 vctrl starved_inv
+XINV3 n3 n1 vdd 0 vctrl starved_inv
+
+RSTART n1 0 1Meg
+CSTART n1 0 5f
+EOUT out 0 VALUE={V(n3)}
+
+.end
