@@ -1,0 +1,28 @@
+name: analogcoder_pro_p27_subtractor_strict
+circuit_type: composite
+technology: AnalogCoder-Pro/PySpice generic Level-1 models
+description: Strict campaign for An Op-amp subtractor to make Vout=Vin2-Vin1
+source:
+  benchmark: AnalogCoder-Pro
+  task_id: 27
+  level: Hard
+  type: Subtractor
+  submodule_name: Unknown
+  netlist: benchmark/analogcoder_pro/p27_subtractor.cir
+performance_targets:
+  operating_point:
+    min: 0.5
+    max: 4.5
+    unit: V
+    weight: 1.25
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: Vin1, Vin2
+  output_nodes: Vout
+  testbench_note: NA
+  expected_behavior: NA
+test_categories:
+- dc
+- transient

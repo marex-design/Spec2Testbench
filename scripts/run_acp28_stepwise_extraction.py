@@ -8,11 +8,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 BENCH_DIR = ROOT / "benchmark" / "analogcoder_pro"
-SPEC_DIR = ROOT / "examples" / "benchmark_specs"
-RESULTS_DIR = ROOT / "results" / "acp28_stepwise_extraction"
-OUT_CSV = RESULTS_DIR / "acp28_stepwise_extraction.csv"
-OUT_JSON = RESULTS_DIR / "acp28_stepwise_extraction.json"
-OUT_MD = RESULTS_DIR / "acp28_stepwise_extraction.md"
+DEFAULT_SPEC_DIR = ROOT / "examples" / "benchmark_specs"
+DEFAULT_RESULTS_DIR = ROOT / "results" / "acp28_stepwise_extraction"
 MANIFEST_PATH = BENCH_DIR / "manifest.csv"
 CLI_COMMAND = [
     str(ROOT / ".venv" / "Scripts" / "python.exe"),
@@ -26,6 +23,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run ACP28 stepwise extraction checks via the framework CLI.")
     parser.add_argument("--limit", type=int, default=0, help="Run only the first N circuits (0 = all).")
     parser.add_argument("--offset", type=int, default=0, help="Skip the first N circuits before running.")
+    parser.add_argument("--spec-dir", type=Path, default=DEFAULT_SPEC_DIR, help="Directory containing ACP28 YAML specs.")
+    parser.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS_DIR, help="Directory where run artifacts are written.")
     return parser.parse_args()
 
 
@@ -89,13 +88,16 @@ def build_markdown(rows: list[dict], summary: dict) -> str:
     return "\n".join(lines)
 
 
-def write_outputs(rows: list[dict]) -> None:
+def write_outputs(rows: list[dict], results_dir: Path, spec_dir: Path) -> None:
     if not rows:
         return
 
     summary = summarize_rows(rows)
+    out_csv = results_dir / "acp28_stepwise_extraction.csv"
+    out_json = results_dir / "acp28_stepwise_extraction.json"
+    out_md = results_dir / "acp28_stepwise_extraction.md"
 
-    with OUT_CSV.open("w", newline="", encoding="utf-8") as handle:
+    with out_csv.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
         writer.writeheader()
         writer.writerows(rows)
@@ -105,20 +107,22 @@ def write_outputs(rows: list[dict]) -> None:
             "generated_at_utc": datetime.now(timezone.utc).isoformat(),
             "root": str(ROOT),
             "bench_dir": str(BENCH_DIR),
-            "spec_dir": str(SPEC_DIR),
-            "results_dir": str(RESULTS_DIR),
+            "spec_dir": str(spec_dir),
+            "results_dir": str(results_dir),
             "command_prefix": " ".join(CLI_COMMAND),
         },
         "summary": summary,
         "circuits": rows,
     }
-    OUT_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-    OUT_MD.write_text(build_markdown(rows, summary), encoding="utf-8")
+    out_json.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    out_md.write_text(build_markdown(rows, summary), encoding="utf-8")
 
 
 def main():
     args = parse_args()
-    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    spec_dir = args.spec_dir.resolve()
+    results_dir = args.results_dir.resolve()
+    results_dir.mkdir(parents=True, exist_ok=True)
     manifest_rows = load_manifest()
 
     if args.offset:
@@ -132,10 +136,10 @@ def main():
         netlist_name = manifest_row["netlist"]
         spec_name = manifest_row["spec"]
         stem = Path(netlist_name).stem
-        case_dir = RESULTS_DIR / stem
+        case_dir = results_dir / stem
         case_dir.mkdir(parents=True, exist_ok=True)
 
-        spec_path = SPEC_DIR / spec_name
+        spec_path = spec_dir / spec_name
         netlist_path = BENCH_DIR / netlist_name
         command = CLI_COMMAND + [
             "--specs", str(spec_path),
@@ -178,12 +182,12 @@ def main():
             "errors": error_text,
             "json_report_path": str(report_path.relative_to(ROOT)) if report_path else "",
         })
-        write_outputs(rows)
+        write_outputs(rows, results_dir, spec_dir)
 
     summary = summarize_rows(rows)
-    print(f"CSV: {OUT_CSV}")
-    print(f"JSON: {OUT_JSON}")
-    print(f"Markdown: {OUT_MD}")
+    print(f"CSV: {results_dir / 'acp28_stepwise_extraction.csv'}")
+    print(f"JSON: {results_dir / 'acp28_stepwise_extraction.json'}")
+    print(f"Markdown: {results_dir / 'acp28_stepwise_extraction.md'}")
     print(f"Processed circuits: {summary['total_circuits']}")
 
 

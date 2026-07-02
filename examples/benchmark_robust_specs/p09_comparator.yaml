@@ -1,0 +1,38 @@
+name: analogcoder_pro_p09_comparator_robust
+circuit_type: comparator
+technology: AnalogCoder-Pro/PySpice generic Level-1 models
+description: Robust campaign for an op-amp comparator to make the output high when
+  Vin > Vref and low when Vin < Vref
+source:
+  benchmark: AnalogCoder-Pro
+  task_id: 9
+  level: Hard
+  type: Comparator
+  submodule_name: Unknown
+  netlist: benchmark/analogcoder_pro/p09_comparator.cir
+performance_targets:
+  propagation_delay:
+    max: 0.001
+    unit: s
+  pvt_delay_variation:
+    max: 0.001
+    unit: s
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: Vin
+  output_nodes: Vout
+  testbench_note: The testbench applies a 0-5V sweep signal to Vin.
+  expected_behavior: Vout should transition sharply from low to high when the input
+    voltage exceeds the reference voltage, producing a digital signal with two states.
+test_categories:
+- transient
+- pvt
+pvt_config:
+  corners:
+  - tt
+  - ff
+  - ss
+  temperature_range: commercial
+  supply_variation: 0.1

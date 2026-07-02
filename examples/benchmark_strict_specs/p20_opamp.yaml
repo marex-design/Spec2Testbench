@@ -1,0 +1,38 @@
+name: analogcoder_pro_p20_opamp_strict
+circuit_type: opamp
+technology: AnalogCoder-Pro/PySpice generic Level-1 models
+description: 'Strict campaign for A two-stage differential opamp (first stage: common-source
+  with an active load and a tail current, second stage: common-source with an active
+  load)'
+source:
+  benchmark: AnalogCoder-Pro
+  task_id: 20
+  level: Hard
+  type: Opamp
+  submodule_name: OpampResistanceLoad
+  netlist: benchmark/analogcoder_pro/p20_opamp.cir
+performance_targets:
+  dc_gain_db:
+    min: -525.0
+    unit: dB
+    weight: 1.25
+  phase_margin:
+    min: 0.1
+    unit: deg
+    weight: 1.25
+  quiescent_current:
+    max: 0.037500000000000006
+    unit: A
+    weight: 1.25
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: Vinp, Vinn, Vbias1, Vbias2, Vbias3
+  output_nodes: Voutp, Vout
+  testbench_note: NA
+  expected_behavior: NA
+test_categories:
+- dc
+- ac
+- transient

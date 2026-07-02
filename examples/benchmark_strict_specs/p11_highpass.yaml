@@ -1,0 +1,29 @@
+name: analogcoder_pro_p11_highpass_strict
+circuit_type: high_pass_filter
+technology: AnalogCoder-Pro/PySpice generic Level-1 models
+description: Strict campaign for a passive high-pass filter
+source:
+  benchmark: AnalogCoder-Pro
+  task_id: 11
+  level: Hard
+  type: HighPass
+  submodule_name: Unknown
+  netlist: benchmark/analogcoder_pro/p11_highpass.cir
+performance_targets:
+  cutoff_frequency_hz:
+    min: 100000000.9
+    max: 900000000.1
+    unit: Hz
+    weight: 1.25
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: Vin
+  output_nodes: Vout
+  testbench_note: The testbench applies a 1Hz-1GHz frequency sweep signal to Vin.
+  expected_behavior: Vout should show significant attenuation at low frequencies and
+    increase to full amplitude at higher frequencies.
+test_categories:
+- ac
+- transient

@@ -1,0 +1,31 @@
+name: analogcoder_pro_p06_inverter
+circuit_type: amplifier
+technology: AnalogCoder-Pro/PySpice generic Level-1 models
+description: A NMOS inverter with resistive load R
+source:
+  benchmark: AnalogCoder-Pro
+  task_id: 6
+  level: Easy
+  type: Inverter
+  submodule_name: NMOSInverter
+  netlist: benchmark/analogcoder_pro/p06_inverter.cir
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+  propagation_delay:
+    min: 0.0
+    max: 1.0
+    unit: s
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: Vin
+  output_nodes: Vout
+  testbench_note: NA
+  expected_behavior: NA
+test_categories:
+- dc
+- transient
