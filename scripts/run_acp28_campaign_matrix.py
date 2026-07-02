@@ -54,7 +54,7 @@ def run_campaign(name: str, spec_dir: Path) -> tuple[dict, list[dict]]:
 
     csv_path = out_dir / "acp28_stepwise_extraction.csv"
     rows = list(csv.DictReader(csv_path.open(encoding="utf-8"))) if csv_path.exists() else []
-    verdict_counts = Counter(row.get("overall_verdict", "") for row in rows)
+    verdict_counts = Counter(row.get("terminal_status", row.get("overall_verdict", "")) for row in rows)
 
     summary_row = {
         "campaign": name,
@@ -63,10 +63,10 @@ def run_campaign(name: str, spec_dir: Path) -> tuple[dict, list[dict]]:
         "exit_code": completed.returncode,
         "circuits": len(rows),
         "pass_count": verdict_counts.get("PASS", 0),
-        "run_count": verdict_counts.get("RUN", 0),
         "fail_count": verdict_counts.get("FAIL", 0),
         "robust_pass_count": verdict_counts.get("ROBUST PASS", 0),
-        "other_count": sum(count for verdict, count in verdict_counts.items() if verdict not in {"PASS", "RUN", "FAIL", "ROBUST PASS"}),
+        "run_count": verdict_counts.get("RUN", 0),
+        "other_count": sum(count for verdict, count in verdict_counts.items() if verdict not in {"PASS", "FAIL", "ROBUST PASS", "RUN"}),
     }
 
     for row in rows:
@@ -80,25 +80,26 @@ def build_markdown(summary_rows: list[dict], per_circuit_rows: list[dict]) -> st
         "",
         f"- Generated at: {datetime.now(timezone.utc).isoformat()}",
         "",
-        "| Campaign | Circuits | PASS | RUN | FAIL | ROBUST PASS | Exit |",
+        "| Campaign | Circuits | PASS | FAIL | ROBUST PASS | RUN | Exit |",
         "|---|---:|---:|---:|---:|---:|---:|",
     ]
     for row in summary_rows:
         lines.append(
-            f"| {row['campaign']} | {row['circuits']} | {row['pass_count']} | {row['run_count']} | "
-            f"{row['fail_count']} | {row['robust_pass_count']} | {row['exit_code']} |"
+            f"| {row['campaign']} | {row['circuits']} | {row['pass_count']} | {row['fail_count']} | "
+            f"{row['robust_pass_count']} | {row['run_count']} | {row['exit_code']} |"
         )
 
     lines.extend([
         "",
         "## Per Circuit",
         "",
-        "| Campaign | Circuit | Type | Verdict | Metrics | Count |",
-        "|---|---|---|---|---|---:|",
+        "| Campaign | Circuit | Type | Verdict | Failure kind | Metrics | Count |",
+        "|---|---|---|---|---|---|---:|",
     ])
     for row in per_circuit_rows:
         lines.append(
-            f"| {row['campaign']} | {row['circuit']} | {row['circuit_type']} | {row['overall_verdict']} | "
+            f"| {row['campaign']} | {row['circuit']} | {row['circuit_type']} | {row.get('terminal_status', row.get('overall_verdict', ''))} | "
+            f"{row.get('failure_kind', '') or '-'} | "
             f"{row['extracted_metrics'] or '-'} | {row['metric_count']} |"
         )
     return "\n".join(lines)
@@ -144,7 +145,7 @@ def main():
         existing_csv = RESULTS_DIR / name / "acp28_stepwise_extraction.csv"
         if args.resume and existing_csv.exists():
             rows = list(csv.DictReader(existing_csv.open(encoding="utf-8")))
-            verdict_counts = Counter(row.get("overall_verdict", "") for row in rows)
+            verdict_counts = Counter(row.get("terminal_status", row.get("overall_verdict", "")) for row in rows)
             summary_row = {
                 "campaign": name,
                 "spec_dir": str(spec_dir),
@@ -152,10 +153,10 @@ def main():
                 "exit_code": 0,
                 "circuits": len(rows),
                 "pass_count": verdict_counts.get("PASS", 0),
-                "run_count": verdict_counts.get("RUN", 0),
                 "fail_count": verdict_counts.get("FAIL", 0),
                 "robust_pass_count": verdict_counts.get("ROBUST PASS", 0),
-                "other_count": sum(count for verdict, count in verdict_counts.items() if verdict not in {"PASS", "RUN", "FAIL", "ROBUST PASS"}),
+                "run_count": verdict_counts.get("RUN", 0),
+                "other_count": sum(count for verdict, count in verdict_counts.items() if verdict not in {"PASS", "FAIL", "ROBUST PASS", "RUN"}),
             }
             for row in rows:
                 row["campaign"] = name

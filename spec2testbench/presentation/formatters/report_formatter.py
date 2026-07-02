@@ -84,12 +84,17 @@ class ReportFormatter:
             "circuit_name": report.circuit_name,
             "timestamp": report.timestamp,
             "overall_verdict": report.overall_verdict.value,
+            "terminal_status": report.terminal_status,
+            "failure_kind": report.failure_kind,
             "success_rate": report.success_rate,
             "compliance_score": report.compliance_score,
             "nominal_compliance_score": report.nominal_compliance_score,
             "pvt_compliance_score": report.pvt_compliance_score,
             "testbench_generation_success": report.testbench_generation_success,
             "simulation_success": report.simulation_success,
+            "missing_metrics": report.missing_metrics,
+            "failed_metrics": report.failed_metric_names,
+            "warning_metrics": report.warning_metric_names,
             "metrics": [
                 {
                     "name": result.test_name,
@@ -99,6 +104,7 @@ class ReportFormatter:
                     "expected_max": result.expected_max,
                     "unit": result.unit,
                     "message": result.message,
+                    "category": result.category,
                 }
                 for result in report.spec_results
             ],

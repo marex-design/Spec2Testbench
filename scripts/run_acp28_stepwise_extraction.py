@@ -73,15 +73,16 @@ def build_markdown(rows: list[dict], summary: dict) -> str:
         f"- Metrics extracted ok: {summary['metrics_extracted_ok']}",
         f"- Zero-metric circuits: {', '.join(summary['zero_metric_circuits']) or 'none'}",
         "",
-        "| Circuit | Type | CLI | Report | TB gen | Sim | Metrics | Count | Extracted metrics | Errors |",
-        "|---|---|---|---|---|---|---|---:|---|---|",
+        "| Circuit | Type | Status | Failure kind | CLI | Report | TB gen | Sim | Metrics | Count | Missing | Failed | Warning | Extracted metrics | Errors |",
+        "|---|---|---|---|---|---|---|---|---|---:|---|---|---|---|---|",
     ]
 
     for row in rows:
         lines.append(
-            f"| {row['circuit']} | {row['circuit_type']} | {row['command_ok']} | "
+            f"| {row['circuit']} | {row['circuit_type']} | {row['terminal_status']} | {row['failure_kind'] or '-'} | {row['command_ok']} | "
             f"{row['report_exists']} | {row['testbench_generation_success']} | "
             f"{row['simulation_success']} | {row['metrics_extracted_ok']} | {row['metric_count']} | "
+            f"{row['missing_metrics'] or '-'} | {row['failed_metrics'] or '-'} | {row['warning_metrics'] or '-'} | "
             f"{row['extracted_metrics'] or '-'} | {row['errors'] or '-'} |"
         )
 
@@ -163,6 +164,9 @@ def main():
         report_data = parse_report(report_path)
         metrics = report_data.get("metrics", []) if report_data else []
         metric_names = [metric.get("name", "") for metric in metrics if metric.get("name")]
+        failed_metrics = [metric.get("name", "") for metric in metrics if metric.get("verdict") == "FAIL" and metric.get("name")]
+        warning_metrics = [metric.get("name", "") for metric in metrics if metric.get("verdict") == "WARNING" and metric.get("name")]
+        missing_metrics = [metric.get("name", "") for metric in metrics if metric.get("verdict") == "ERROR" and metric.get("name")]
         errors = report_data.get("errors", []) if report_data else []
         error_text = " | ".join(errors)
 
@@ -178,6 +182,11 @@ def main():
             "metric_count": len(metric_names),
             "extracted_metrics": ", ".join(metric_names),
             "overall_verdict": report_data.get("overall_verdict", "") if report_data else "",
+            "terminal_status": report_data.get("terminal_status", report_data.get("overall_verdict", "")) if report_data else "",
+            "failure_kind": report_data.get("failure_kind", "") if report_data else "",
+            "missing_metrics": ", ".join(report_data.get("missing_metrics", missing_metrics)) if report_data else "",
+            "failed_metrics": ", ".join(report_data.get("failed_metrics", failed_metrics)) if report_data else "",
+            "warning_metrics": ", ".join(report_data.get("warning_metrics", warning_metrics)) if report_data else "",
             "compliance_score": report_data.get("compliance_score", "") if report_data else "",
             "errors": error_text,
             "json_report_path": str(report_path.relative_to(ROOT)) if report_path else "",

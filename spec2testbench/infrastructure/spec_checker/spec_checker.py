@@ -85,7 +85,7 @@ class SpecChecker(ISpecChecker):
         for metric_name, expected in specification.performance_targets.items():
             measured = extracted.get(metric_name)
             result = self.verify_single_metric(
-                metric_name, measured, specification
+                metric_name, measured, specification, simulation_results
             )
             results.append(result)
         
@@ -101,7 +101,8 @@ class SpecChecker(ISpecChecker):
     def verify_single_metric(self,
                              metric_name: str,
                              measured_value: Optional[float],
-                             specification: Specification) -> CheckResult:
+                             specification: Specification,
+                             simulation_results: Optional[Dict[str, Any]] = None) -> CheckResult:
         """
         Verify a single metric against specification.
         
@@ -132,6 +133,7 @@ class SpecChecker(ISpecChecker):
         
         # Handle missing measured value
         if measured_value is None:
+            error_cause = self._infer_missing_metric_cause(metric_name, simulation_results or {})
             return CheckResult(
                 test_name=metric_name,
                 verdict=Verdict.ERROR,
@@ -139,14 +141,26 @@ class SpecChecker(ISpecChecker):
                 expected_min=expected_min,
                 expected_max=expected_max,
                 unit=unit,
-                message=f"Metric '{metric_name}' could not be extracted from simulation",
+                message=f"{error_cause}: Metric '{metric_name}' could not be extracted from simulation",
                 category=self._get_metric_category(metric_name)
             )
-        
+
         # Convert units to SI for comparison
         measured_si = self._to_si(measured_value, unit)
         expected_min_si = self._to_si(expected_min, unit) if expected_min is not None else None
         expected_max_si = self._to_si(expected_max, unit) if expected_max is not None else None
+
+        if measured_si is None:
+            return CheckResult(
+                test_name=metric_name,
+                verdict=Verdict.ERROR,
+                measured_value=None,
+                expected_min=expected_min,
+                expected_max=expected_max,
+                unit=unit,
+                message=f"unit_conversion_failed: Metric '{metric_name}' could not be converted to SI",
+                category=self._get_metric_category(metric_name)
+            )
         
         # Determine verdict
         verdict, message = self._compute_verdict(
@@ -335,7 +349,9 @@ class SpecChecker(ISpecChecker):
         """Determine category from metric name."""
         metric_lower = metric_name.lower()
         
-        if any(x in metric_lower for x in ["dc", "op", "bias", "power", "current"]):
+        if any(x in metric_lower for x in ["pvt", "corner", "temperature", "supply"]):
+            return "pvt"
+        elif any(x in metric_lower for x in ["dc", "op", "bias", "power", "current"]):
             return "dc"
         elif any(x in metric_lower for x in ["gain", "bandwidth", "gbw", "cmrr", "psrr", "phase"]):
             return "ac"
@@ -343,7 +359,23 @@ class SpecChecker(ISpecChecker):
             return "transient"
         elif any(x in metric_lower for x in ["thd", "fft", "sfdr", "spectral", "noise"]):
             return "spectral"
-        elif any(x in metric_lower for x in ["pvt", "corner", "temperature", "supply"]):
-            return "pvt"
         else:
             return "other"
+
+    def _infer_missing_metric_cause(self, metric_name: str, simulation_results: Dict[str, Any]) -> str:
+        if not simulation_results.get("success", True):
+            return "simulation_not_successful"
+
+        category = self._get_metric_category(metric_name)
+        category_sections = {
+            "dc": ("dc", "metrics"),
+            "ac": ("ac", "metrics"),
+            "transient": ("transient", "tran", "metrics"),
+            "spectral": ("fourier", "metrics"),
+            "pvt": ("pvt", "metrics"),
+        }
+        section_names = category_sections.get(category, ("metrics",))
+        if not any(simulation_results.get(section_name) for section_name in section_names):
+            return "no_waveform_data"
+
+        return "metric_missing"

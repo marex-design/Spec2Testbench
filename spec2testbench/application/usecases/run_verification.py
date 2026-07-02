@@ -34,6 +34,55 @@ class VerificationReport:
     waveform_analyses: List[MultimodalResult] = field(default_factory=list)
     simulation_logs: List[str] = field(default_factory=list)
     errors: List[str] = field(default_factory=list)
+
+    @property
+    def terminal_status(self) -> str:
+        return self.overall_verdict.value
+
+    @property
+    def missing_metrics(self) -> List[str]:
+        return [
+            result.test_name
+            for result in self.spec_results
+            if result.verdict == Verdict.ERROR
+        ]
+
+    @property
+    def failed_metric_names(self) -> List[str]:
+        return [
+            result.test_name
+            for result in self.spec_results
+            if result.verdict == Verdict.FAIL
+        ]
+
+    @property
+    def warning_metric_names(self) -> List[str]:
+        return [
+            result.test_name
+            for result in self.spec_results
+            if result.verdict == Verdict.WARNING
+        ]
+
+    @property
+    def failure_kind(self) -> str:
+        if self.errors or not self.testbench_generation_success:
+            return "testbench_generation_failed"
+        if not self.simulation_success:
+            return "simulation_not_successful"
+
+        error_results = [result for result in self.spec_results if result.verdict == Verdict.ERROR]
+        if error_results:
+            prefixes = []
+            for result in error_results:
+                prefix = result.message.split(":", 1)[0].strip().lower()
+                if prefix and prefix not in prefixes:
+                    prefixes.append(prefix)
+            return prefixes[0] if prefixes else "metric_extraction_failed"
+
+        if any(result.verdict == Verdict.FAIL for result in self.spec_results):
+            return "metric_out_of_spec"
+
+        return ""
     
     @property
     def overall_verdict(self) -> ValidationStatus:
@@ -44,7 +93,7 @@ class VerificationReport:
         if any(verdict == Verdict.ERROR for verdict in metric_verdicts):
             return ValidationStatus.FAIL
         if any(verdict == Verdict.FAIL for verdict in metric_verdicts):
-            return ValidationStatus.RUN
+            return ValidationStatus.FAIL
         if self.has_pvt_coverage and self.pvt_compliance_score == 1.0 and self.nominal_compliance_score == 1.0:
             return ValidationStatus.ROBUST_PASS
         return ValidationStatus.PASS
