@@ -297,6 +297,9 @@ def main():
             **pvt_summary,
         })
 
+    if not rows:
+        raise RuntimeError(f"No benchmark netlists found in {NETLIST_DIR}")
+
     with OUT_CSV.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
         writer.writeheader()

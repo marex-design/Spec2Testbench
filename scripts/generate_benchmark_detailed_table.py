@@ -6,11 +6,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 
-NETLIST_DIR = Path("benchmark_netlists")
-METRICS_CSV = Path("results/benchmark_campaign_metrics.csv")
-TOPOLOGY_CSV = Path("results/paper_topology_table.csv")
-OUT_CSV = Path("results/benchmark_detailed_table.csv")
-OUT_MD = Path("results/benchmark_detailed_table.md")
+NETLIST_DIR = ROOT / "benchmark" / "analogcoder_pro"
+METRICS_CSV = ROOT / "results" / "benchmark_campaign_metrics.csv"
+TOPOLOGY_CSV = ROOT / "results" / "paper_topology_table.csv"
+OUT_CSV = ROOT / "results" / "benchmark_detailed_table.csv"
+OUT_MD = ROOT / "results" / "benchmark_detailed_table.md"
 
 
 COMPONENT_PREFIXES = {
@@ -125,6 +125,9 @@ def main():
             "metrics": extracted_metrics,
             "success": topo_row.get("success", "PASS" if metric_row.get("success") == "True" else "FAIL"),
         })
+
+    if not rows:
+        raise RuntimeError(f"No benchmark netlists found in {NETLIST_DIR}")
 
     with OUT_CSV.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))

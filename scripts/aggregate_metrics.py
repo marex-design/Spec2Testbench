@@ -13,17 +13,17 @@ import traceback
 from spec2testbench.domain.registry import circuit_kb
 
 
-NETLIST_DIR = Path("benchmark_netlists")
-OUT_RAW_DIR = Path("results/raw")
+NETLIST_DIR = ROOT / "benchmark" / "analogcoder_pro"
+OUT_RAW_DIR = ROOT / "results" / "raw"
 OUT_RAW_DIR.mkdir(parents=True, exist_ok=True)
-PREPARED_NETLIST_DIR = Path("results/prepared_netlists")
+PREPARED_NETLIST_DIR = ROOT / "results" / "prepared_netlists"
 PREPARED_NETLIST_DIR.mkdir(parents=True, exist_ok=True)
-NGSPICE_LOG_DIR = Path("results/ngspice_logs")
+NGSPICE_LOG_DIR = ROOT / "results" / "ngspice_logs"
 NGSPICE_LOG_DIR.mkdir(parents=True, exist_ok=True)
-OUT_CSV = Path("results/metrics.csv")
+OUT_CSV = ROOT / "results" / "metrics.csv"
 
 # optional overrides: results/node_override.csv with columns circuit,preferred_out_node
-NODE_OVERRIDE_CSV = Path('results/node_override.csv')
+NODE_OVERRIDE_CSV = ROOT / "results" / "node_override.csv"
 NODE_OVERRIDES = {}
 if NODE_OVERRIDE_CSV.exists():
     try:
