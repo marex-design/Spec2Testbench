@@ -1,0 +1,17 @@
+[
+  {
+    "metric_name": "slew_rate",
+    "measured_value": 63041381857.04531,
+    "unit": "V/s",
+    "normalized_value": 63041381857.04531,
+    "expected_operator": ">=",
+    "expected_threshold": 1e-06,
+    "tolerance": null,
+    "status": "PASS",
+    "source_analysis": "TRAN",
+    "source_signal": "vout",
+    "extraction_method": "MetricExtractor.extract:slew_rate",
+    "raw_result_file": null,
+    "error": null
+  }
+]

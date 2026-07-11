@@ -11,6 +11,7 @@ import subprocess
 import os
 import re
 import shutil
+import copy
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, field
@@ -18,6 +19,7 @@ import numpy as np
 
 from ...domain.entities.testbench import TestBench, AnalysisType, Stimulus
 from ...domain.interfaces.icircuit_simulator import ICircuitSimulator
+from ...domain.value_objects.scientific_status import ExecutionStatus, SimulationMode
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +55,12 @@ class PySpiceSimulator(ICircuitSimulator):
         macOS: brew install ngspice
     """
     
-    def __init__(self, ngspice_path: Optional[str] = None, timeout: int = 300):
+    def __init__(
+        self,
+        ngspice_path: Optional[str] = None,
+        timeout: int = 300,
+        allow_mock: bool = False,
+    ):
         """
         Initialize the PySpice simulator.
         
@@ -63,6 +70,7 @@ class PySpiceSimulator(ICircuitSimulator):
         """
         self.ngspice_path = ngspice_path or self._find_ngspice()
         self.timeout = timeout
+        self.allow_mock = allow_mock
         self._ngspice_available = self._check_ngspice()
     
     def _find_ngspice(self) -> str:
@@ -114,9 +122,13 @@ class PySpiceSimulator(ICircuitSimulator):
         logger.info(f"Running simulation for {testbench.circuit_name}")
         
         if not self._ngspice_available:
-            # Fallback to mock simulation
-            logger.warning("Ngspice not available, using mock simulation")
-            return self._run_mock_simulation(testbench)
+            if self.allow_mock:
+                logger.warning("Ngspice not available, using explicit mock simulation")
+                return self._run_mock_simulation(testbench)
+            return self._error_result(
+                "ngspice_unavailable",
+                f"Ngspice executable not available: {self.ngspice_path}",
+            )
         
         # Generate SPICE deck
         spice_deck = self._generate_spice_deck(netlist_path, testbench)
@@ -136,6 +148,18 @@ class PySpiceSimulator(ICircuitSimulator):
             simulation_results['logs'] = result['logs']
             simulation_results['errors'] = result['errors']
             simulation_results['success'] = result['success']
+            simulation_results['simulation_mode'] = SimulationMode.REAL.value
+            simulation_results['execution_status'] = self._execution_status_from_result(result)
+            simulation_results['error_type'] = self._error_type_from_result(result)
+
+            pvt_analysis = next((analysis for analysis in testbench.analyses if analysis.type == AnalysisType.PVT), None)
+            if pvt_analysis is not None and (result['success'] or any(simulation_results.get(key) for key in ('dc', 'ac', 'tran', 'transient', 'fourier'))):
+                simulation_results['pvt'] = self._run_pvt_variants(
+                    spice_deck,
+                    testbench,
+                    simulation_results,
+                    pvt_analysis.parameters,
+                )
             
             # Extract metrics
             has_structured_results = any(
@@ -149,7 +173,10 @@ class PySpiceSimulator(ICircuitSimulator):
             
         except Exception as e:
             logger.error(f"Simulation failed: {e}")
-            return self._run_mock_simulation(testbench)
+            if self.allow_mock:
+                logger.warning("Simulation failed, using explicit mock simulation")
+                return self._run_mock_simulation(testbench)
+            return self._error_result(type(e).__name__, str(e))
         finally:
             # Cleanup
             try:
@@ -165,6 +192,9 @@ class PySpiceSimulator(ICircuitSimulator):
         # Generate mock results based on testbench type
         results = {
             'success': True,
+            'simulation_mode': SimulationMode.MOCK.value,
+            'execution_status': ExecutionStatus.SUCCESS.value,
+            'eligible_for_paper_results': False,
             'logs': ['Mock simulation - ngspice not available'],
             'errors': [],
             'metrics': {},
@@ -210,6 +240,49 @@ class PySpiceSimulator(ICircuitSimulator):
         results['currents'] = {'vdd': 1e-3}
         
         return results
+
+    def _error_result(self, error_type: str, error_message: str) -> Dict[str, Any]:
+        execution_status = (
+            ExecutionStatus.TIMEOUT
+            if "timeout" in error_type.lower() or "timed out" in error_message.lower()
+            else ExecutionStatus.ERROR
+        )
+        return {
+            "success": False,
+            "simulation_mode": SimulationMode.REAL.value,
+            "execution_status": execution_status.value,
+            "eligible_for_paper_results": False,
+            "logs": [],
+            "errors": [error_message],
+            "error_type": error_type,
+            "error_message": error_message,
+            "metrics": {},
+            "ac": {},
+            "tran": {},
+            "transient": {},
+            "dc": {},
+            "fourier": {},
+            "pvt": {},
+            "currents": {},
+        }
+
+    def _execution_status_from_result(self, result: Dict[str, Any]) -> str:
+        if result.get("success"):
+            return ExecutionStatus.SUCCESS.value
+        joined_errors = "\n".join(result.get("errors", []))
+        if "timed out" in joined_errors.lower():
+            return ExecutionStatus.TIMEOUT.value
+        return ExecutionStatus.ERROR.value
+
+    def _error_type_from_result(self, result: Dict[str, Any]) -> Optional[str]:
+        if result.get("success"):
+            return None
+        joined_errors = "\n".join(result.get("errors", []))
+        if "timed out" in joined_errors.lower():
+            return "timeout"
+        if joined_errors:
+            return "ngspice_error"
+        return "simulation_error"
     
     def _generate_spice_deck(self, netlist_path: Path, testbench: TestBench) -> str:
         """Generate complete SPICE deck."""
@@ -237,7 +310,10 @@ class PySpiceSimulator(ICircuitSimulator):
         else:
             lines.extend(["", f"* WARNING: Netlist not found: {netlist_path}"])
 
-        if not re.search(r"^\s*\.temp\b", existing_text, re.IGNORECASE | re.MULTILINE):
+        if (
+            not re.search(r"^\s*\.temp\b", existing_text, re.IGNORECASE | re.MULTILINE)
+            and not self._nearly_equal(float(testbench.temperature), 27.0)
+        ):
             lines.extend(["", f".TEMP {testbench.temperature}"])
 
         emitted_sources = set()
@@ -435,12 +511,13 @@ class PySpiceSimulator(ICircuitSimulator):
             pattern = patterns.get(analysis.type)
             if not pattern:
                 continue
-            updated_text, count = re.subn(pattern, analysis.to_spice(), updated_text, count=1)
+            updated_text, count = re.subn(pattern, "", updated_text)
             if count:
                 logger.debug("Overrode existing %s analysis", analysis.type.value)
+                updated_text = updated_text.rstrip() + "\n" + analysis.to_spice() + "\n"
         return updated_text
     
-    def _run_ngspice(self, spice_file: Path, raw_file: Path) -> Dict[str, Any]:
+    def _run_ngspice(self, spice_file: Path, raw_file: Path, timeout_override: Optional[int] = None) -> Dict[str, Any]:
         """
         Run ngspice simulation.
         
@@ -455,12 +532,14 @@ class PySpiceSimulator(ICircuitSimulator):
             str(spice_file)
         ]
         
+        effective_timeout = timeout_override or self.timeout
+
         try:
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
-                timeout=self.timeout,
+                timeout=effective_timeout,
                 shell=False
             )
             
@@ -485,7 +564,7 @@ class PySpiceSimulator(ICircuitSimulator):
             return {
                 'success': False,
                 'logs': [],
-                'errors': [f"Simulation timed out after {self.timeout} seconds"]
+                'errors': [f"Simulation timed out after {effective_timeout} seconds"]
             }
         except Exception as e:
             return {
@@ -612,6 +691,13 @@ class PySpiceSimulator(ICircuitSimulator):
                 metrics['slew_rate'] = float(sr)
             schmitt_metrics = self._extract_schmitt_metrics(tran)
             metrics.update({key: value for key, value in schmitt_metrics.items() if value is not None})
+            oscillation_frequency = self._estimate_transient_frequency(tran)
+            if oscillation_frequency is not None:
+                metrics['oscillator_frequency'] = float(oscillation_frequency)
+                metrics['frequency_hz'] = float(oscillation_frequency)
+            startup_amplitude = self._estimate_startup_amplitude(tran)
+            if startup_amplitude is not None:
+                metrics['startup_amplitude'] = float(startup_amplitude)
 
         fourier = results.get('fourier', {})
         if 'thd' in fourier:
@@ -630,6 +716,222 @@ class PySpiceSimulator(ICircuitSimulator):
                     break
         
         return metrics
+
+    def _run_pvt_variants(
+        self,
+        spice_deck: str,
+        testbench: TestBench,
+        nominal_results: Dict[str, Any],
+        parameters: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        temperatures = self._normalize_temperature_points(parameters.get('temperatures', []))
+        supply_variation = self._coerce_float(parameters.get('supply_variation'), default=0.0) or 0.0
+        supply_scales = [1.0]
+        if supply_variation > 0:
+            supply_scales.extend([max(0.0, 1.0 - supply_variation), 1.0 + supply_variation])
+
+        nominal_temperature = self._extract_nominal_temperature(spice_deck, testbench.temperature)
+        base_variants: List[Tuple[str, Optional[float], float]] = []
+        for temperature in temperatures:
+            if temperature is None or self._nearly_equal(temperature, nominal_temperature):
+                continue
+            label = f"temp_{int(temperature) if float(temperature).is_integer() else temperature}c"
+            base_variants.append((label, temperature, 1.0))
+        for scale in supply_scales:
+            if self._nearly_equal(scale, 1.0):
+                continue
+            direction = "minus" if scale < 1.0 else "plus"
+            delta_pct = abs(scale - 1.0) * 100.0
+            suffix = int(round(delta_pct)) if abs(delta_pct - round(delta_pct)) < 1e-9 else round(delta_pct, 3)
+            label = f"vdd_{direction}_{suffix}pct"
+            base_variants.append((label, None, scale))
+
+        variant_rows = []
+        if not base_variants:
+            return {"variants": [], "summary": {}}
+
+        variant_testbench = copy.deepcopy(testbench)
+        variant_testbench.analyses = [analysis for analysis in variant_testbench.analyses if analysis.type != AnalysisType.PVT]
+        variant_testbench.analyses = self._select_pvt_variant_analyses(variant_testbench)
+
+        nominal_metrics = self.extract_metrics(nominal_results, variant_testbench)
+        for label, temperature, supply_scale in base_variants:
+            variant_deck, modified_supplies = self._apply_pvt_variant_to_deck(spice_deck, temperature, supply_scale)
+            variant_result = self._run_spice_deck_text(
+                variant_deck,
+                variant_testbench,
+                timeout_override=min(self.timeout, 20),
+            )
+            variant_metrics = self.extract_metrics(variant_result, variant_testbench) if variant_result.get('success') else {}
+            variant_rows.append({
+                "label": label,
+                "temperature_c": temperature,
+                "supply_scale": supply_scale,
+                "modified_supplies": modified_supplies,
+                "success": bool(variant_result.get("success")),
+                "errors": variant_result.get("errors", []),
+                "metrics": variant_metrics,
+            })
+
+        return {
+            "variants": variant_rows,
+            "summary": self._summarize_pvt_variants(nominal_metrics, variant_rows),
+        }
+
+    def _select_pvt_variant_analyses(self, testbench: TestBench) -> List[Any]:
+        measurements = {measurement.name.lower() for measurement in testbench.measurements}
+        required_types = set()
+
+        if any(name in measurements for name in ("pvt_vout_variation", "pvt_power_variation", "pvt_dc_gain_variation")):
+            required_types.add(AnalysisType.DC)
+        if "pvt_dc_gain_variation" in measurements:
+            required_types.add(AnalysisType.AC)
+        if any(name in measurements for name in ("pvt_delay_variation", "pvt_frequency_variation")):
+            required_types.add(AnalysisType.TRANSIENT)
+        if "pvt_thd_variation" in measurements:
+            required_types.update({AnalysisType.TRANSIENT, AnalysisType.FOURIER})
+
+        if not required_types:
+            return testbench.analyses
+
+        filtered = [analysis for analysis in testbench.analyses if analysis.type in required_types]
+        return filtered or testbench.analyses
+
+    def _run_spice_deck_text(
+        self,
+        spice_deck: str,
+        testbench: TestBench,
+        timeout_override: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.cir', delete=False, encoding='utf-8') as handle:
+            handle.write(spice_deck)
+            spice_file = Path(handle.name)
+
+        raw_file = spice_file.with_suffix('.raw')
+        try:
+            run_result = self._run_ngspice(spice_file, raw_file, timeout_override=timeout_override)
+            parsed_results = self._parse_results(raw_file, testbench)
+            parsed_results['logs'] = run_result['logs']
+            parsed_results['errors'] = run_result['errors']
+            parsed_results['success'] = run_result['success']
+            return parsed_results
+        finally:
+            try:
+                spice_file.unlink(missing_ok=True)
+                raw_file.unlink(missing_ok=True)
+            except Exception:
+                pass
+
+    def _summarize_pvt_variants(self, nominal_metrics: Dict[str, float], variant_rows: List[Dict[str, Any]]) -> Dict[str, float]:
+        summary: Dict[str, float] = {"pvt_variants_run": float(len(variant_rows))}
+        tracked = {
+            "pvt_vout_variation": [self._safe_metric_float(nominal_metrics.get("vout_dc")), self._safe_metric_float(nominal_metrics.get("operating_point"))],
+            "pvt_power_variation": [self._safe_metric_float(nominal_metrics.get("power"))],
+            "pvt_dc_gain_variation": [self._safe_metric_float(nominal_metrics.get("dc_gain_db"))],
+            "pvt_frequency_variation": [self._safe_metric_float(nominal_metrics.get("frequency_hz")), self._safe_metric_float(nominal_metrics.get("oscillator_frequency")), self._safe_metric_float(nominal_metrics.get("fundamental_frequency"))],
+            "pvt_delay_variation": [self._safe_metric_float(nominal_metrics.get("propagation_delay")), self._safe_metric_float(nominal_metrics.get("propagation_delay_s"))],
+            "pvt_thd_variation": [self._safe_metric_float(nominal_metrics.get("thd_percent")), self._safe_metric_float(nominal_metrics.get("thd"))],
+        }
+        metric_map = {
+            "pvt_vout_variation": ("vout_dc", "operating_point"),
+            "pvt_power_variation": ("power",),
+            "pvt_dc_gain_variation": ("dc_gain_db",),
+            "pvt_frequency_variation": ("frequency_hz", "oscillator_frequency", "fundamental_frequency"),
+            "pvt_delay_variation": ("propagation_delay", "propagation_delay_s"),
+            "pvt_thd_variation": ("thd_percent", "thd"),
+        }
+
+        for row in variant_rows:
+            variant_metrics = row.get("metrics", {})
+            for summary_key, metric_names in metric_map.items():
+                for metric_name in metric_names:
+                    value = self._safe_metric_float(variant_metrics.get(metric_name))
+                    if value is not None:
+                        tracked[summary_key].append(value)
+                        break
+
+        for summary_key, values in tracked.items():
+            numeric_values = [value for value in values if value is not None]
+            if len(numeric_values) >= 2:
+                summary[summary_key] = float(max(numeric_values) - min(numeric_values))
+        return summary
+
+    def _apply_pvt_variant_to_deck(self, spice_deck: str, temperature: Optional[float], supply_scale: float) -> Tuple[str, int]:
+        updated = re.sub(r"^\s*\.temp\b.*$", "", spice_deck, flags=re.IGNORECASE | re.MULTILINE)
+        sources = self._supply_sources_from_deck(updated)
+
+        for source_name, positive_node, negative_node, nominal, has_dc_keyword in sources:
+            scaled = nominal * supply_scale
+            keyword_pattern = r"(?:DC\s+)?" if has_dc_keyword else r"(?:DC\s+)?"
+            pattern = re.compile(
+                rf"^({re.escape(source_name)}\s+{re.escape(positive_node)}\s+{re.escape(negative_node)}\s+{keyword_pattern})([^\s]+)",
+                re.IGNORECASE | re.MULTILINE,
+            )
+            updated = pattern.sub(rf"\g<1>{scaled}", updated, count=1)
+
+        if temperature is not None:
+            updated = updated.rstrip() + f"\n.TEMP {temperature}\n"
+
+        return updated, len(sources)
+
+    def _supply_sources_from_deck(self, spice_deck: str) -> List[Tuple[str, str, str, float, bool]]:
+        pattern = re.compile(
+            r"^(V[\w$]+)\s+(\S+)\s+(\S+)\s+(DC\s+)?([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)",
+            re.IGNORECASE | re.MULTILINE,
+        )
+        sources: List[Tuple[str, str, str, float, bool]] = []
+        for match in pattern.finditer(spice_deck):
+            source_name, positive_node, negative_node, dc_keyword, value = match.groups()
+            lowered = f"{source_name} {positive_node}".lower()
+            if any(token in lowered for token in ("vdd", "vcc", "supply")) and negative_node == "0":
+                try:
+                    sources.append((source_name, positive_node, negative_node, float(value), bool(dc_keyword)))
+                except ValueError:
+                    continue
+        return sources
+
+    def _extract_nominal_temperature(self, spice_deck: str, default_temperature: float) -> float:
+        match = re.search(r"^\s*\.temp\s+([^\s]+)", spice_deck, flags=re.IGNORECASE | re.MULTILINE)
+        if not match:
+            return float(default_temperature)
+        return self._coerce_float(match.group(1), default=float(default_temperature)) or float(default_temperature)
+
+    @staticmethod
+    def _normalize_temperature_points(raw_temperatures: Any) -> List[Optional[float]]:
+        if not isinstance(raw_temperatures, list):
+            return []
+        normalized: List[Optional[float]] = []
+        for value in raw_temperatures:
+            try:
+                normalized.append(float(value))
+            except Exception:
+                continue
+        return normalized
+
+    @staticmethod
+    def _safe_metric_float(value: Any) -> Optional[float]:
+        try:
+            if value is None:
+                return None
+            numeric = float(value)
+            if np.isnan(numeric) or np.isinf(numeric):
+                return None
+            return numeric
+        except Exception:
+            return None
+
+    @staticmethod
+    def _coerce_float(value: Any, default: Optional[float] = None) -> Optional[float]:
+        try:
+            if value is None:
+                return default
+            return float(value)
+        except Exception:
+            return default
+
+    @staticmethod
+    def _nearly_equal(left: float, right: float, tolerance: float = 1e-12) -> bool:
+        return abs(float(left) - float(right)) <= tolerance * max(abs(float(left)), abs(float(right)), 1.0)
 
     def _extract_schmitt_metrics(self, transient: Dict[str, Any]) -> Dict[str, float]:
         time = transient.get('time', [])
@@ -678,6 +980,39 @@ class PySpiceSimulator(ICircuitSimulator):
             metrics["hysteresis_width"] = abs(metrics["v_t_plus"] - metrics["v_t_minus"])
 
         return metrics
+
+    def _estimate_transient_frequency(self, transient: Dict[str, Any]) -> Optional[float]:
+        time = transient.get('time', [])
+        vout = transient.get('vout', [])
+        if len(time) < 3 or len(vout) < 3:
+            return None
+
+        mean_value = float(np.mean(vout))
+        crossings: List[float] = []
+        for index in range(1, len(vout)):
+            if vout[index - 1] <= mean_value < vout[index]:
+                crossings.append(float(time[index]))
+        if len(crossings) < 2:
+            return None
+
+        periods = [crossings[index] - crossings[index - 1] for index in range(1, len(crossings))]
+        valid_periods = [period for period in periods if period > 0]
+        if not valid_periods:
+            return None
+        average_period = float(np.mean(valid_periods))
+        if average_period <= 0:
+            return None
+        return 1.0 / average_period
+
+    def _estimate_startup_amplitude(self, transient: Dict[str, Any]) -> Optional[float]:
+        vout = transient.get('vout', [])
+        if len(vout) < 5:
+            return None
+        tail_start = max(0, int(len(vout) * 0.8))
+        steady_state = vout[tail_start:]
+        if not steady_state:
+            return None
+        return float((max(steady_state) - min(steady_state)) / 2.0)
 
     def _select_supply_current(self, currents: Dict[str, Any]) -> Optional[float]:
         priority_tokens = ('ivdd', 'vdd', 'ivdda', 'vdda', 'ivcc', 'vcc', 'supply')

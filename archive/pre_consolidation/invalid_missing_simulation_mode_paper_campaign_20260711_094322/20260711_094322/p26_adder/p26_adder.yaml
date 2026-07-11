@@ -1,0 +1,28 @@
+﻿name: analogcoder_pro_p26_adder
+circuit_type: composite
+technology: AnalogCoder-Pro/PySpice generic Level-1 models
+description: An Opamp adder to make Vout=-(Vin1+Vin2)
+source:
+  benchmark: AnalogCoder-Pro
+  task_id: 26
+  level: Hard
+  type: Adder
+  submodule_name: Unknown
+  netlist: benchmark/analogcoder_pro/p26_adder.cir
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: Vin1, Vin2
+  output_nodes: Vout
+  testbench_note: 'NA'
+  expected_behavior: 'NA'
+test_categories:
+  - dc
+  - transient
+

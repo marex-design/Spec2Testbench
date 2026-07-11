@@ -1,0 +1,47 @@
+[
+  {
+    "metric_name": "dc_gain_db",
+    "measured_value": -181.9381983957126,
+    "unit": "dB",
+    "normalized_value": -181.9381983957126,
+    "expected_operator": ">=",
+    "expected_threshold": -700.0,
+    "tolerance": null,
+    "status": "PASS",
+    "source_analysis": "OP",
+    "source_signal": "vout",
+    "extraction_method": "MetricExtractor.extract:dc_gain_db",
+    "raw_result_file": null,
+    "error": null
+  },
+  {
+    "metric_name": "phase_margin",
+    "measured_value": 180.0,
+    "unit": "deg",
+    "normalized_value": 180.0,
+    "expected_operator": ">=",
+    "expected_threshold": 0.0,
+    "tolerance": null,
+    "status": "PASS",
+    "source_analysis": "AC",
+    "source_signal": "vout",
+    "extraction_method": "MetricExtractor.extract:phase_margin",
+    "raw_result_file": null,
+    "error": null
+  },
+  {
+    "metric_name": "quiescent_current",
+    "measured_value": 0.0006250000015100062,
+    "unit": "A",
+    "normalized_value": 0.0006250000015100062,
+    "expected_operator": "<=",
+    "expected_threshold": 0.05,
+    "tolerance": null,
+    "status": "PASS",
+    "source_analysis": "OP",
+    "source_signal": "supply_current",
+    "extraction_method": "MetricExtractor.extract:quiescent_current",
+    "raw_result_file": null,
+    "error": null
+  }
+]

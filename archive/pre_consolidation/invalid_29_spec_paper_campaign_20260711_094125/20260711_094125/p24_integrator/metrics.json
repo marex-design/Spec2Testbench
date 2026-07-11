@@ -1,0 +1,32 @@
+[
+  {
+    "metric_name": "slew_rate",
+    "measured_value": 2398797.5761123747,
+    "unit": "V/s",
+    "normalized_value": 2398797.5761123747,
+    "expected_operator": ">=",
+    "expected_threshold": 1e-06,
+    "tolerance": null,
+    "status": "PASS",
+    "source_analysis": "TRAN",
+    "source_signal": "vout",
+    "extraction_method": "MetricExtractor.extract:slew_rate",
+    "raw_result_file": null,
+    "error": null
+  },
+  {
+    "metric_name": "settling_time",
+    "measured_value": 4.999696005404713e-05,
+    "unit": "s",
+    "normalized_value": 4.999696005404713e-05,
+    "expected_operator": "<=",
+    "expected_threshold": 1.0,
+    "tolerance": null,
+    "status": "PASS",
+    "source_analysis": "TRAN",
+    "source_signal": "vout",
+    "extraction_method": "MetricExtractor.extract:settling_time",
+    "raw_result_file": null,
+    "error": null
+  }
+]

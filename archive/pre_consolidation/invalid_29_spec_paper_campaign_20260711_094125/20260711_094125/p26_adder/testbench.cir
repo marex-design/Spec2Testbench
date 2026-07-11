@@ -1,0 +1,9 @@
+* TestBench: analogcoder_pro_p26_adder_full_testbench
+* Category: full
+* Circuit: analogcoder_pro_p26_adder
+
+analogcoder_pro_p26_adder
+.INCLUDE E:\my_organisation\Memoire Maruba\code\Spec2Testbench\benchmark\analogcoder_pro\p26_adder.cir
+Vvin Vin1 0 2.5
+.OP
+.END

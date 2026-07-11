@@ -47,6 +47,8 @@ class SimulatorSettings:
     simulator_type: str = field(default_factory=lambda: os.getenv("SIMULATOR_TYPE", "wsl"))
     ngspice_path: str = field(default_factory=lambda: os.getenv("NGSPICE_PATH", "ngspice"))
     timeout_seconds: int = int(os.getenv("SIMULATOR_TIMEOUT", "30"))
+    allow_mock: bool = field(default_factory=lambda: os.getenv("ALLOW_MOCK_SIMULATION", "false").lower() == "true")
+    allow_recovery: bool = field(default_factory=lambda: os.getenv("ALLOW_SIMULATION_RECOVERY", "true").lower() == "true")
 
 @dataclass
 class OutputSettings:

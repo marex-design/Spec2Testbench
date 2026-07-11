@@ -1,0 +1,19 @@
+* AnalogCoder-Pro p17: A cascode current mirror with 4 mosfets (2 stacked at input side with diode-connected, 2 stacked at output side), reference current source input Iref (connected to Vdd) and resistive load R
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p17\p17.py
+* AnalogCoder-Pro type: CurrentMirror
+* Inputs: Iref
+* Outputs: Iout
+
+.MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.7)
+
+Vdd Vdd 0 5
+Iref Vdd Iref 100u
+M1 N1 N1 0 0 nmos_model W=2e-05 L=1e-06
+M2 Iref Iref N1 N1 nmos_model W=2e-05 L=1e-06
+M3 N3 N1 0 0 nmos_model W=2e-05 L=1e-06
+M4 Iout Iref N3 N3 nmos_model W=2e-05 L=1e-06
+R1 Iout Vdd 10k
+
+.OP
+.DC Vdd 0 5 0.1
+.END

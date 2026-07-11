@@ -25,6 +25,12 @@ class ReportFormatter:
             f"**Circuit:** `{report.circuit_name}`",
             f"**Date:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             f"**Overall Verdict:** {self._verdict_badge(report.overall_verdict)}",
+            f"**Execution Status:** `{report.execution_status.value}`",
+            f"**Simulation Mode:** `{report.simulation_mode.value if report.simulation_mode else 'N/A'}`",
+            f"**Compliance Status:** `{report.compliance_status.value}`",
+            f"**Robustness Status:** `{report.robustness_status.value}`",
+            f"**Scientific Category:** `{report.scientific_category.value}`",
+            f"**Paper Eligible:** `{str(report.eligible_for_paper_results).lower()}`",
             f"**Success Rate:** {report.success_rate * 100:.1f}%",
             f"**Compliance Score:** {report.compliance_score:.3f}",
             f"**Nominal Compliance:** {report.nominal_compliance_score:.3f}",
@@ -85,6 +91,12 @@ class ReportFormatter:
             "timestamp": report.timestamp,
             "overall_verdict": report.overall_verdict.value,
             "terminal_status": report.terminal_status,
+            "execution_status": report.execution_status.value,
+            "simulation_mode": report.simulation_mode.value if report.simulation_mode else None,
+            "compliance_status": report.compliance_status.value,
+            "robustness_status": report.robustness_status.value,
+            "scientific_category": report.scientific_category.value,
+            "eligible_for_paper_results": report.eligible_for_paper_results,
             "failure_kind": report.failure_kind,
             "success_rate": report.success_rate,
             "compliance_score": report.compliance_score,
@@ -108,6 +120,8 @@ class ReportFormatter:
                 }
                 for result in report.spec_results
             ],
+            "metric_traces": [trace.to_dict() for trace in report.metric_traces],
+            "provenance": report.provenance,
             "waveform_analyses": [
                 {
                     "test_name": waveform.test_name,
@@ -119,6 +133,7 @@ class ReportFormatter:
                 for waveform in report.waveform_analyses
             ],
             "errors": report.errors,
+            "simulation_errors": report.simulation_errors,
         }
 
         content = json.dumps(data, indent=2)
@@ -138,6 +153,11 @@ class ReportFormatter:
             f"  Spec2TestBench - {report.circuit_name}",
             "=" * 70,
             f"\n  Overall: {report.overall_verdict.value}",
+            f"  Execution: {report.execution_status.value}",
+            f"  Simulation Mode: {report.simulation_mode.value if report.simulation_mode else 'N/A'}",
+            f"  Compliance: {report.compliance_status.value}",
+            f"  Robustness: {report.robustness_status.value}",
+            f"  Scientific Category: {report.scientific_category.value}",
             f"  Success Rate: {report.success_rate * 100:.1f}%",
             f"  Compliance Score: {report.compliance_score:.3f}",
             f"  Nominal Compliance: {report.nominal_compliance_score:.3f}",

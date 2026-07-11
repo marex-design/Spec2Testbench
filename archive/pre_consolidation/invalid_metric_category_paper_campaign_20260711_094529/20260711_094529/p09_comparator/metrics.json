@@ -1,0 +1,17 @@
+[
+  {
+    "metric_name": "propagation_delay",
+    "measured_value": 1.0001e-05,
+    "unit": "s",
+    "normalized_value": 1.0001e-05,
+    "expected_operator": "<=",
+    "expected_threshold": 0.001,
+    "tolerance": null,
+    "status": "PASS",
+    "source_analysis": "OP",
+    "source_signal": "",
+    "extraction_method": "MetricExtractor.extract:propagation_delay",
+    "raw_result_file": null,
+    "error": null
+  }
+]

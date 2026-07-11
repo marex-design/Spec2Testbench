@@ -1,0 +1,9 @@
+* TestBench: analogcoder_pro_p10_lowpass_full_testbench
+* Category: full
+* Circuit: analogcoder_pro_p10_lowpass
+
+analogcoder_pro_p10_lowpass
+.INCLUDE E:\my_organisation\Memoire Maruba\code\Spec2Testbench\benchmark\analogcoder_pro\p10_lowpass.cir
+Vvin Vin 0 AC 1
+.AC dec 10 1 1000000000.0
+.END

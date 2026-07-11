@@ -1,0 +1,11 @@
+* TestBench: analogcoder_pro_p06_inverter_full_testbench
+* Category: full
+* Circuit: analogcoder_pro_p06_inverter
+
+analogcoder_pro_p06_inverter
+.INCLUDE E:\my_organisation\Memoire Maruba\code\Spec2Testbench\benchmark\analogcoder_pro\p06_inverter.cir
+Vvin Vin 0 2.5
+Vvin Vin 0 PULSE(1.25 3.75 0 1n 1n 10u 20u)
+.OP
+.TRAN 1n 50u 0
+.END

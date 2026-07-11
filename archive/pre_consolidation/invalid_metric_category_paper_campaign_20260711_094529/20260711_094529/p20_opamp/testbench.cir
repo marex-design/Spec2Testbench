@@ -1,0 +1,11 @@
+* TestBench: analogcoder_pro_p20_opamp_full_testbench
+* Category: full
+* Circuit: analogcoder_pro_p20_opamp
+
+analogcoder_pro_p20_opamp
+.INCLUDE E:\my_organisation\Memoire Maruba\code\Spec2Testbench\benchmark\analogcoder_pro\p20_opamp.cir
+Vvin Vinp 0 2.5
+Vvin Vinp 0 AC 1
+.OP
+.AC dec 10 1 1000000000.0
+.END

@@ -1,0 +1,8 @@
+* TestBench: analogcoder_pro_p23_oscillator_full_testbench
+* Category: full
+* Circuit: analogcoder_pro_p23_oscillator
+
+analogcoder_pro_p23_oscillator
+.INCLUDE E:\my_organisation\Memoire Maruba\code\Spec2Testbench\benchmark\analogcoder_pro\p23_oscillator.cir
+.TRAN 1n 50u 0
+.END

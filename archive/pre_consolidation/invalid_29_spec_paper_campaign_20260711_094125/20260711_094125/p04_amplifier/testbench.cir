@@ -1,0 +1,11 @@
+* TestBench: analogcoder_pro_p04_amplifier_full_testbench
+* Category: full
+* Circuit: analogcoder_pro_p04_amplifier
+
+analogcoder_pro_p04_amplifier
+.INCLUDE E:\my_organisation\Memoire Maruba\code\Spec2Testbench\benchmark\analogcoder_pro\p04_amplifier.cir
+Vvin Vin 0 2.5
+Vvin Vin 0 AC 1
+.OP
+.AC dec 10 1 1000000000.0
+.END

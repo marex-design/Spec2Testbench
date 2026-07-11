@@ -325,13 +325,14 @@ class SpecChecker(ISpecChecker):
                 return None
         
         unit_lower = unit.lower().strip()
-        
-        # Find conversion factor
-        for prefix, factor in self.UNIT_CONVERSION.items():
-            if unit_lower.endswith(prefix):
-                return value * factor
-        
-        return value
+        if unit_lower in {"", "db", "deg", "degree", "degrees", "%", "percent", "v/s", "vps"}:
+            return value
+
+        factor = self.UNIT_CONVERSION.get(unit_lower)
+        if factor is not None:
+            return value * factor
+
+        return None
 
     @staticmethod
     def _relative_margin(delta: float, reference: float) -> float:
@@ -351,10 +352,10 @@ class SpecChecker(ISpecChecker):
         
         if any(x in metric_lower for x in ["pvt", "corner", "temperature", "supply"]):
             return "pvt"
-        elif any(x in metric_lower for x in ["dc", "op", "bias", "power", "current"]):
-            return "dc"
         elif any(x in metric_lower for x in ["gain", "bandwidth", "gbw", "cmrr", "psrr", "phase"]):
             return "ac"
+        elif any(x in metric_lower for x in ["vout_dc", "operating_point", "op_point", "bias", "power", "current", "idd"]):
+            return "dc"
         elif any(x in metric_lower for x in ["slew", "settling", "overshoot", "transient"]):
             return "transient"
         elif any(x in metric_lower for x in ["thd", "fft", "sfdr", "spectral", "noise"]):

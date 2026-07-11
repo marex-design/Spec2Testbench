@@ -1,0 +1,9 @@
+* TestBench: analogcoder_pro_p09_comparator_full_testbench
+* Category: full
+* Circuit: analogcoder_pro_p09_comparator
+
+analogcoder_pro_p09_comparator
+.INCLUDE E:\my_organisation\Memoire Maruba\code\Spec2Testbench\benchmark\analogcoder_pro\p09_comparator.cir
+Vvin Vin 0 PULSE(1.25 3.75 0 1n 1n 10u 20u)
+.TRAN 1n 50u 0
+.END

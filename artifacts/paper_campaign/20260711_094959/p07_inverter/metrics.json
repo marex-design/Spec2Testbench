@@ -1,0 +1,32 @@
+[
+  {
+    "metric_name": "operating_point",
+    "measured_value": 4.933147126837077,
+    "unit": "V",
+    "normalized_value": 4.933147126837077,
+    "expected_operator": "range",
+    "expected_threshold": null,
+    "tolerance": null,
+    "status": "PASS",
+    "source_analysis": "OP",
+    "source_signal": "",
+    "extraction_method": "MetricExtractor.extract:operating_point",
+    "raw_result_file": null,
+    "error": null
+  },
+  {
+    "metric_name": "propagation_delay",
+    "measured_value": 1.000055999999918e-05,
+    "unit": "s",
+    "normalized_value": 1.000055999999918e-05,
+    "expected_operator": "<=",
+    "expected_threshold": 0.001,
+    "tolerance": null,
+    "status": "PASS",
+    "source_analysis": "",
+    "source_signal": "",
+    "extraction_method": "MetricExtractor.extract:propagation_delay",
+    "raw_result_file": null,
+    "error": null
+  }
+]

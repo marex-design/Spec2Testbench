@@ -1,0 +1,9 @@
+* TestBench: analogcoder_pro_p28_schmitt_full_testbench
+* Category: full
+* Circuit: analogcoder_pro_p28_schmitt
+
+analogcoder_pro_p28_schmitt
+.INCLUDE E:\my_organisation\Memoire Maruba\code\Spec2Testbench\benchmark\analogcoder_pro\p28_schmitt.cir
+Vvin Vin 0 PULSE(2.3 2.7 0 1u 1u 200u 400u)
+.TRAN 1u 2m 0
+.END

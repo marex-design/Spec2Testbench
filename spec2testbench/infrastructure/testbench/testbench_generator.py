@@ -190,16 +190,70 @@ class TestBenchGenerator(ITestBenchGenerator):
     
     def _determine_categories(self, specification: Specification) -> List[str]:
         """Determine which test categories to generate."""
-        
+        inferred = self._infer_categories_from_metrics(specification)
+
         # If user specified categories, use them
         if specification.test_categories:
-            return specification.test_categories
+            filtered = [category for category in specification.test_categories if category in inferred]
+            return filtered or specification.test_categories
         
         # Otherwise use defaults based on circuit type
-        return self.DEFAULT_CATEGORIES.get(
+        defaults = self.DEFAULT_CATEGORIES.get(
             specification.circuit_type, 
             ['dc', 'ac', 'transient']
         )
+        filtered_defaults = [category for category in defaults if category in inferred]
+        return filtered_defaults or defaults
+
+    def _infer_categories_from_metrics(self, specification: Specification) -> List[str]:
+        metric_names = {name.lower() for name in specification.performance_targets.keys()}
+        categories = []
+
+        if any(
+            token in metric_names
+            for token in {
+                "operating_point", "vout_dc", "quiescent_current", "idd", "power",
+                "pvt_vout_variation", "pvt_power_variation"
+            }
+        ):
+            categories.append("dc")
+        if any(
+            token in metric_names
+            for token in {
+                "dc_gain", "dc_gain_db", "bandwidth", "cutoff_frequency_hz",
+                "unity_gain_frequency", "ugbw", "phase_margin", "cmrr", "psrr",
+                "pvt_dc_gain_variation"
+            }
+        ):
+            categories.append("ac")
+        if any(
+            token in metric_names
+            for token in {
+                "slew_rate", "settling_time", "propagation_delay", "propagation_delay_s",
+                "startup_amplitude", "oscillator_frequency", "frequency_hz",
+                "pvt_delay_variation", "pvt_frequency_variation"
+            }
+        ):
+            categories.append("transient")
+        if any(
+            token in metric_names
+            for token in {
+                "thd", "thd_percent", "fundamental_frequency", "sfdr", "pvt_thd_variation"
+            }
+        ):
+            categories.append("spectral")
+        if any(
+            token in metric_names
+            for token in {
+                "differential_gain", "common_mode_gain", "input_common_mode_range",
+                "hysteresis_width", "v_t_plus", "v_t_minus"
+            }
+        ):
+            categories.append("differential")
+        if any(name.startswith("pvt_") for name in metric_names):
+            categories.append("pvt")
+
+        return list(dict.fromkeys(categories or ["dc"]))
     
     def _merge_testbenches(self, testbenches: List[TestBench], circuit_name: str) -> TestBench:
         """Merge multiple testbenches into one."""
@@ -534,26 +588,29 @@ class TestBenchGenerator(ITestBenchGenerator):
         current_metric = self._first_metric_name(spec, ["quiescent_current", "idd", "current"])
         power_metric = self._first_metric_name(spec, ["power", "power_w", "power_mw"])
         
-        stimuli = [
-            Stimulus(
-                name="vin",
-                type="dc",
-                parameters={"value": spec.common_mode_voltage},
-                node_positive=self._primary_input_node(spec),
-                node_negative="0",
-            )
-        ]
+        stimuli = []
+        if spec.circuit_type != CircuitType.CURRENT_MIRROR:
+            stimuli = [
+                Stimulus(
+                    name="vin",
+                    type="dc",
+                    parameters={"value": spec.common_mode_voltage},
+                    node_positive=self._primary_input_node(spec),
+                    node_negative="0",
+                )
+            ]
         
         analyses = [
             AnalysisConfig(
                 type=AnalysisType.DC,
                 parameters={
-                    "source": "vin",
+                    "source": "vin" if spec.circuit_type != CircuitType.CURRENT_MIRROR else "vdd",
                     # Use a single-point nominal bias rather than a full sweep so
                     # vout_dc reflects the operating point used in the paper metrics.
-                    "start": spec.common_mode_voltage,
-                    "stop": spec.common_mode_voltage,
+                    "start": spec.common_mode_voltage if spec.circuit_type != CircuitType.CURRENT_MIRROR else spec.vdd,
+                    "stop": spec.common_mode_voltage if spec.circuit_type != CircuitType.CURRENT_MIRROR else spec.vdd,
                     "step": max(spec.vdd / 100, 1e-6),
+                    "force_sweep": spec.circuit_type == CircuitType.CURRENT_MIRROR,
                 }
             )
         ]
@@ -689,18 +746,18 @@ class TestBenchGenerator(ITestBenchGenerator):
         stimuli = []
         if spec.circuit_type not in oscillator_types:
             if spec.circuit_type in schmitt_types:
-                low_level = max(spec.vss, spec.common_mode_voltage - spec.vdd / 3)
-                high_level = min(spec.vdd, spec.common_mode_voltage + spec.vdd / 3)
                 stimuli = [
                     Stimulus(
                         name="vin",
-                        type="pwl",
+                        type="pulse",
                         parameters={
-                            "points": [
-                                ("0", low_level),
-                                ("20u", high_level),
-                                ("40u", low_level),
-                            ]
+                            "v1": max(spec.vss, spec.common_mode_voltage - 0.2),
+                            "v2": min(spec.vdd, spec.common_mode_voltage + 0.2),
+                            "delay": 0,
+                            "rise": "1u",
+                            "fall": "1u",
+                            "width": "200u",
+                            "period": "400u",
                         },
                         node_positive=self._primary_input_node(spec),
                         node_negative="0",
@@ -728,8 +785,8 @@ class TestBenchGenerator(ITestBenchGenerator):
             AnalysisConfig(
                 type=AnalysisType.TRANSIENT,
                 parameters={
-                    "step_time": "100n" if spec.circuit_type in schmitt_types else "1n",
-                    "end_time": "40u" if spec.circuit_type in schmitt_types else "50u",
+                    "step_time": "1u" if spec.circuit_type in schmitt_types else "1n",
+                    "end_time": "2m" if spec.circuit_type in schmitt_types else "50u",
                     "start_time": 0,
                 }
             )
@@ -796,20 +853,8 @@ class TestBenchGenerator(ITestBenchGenerator):
     
     def _create_pvt_testbench(self, spec: Specification) -> TestBench:
         """Create PVT testbench using templates."""
-        gain_metric = self._first_metric_name(spec, ["pvt_dc_gain_variation", "gain_variation"]) or "pvt_dc_gain_variation"
-        vout_metric = self._first_metric_name(spec, ["pvt_vout_variation", "vout_variation"]) or "pvt_vout_variation"
-        power_metric = self._first_metric_name(spec, ["pvt_power_variation", "power_variation"]) or "pvt_power_variation"
-        
         # PVT is special - we'll create a testbench that notes the PVT configuration
-        stimuli = [
-            Stimulus(
-                name="vdd",
-                type="dc",
-                parameters={"value": spec.vdd},
-                node_positive="vdd",
-                node_negative="0",
-            )
-        ]
+        stimuli = []
         
         analyses = [
             AnalysisConfig(
@@ -822,26 +867,25 @@ class TestBenchGenerator(ITestBenchGenerator):
             )
         ]
         
-        measurements = [
-            Measurement(
-                name=gain_metric,
-                expression="gain variation over PVT",
-                expected_max=spec.get_metric_max(gain_metric),
-                unit=spec.get_metric_unit(gain_metric) or "dB",
-            ),
-            Measurement(
-                name=vout_metric,
-                expression="Vout variation over PVT",
-                expected_max=spec.get_metric_max(vout_metric),
-                unit=spec.get_metric_unit(vout_metric) or "V",
-            ),
-            Measurement(
-                name=power_metric,
-                expression="power variation over PVT",
-                expected_max=spec.get_metric_max(power_metric),
-                unit=spec.get_metric_unit(power_metric) or "W",
-            ),
+        pvt_measurement_defs = [
+            ("pvt_dc_gain_variation", ["pvt_dc_gain_variation", "gain_variation"], "gain variation over PVT", "dB"),
+            ("pvt_vout_variation", ["pvt_vout_variation", "vout_variation"], "Vout variation over PVT", "V"),
+            ("pvt_power_variation", ["pvt_power_variation", "power_variation"], "power variation over PVT", "W"),
+            ("pvt_delay_variation", ["pvt_delay_variation", "delay_variation"], "propagation delay variation over PVT", "s"),
+            ("pvt_frequency_variation", ["pvt_frequency_variation", "frequency_variation"], "frequency variation over PVT", "Hz"),
+            ("pvt_thd_variation", ["pvt_thd_variation", "thd_variation"], "THD variation over PVT", "%"),
         ]
+        measurements = []
+        for default_name, candidates, expression, fallback_unit in pvt_measurement_defs:
+            metric_name = self._first_metric_name(spec, candidates)
+            if not metric_name:
+                continue
+            measurements.append(Measurement(
+                name=metric_name,
+                expression=expression,
+                expected_max=spec.get_metric_max(metric_name),
+                unit=spec.get_metric_unit(metric_name) or fallback_unit,
+            ))
 
         return TestBench(
             name=f"{spec.name}_pvt",

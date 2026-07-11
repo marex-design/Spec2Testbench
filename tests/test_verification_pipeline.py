@@ -3,7 +3,14 @@ from spec2testbench.domain.entities.specification import Specification
 from spec2testbench.domain.entities.testbench import AnalysisConfig, AnalysisType, Stimulus, TestBench
 from spec2testbench.domain.value_objects.circuit_type import CircuitType
 from spec2testbench.domain.value_objects.verdict import CheckResult, Verdict, ValidationStatus
+from spec2testbench.domain.value_objects.scientific_status import (
+    ComplianceStatus,
+    ExecutionStatus,
+    ScientificCategory,
+    SimulationMode,
+)
 from spec2testbench.infrastructure.spec_checker.metric_extractor import MetricExtractor
+from spec2testbench.infrastructure.spec_checker.spec_checker import SpecChecker
 from spec2testbench.infrastructure.simulator.pyspice_simulator import PySpiceSimulator
 from spec2testbench.infrastructure.testbench import TestBenchGenerator as FrameworkTestBenchGenerator
 
@@ -20,6 +27,43 @@ def test_metric_extractor_accepts_transient_aliases():
     assert extractor.extract(results, "slew_rate") == 2_000_000.0
 
 
+def test_unit_conversions_use_exact_units():
+    checker = SpecChecker()
+
+    assert checker._to_si(2500, "mV") == 2.5
+    assert checker._to_si(2.5, "V") == 2.5
+    assert checker._to_si(3, "MHz") == 3e6
+    assert checker._to_si(4, "us") == 4e-6
+    assert checker._to_si(7, "uA") == 7e-6
+
+
+def test_incompatible_unit_is_not_evaluated():
+    checker = SpecChecker()
+    specification = Specification(
+        name="unit_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"gain": {"min": 1, "unit": "bananas"}},
+    )
+
+    result = checker.verify_single_metric("gain", 2.0, specification)
+
+    assert result.verdict == Verdict.ERROR
+    assert "unit_conversion_failed" in result.message
+
+
+def test_non_numeric_metric_is_not_evaluated():
+    checker = SpecChecker()
+    specification = Specification(
+        name="numeric_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"gain": {"min": 1, "unit": "V"}},
+    )
+
+    result = checker.verify_single_metric("gain", "not-a-number", specification)
+
+    assert result.verdict == Verdict.ERROR
+
+
 def test_verification_report_treats_error_as_overall_error():
     report = VerificationReport(
         circuit_name="demo",
@@ -30,7 +74,9 @@ def test_verification_report_treats_error_as_overall_error():
         ],
     )
 
-    assert report.overall_verdict == ValidationStatus.FAIL
+    assert report.compliance_status == ComplianceStatus.NOT_EVALUATED
+    assert report.scientific_category == ScientificCategory.UNEVALUATED
+    assert report.overall_verdict == ValidationStatus.RUN
 
 
 def test_verification_report_counts_warning_as_success():
@@ -67,7 +113,247 @@ def test_pipeline_marks_missing_metric_as_error():
     report = pipeline.verify(specification, simulation_results={"ac": {}, "currents": {}, "metrics": {}})
 
     assert report.spec_results[0].verdict == Verdict.ERROR
-    assert report.overall_verdict == ValidationStatus.FAIL
+    assert report.execution_status == ExecutionStatus.SUCCESS
+    assert report.compliance_status == ComplianceStatus.NOT_EVALUATED
+    assert report.scientific_category == ScientificCategory.UNEVALUATED
+    assert report.overall_verdict == ValidationStatus.RUN
+
+
+def test_successful_real_simulation_all_specs_pass():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="pass_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"dc_gain": {"min": 20, "unit": "dB"}},
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": True,
+            "simulation_mode": SimulationMode.REAL.value,
+            "metrics": {"dc_gain": 40},
+        },
+    )
+
+    assert report.execution_status == ExecutionStatus.SUCCESS
+    assert report.compliance_status == ComplianceStatus.PASS
+    assert report.scientific_category == ScientificCategory.SIMULABLE_COMPLIANT
+    assert report.eligible_for_paper_results is True
+
+
+def test_successful_real_simulation_one_spec_fails():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="fail_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"dc_gain": {"min": 60, "unit": "dB"}},
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": True,
+            "simulation_mode": SimulationMode.REAL.value,
+            "metrics": {"dc_gain": 40},
+        },
+    )
+
+    assert report.execution_status == ExecutionStatus.SUCCESS
+    assert report.compliance_status == ComplianceStatus.FAIL
+    assert report.scientific_category == ScientificCategory.SIMULABLE_NONCOMPLIANT
+
+
+def test_ngspice_error_is_non_simulable():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="error_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"dc_gain": {"min": 20, "unit": "dB"}},
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": False,
+            "execution_status": ExecutionStatus.ERROR.value,
+            "simulation_mode": SimulationMode.REAL.value,
+            "errors": ["singular matrix"],
+        },
+    )
+
+    assert report.execution_status == ExecutionStatus.ERROR
+    assert report.scientific_category == ScientificCategory.NON_SIMULABLE
+
+
+def test_timeout_is_non_simulable():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="timeout_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"dc_gain": {"min": 20, "unit": "dB"}},
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": False,
+            "execution_status": ExecutionStatus.TIMEOUT.value,
+            "simulation_mode": SimulationMode.REAL.value,
+            "errors": ["Simulation timed out after 60 seconds"],
+        },
+    )
+
+    assert report.execution_status == ExecutionStatus.TIMEOUT
+    assert report.scientific_category == ScientificCategory.NON_SIMULABLE
+
+
+def test_mock_explicitly_allowed_is_not_paper_eligible():
+    pipeline = VerificationPipeline(use_llm=False, allow_mock=True)
+    specification = Specification(
+        name="mock_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"operating_point": {"min": 0.8, "max": 1.0, "unit": "V"}},
+    )
+
+    report = pipeline.verify(specification)
+
+    assert report.simulation_mode == SimulationMode.MOCK
+    assert report.execution_status == ExecutionStatus.SUCCESS
+    assert report.eligible_for_paper_results is False
+
+
+def test_mock_forbidden_without_netlist_is_skipped():
+    pipeline = VerificationPipeline(use_llm=False, allow_mock=False)
+    specification = Specification(
+        name="no_mock_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"operating_point": {"min": 0.8, "max": 1.0, "unit": "V"}},
+    )
+
+    report = pipeline.verify(specification)
+
+    assert report.execution_status == ExecutionStatus.SKIPPED
+    assert report.simulation_mode is None
+    assert report.scientific_category == ScientificCategory.UNEVALUATED
+
+
+def test_recovered_simulation_is_paper_eligible():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="recovered_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"dc_gain": {"min": 20, "unit": "dB"}},
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": True,
+            "simulation_mode": SimulationMode.RECOVERED.value,
+            "execution_status": ExecutionStatus.SUCCESS.value,
+            "recovery_actions": ["removed stale .control block"],
+            "metrics": {"dc_gain": 40},
+        },
+    )
+
+    assert report.simulation_mode == SimulationMode.RECOVERED
+    assert report.compliance_status == ComplianceStatus.PASS
+    assert report.eligible_for_paper_results is True
+
+
+def test_nominal_pass_without_pvt_has_no_robustness_status():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="nominal_only",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"dc_gain": {"min": 20, "unit": "dB"}},
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": True,
+            "simulation_mode": SimulationMode.REAL.value,
+            "metrics": {"dc_gain": 40},
+        },
+    )
+
+    assert report.compliance_status == ComplianceStatus.PASS
+    assert report.robustness_status.value == "NOT_EVALUATED"
+
+
+def test_nominal_pass_and_pvt_pass_are_robust_pass():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="robust_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={
+            "dc_gain": {"min": 20, "unit": "dB"},
+            "pvt_dc_gain_variation": {"max": 5, "unit": "dB"},
+        },
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": True,
+            "simulation_mode": SimulationMode.REAL.value,
+            "metrics": {"dc_gain": 40, "pvt_dc_gain_variation": 2},
+            "pvt": {"summary": {"pvt_dc_gain_variation": 2}},
+        },
+    )
+
+    assert report.compliance_status == ComplianceStatus.PASS
+    assert report.robustness_status.value == "ROBUST_PASS"
+
+
+def test_nominal_pass_but_pvt_fail_is_robust_fail():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="robust_fail_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={
+            "dc_gain": {"min": 20, "unit": "dB"},
+            "pvt_dc_gain_variation": {"max": 5, "unit": "dB"},
+        },
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": True,
+            "simulation_mode": SimulationMode.REAL.value,
+            "metrics": {"dc_gain": 40, "pvt_dc_gain_variation": 8},
+            "pvt": {"summary": {"pvt_dc_gain_variation": 8}},
+        },
+    )
+
+    assert report.compliance_status == ComplianceStatus.PASS
+    assert report.robustness_status.value == "ROBUST_FAIL"
+
+
+def test_absent_result_file_is_non_simulable_error():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="absent_file_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"dc_gain": {"min": 20, "unit": "dB"}},
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": False,
+            "execution_status": ExecutionStatus.ERROR.value,
+            "simulation_mode": SimulationMode.REAL.value,
+            "error_type": "result_file_absent",
+            "errors": ["No structured ngspice result data was parsed"],
+        },
+    )
+
+    assert report.error_type == "result_file_absent"
+    assert report.scientific_category == ScientificCategory.NON_SIMULABLE
 
 
 def test_testbench_generator_covers_paper_metrics():
@@ -142,7 +428,7 @@ def test_metric_extractor_supports_paper_metrics():
 
 
 def test_pipeline_mock_simulation_passes_core_paper_metrics():
-    pipeline = VerificationPipeline(use_llm=False)
+    pipeline = VerificationPipeline(use_llm=False, allow_mock=True)
     specification = Specification(
         name="paper_eval",
         circuit_type=CircuitType.OSCILLATOR,
@@ -183,7 +469,10 @@ def test_verification_report_uses_run_for_spec_failures():
         ],
     )
 
-    assert report.overall_verdict == ValidationStatus.RUN
+    assert report.execution_status == ExecutionStatus.SUCCESS
+    assert report.compliance_status == ComplianceStatus.FAIL
+    assert report.scientific_category == ScientificCategory.SIMULABLE_NONCOMPLIANT
+    assert report.overall_verdict == ValidationStatus.FAIL
 
 
 def test_verification_report_computes_compliance_scores():
@@ -211,7 +500,9 @@ def test_verification_report_computes_compliance_scores():
     assert report.compliance_score == 0.9375
     assert abs(report.nominal_compliance_score - ((2.0 * 1.0 + 1.0 * 0.75) / 3.0)) < 1e-9
     assert report.pvt_compliance_score == 1.0
-    assert report.overall_verdict == ValidationStatus.PASS
+    assert report.compliance_status == ComplianceStatus.PASS
+    assert report.robustness_status.value == "ROBUST_PASS"
+    assert report.overall_verdict == ValidationStatus.ROBUST_PASS
 
 
 def test_ac_stimulus_preserves_dc_bias_when_collapsed():
