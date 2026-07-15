@@ -1,0 +1,14 @@
+{
+  "case_id": "p19_mixer_nominal_gt",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+  "target_metric": "thd",
+  "reference": {
+    "method": "manual_spectral_estimate",
+    "equation": "Mixer spectral content expected to remain finite and simulable",
+    "expected_value": 1.0,
+    "unit": "%",
+    "tolerance_percent": 20
+  },
+  "uses_spec2testbench_verdict": false
+}

@@ -6,6 +6,7 @@ import logging
 import math
 import hashlib
 import platform
+import shutil
 import subprocess
 import sys
 import time
@@ -23,6 +24,8 @@ from ...domain.value_objects.multimodal_result import MultimodalResult
 from ...domain.value_objects.scientific_status import (
     ComplianceStatus,
     ExecutionStatus,
+    MutationEffectivenessStatus,
+    NetlistBindingStatus,
     RobustnessStatus,
     ScientificCategory,
     SimulationMode,
@@ -95,6 +98,25 @@ class VerificationReport:
     provenance: Dict[str, Any] = field(default_factory=dict)
     runtime_seconds: float = 0.0
     error_type: Optional[str] = None
+    ngspice_command: List[str] = field(default_factory=list)
+    ngspice_returncode: Optional[int] = None
+    raw_result_file: Optional[str] = None
+    raw_result_file_exists: bool = False
+    ngspice_version: Optional[str] = None
+    case_id: Optional[str] = None
+    parent_circuit_id: Optional[str] = None
+    netlist_binding_status: NetlistBindingStatus = NetlistBindingStatus.NOT_VERIFIED
+    expected_netlist_sha256: Optional[str] = None
+    actual_netlist_sha256: Optional[str] = None
+    actual_deck_sha256: Optional[str] = None
+    specification_sha256: Optional[str] = None
+    mutation_effectiveness_status: MutationEffectivenessStatus = MutationEffectivenessStatus.NOT_EVALUATED
+    required_metric_validation: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    measurement_backend: Optional[str] = None
+    measurement_source: Optional[str] = None
+    measurement_command: Optional[str] = None
+    measurement_status: Optional[str] = None
+    pyspice_required: bool = True
 
     def __post_init__(self) -> None:
         if self.simulation_success and self.execution_status == ExecutionStatus.SKIPPED:
@@ -113,10 +135,10 @@ class VerificationReport:
 
         if self.execution_status != ExecutionStatus.SUCCESS or not nominal_results:
             self.compliance_status = ComplianceStatus.NOT_EVALUATED
-        elif any(result.verdict == Verdict.ERROR for result in nominal_results):
-            self.compliance_status = ComplianceStatus.NOT_EVALUATED
         elif any(result.verdict == Verdict.FAIL for result in nominal_results):
             self.compliance_status = ComplianceStatus.FAIL
+        elif any(result.verdict == Verdict.ERROR for result in nominal_results):
+            self.compliance_status = ComplianceStatus.NOT_EVALUATED
         else:
             self.compliance_status = ComplianceStatus.PASS
 
@@ -258,7 +280,7 @@ class VerificationReport:
     def to_summary(self) -> str:
         lines = [
             "=" * 60,
-            f"Spec2TestBench - Verification Report",
+            f"Spec2Testbench - Verification Report",
             "=" * 60,
             f"Circuit: {self.circuit_name}",
             f"Timestamp: {self.timestamp}",
@@ -316,10 +338,15 @@ class VerificationPipeline:
         started = time.time()
         report = VerificationReport(circuit_name=specification.name)
         report.specification = specification
+        report.case_id = specification.case_id or specification.name
+        report.parent_circuit_id = specification.parent_circuit_id
         
         try:
             logger.info("Step 1/4: Generating testbench...")
             testbench = self.testbench_gen.generate(specification)
+            testbench.case_id = report.case_id
+            testbench.metadata["required_metrics"] = list(specification.performance_targets.keys())
+            testbench.metadata["measurement"] = dict(getattr(specification, "measurement", {}) or {})
             if netlist_path:
                 testbench.netlist_path = str(netlist_path)
             report.testbench = testbench
@@ -343,10 +370,39 @@ class VerificationPipeline:
             report.simulation_mode = self._parse_simulation_mode(simulation_results)
             report.error_type = simulation_results.get("error_type")
             report.simulation_errors = simulation_results.get("errors", report.simulation_errors)
+            report.ngspice_command = simulation_results.get("ngspice_command") or []
+            report.ngspice_returncode = simulation_results.get("ngspice_returncode")
+            report.raw_result_file = simulation_results.get("raw_result_file")
+            report.raw_result_file_exists = bool(simulation_results.get("raw_result_file_exists"))
+            report.ngspice_version = simulation_results.get("ngspice_version")
+            report.netlist_binding_status = self._parse_netlist_binding_status(
+                simulation_results,
+                netlist_path=netlist_path,
+            )
+            report.expected_netlist_sha256 = simulation_results.get("expected_netlist_sha256")
+            report.actual_netlist_sha256 = simulation_results.get("actual_netlist_sha256")
+            report.actual_deck_sha256 = simulation_results.get("actual_deck_sha256")
+            report.specification_sha256 = self._sha256_file(spec_path) if spec_path else None
+            report.measurement_backend = simulation_results.get("measurement_backend")
+            report.measurement_source = simulation_results.get("measurement_source")
+            report.measurement_command = simulation_results.get("measurement_command")
+            report.measurement_status = simulation_results.get("measurement_status")
+            report.pyspice_required = bool(simulation_results.get("pyspice_required", True))
+
+            # Native backends are authoritative when they provide a finite
+            # extraction. This prevents the compliance checker from silently
+            # recomputing a different metric from a separate raw-file path.
+            native_metrics = simulation_results.get("native_metrics", {}) or {}
+            if native_metrics:
+                simulation_results.setdefault("metrics", {}).update(native_metrics)
             
             logger.info("Step 3/4: Verifying specifications...")
             if report.execution_status == ExecutionStatus.SUCCESS:
-                report.spec_results = self.spec_checker.verify(simulation_results, specification)
+                report.required_metric_validation = self._validate_required_metrics(specification, simulation_results, testbench)
+                if self._has_required_metric_validation_errors(report.required_metric_validation):
+                    report.spec_results = self._build_precheck_error_results(specification, report.required_metric_validation)
+                else:
+                    report.spec_results = self.spec_checker.verify(simulation_results, specification)
             else:
                 report.spec_results = []
             
@@ -410,6 +466,24 @@ class VerificationPipeline:
             'pvt': result.get('pvt', {}),
             'currents': result.get('currents', {}),
             'vdd': result.get('vdd', 0.0),
+            'native_metrics': result.get('native_metrics', {}),
+            'native_extractions': result.get('native_extractions', {}),
+            'oscillation_validation': result.get('oscillation_validation', {}),
+            'ngspice_command': result.get('ngspice_command'),
+            'ngspice_returncode': result.get('ngspice_returncode'),
+            'raw_result_file': result.get('raw_result_file'),
+            'raw_result_file_exists': result.get('raw_result_file_exists'),
+            'ngspice_version': result.get('ngspice_version'),
+            'case_id': result.get('case_id') or testbench.case_id,
+            'expected_netlist_sha256': result.get('expected_netlist_sha256'),
+            'actual_netlist_sha256': result.get('actual_netlist_sha256'),
+            'actual_deck_sha256': result.get('actual_deck_sha256'),
+            'netlist_binding_status': result.get('netlist_binding_status'),
+            'measurement_backend': result.get('measurement_backend'),
+            'pyspice_required': result.get('pyspice_required'),
+            'measurement_source': result.get('measurement_source'),
+            'measurement_command': result.get('measurement_command'),
+            'measurement_status': result.get('measurement_status'),
         }
 
         # Treat extracted structured data as a successful simulation even if an
@@ -677,6 +751,22 @@ class VerificationPipeline:
         except ValueError:
             return None
 
+    def _parse_netlist_binding_status(
+        self,
+        simulation_results: Dict[str, Any],
+        *,
+        netlist_path: Optional[Path],
+    ) -> NetlistBindingStatus:
+        raw_status = simulation_results.get("netlist_binding_status")
+        if not raw_status:
+            if netlist_path is None and simulation_results.get("success", False):
+                return NetlistBindingStatus.MATCH
+            return NetlistBindingStatus.NOT_VERIFIED
+        try:
+            return NetlistBindingStatus(raw_status)
+        except ValueError:
+            return NetlistBindingStatus.NOT_VERIFIED
+
     def _finalize_report_statuses(self, report: VerificationReport, simulation_results: Dict[str, Any]) -> None:
         nominal_results = [
             result for result in report.spec_results
@@ -687,12 +777,16 @@ class VerificationPipeline:
             if (result.category or "").lower() == "pvt"
         ]
 
-        if report.execution_status != ExecutionStatus.SUCCESS or not nominal_results:
-            report.compliance_status = ComplianceStatus.NOT_EVALUATED
-        elif any(result.verdict == Verdict.ERROR for result in nominal_results):
+        if (
+            report.execution_status != ExecutionStatus.SUCCESS
+            or report.netlist_binding_status != NetlistBindingStatus.MATCH
+            or not nominal_results
+        ):
             report.compliance_status = ComplianceStatus.NOT_EVALUATED
         elif any(result.verdict == Verdict.FAIL for result in nominal_results):
             report.compliance_status = ComplianceStatus.FAIL
+        elif any(result.verdict == Verdict.ERROR for result in nominal_results):
+            report.compliance_status = ComplianceStatus.NOT_EVALUATED
         else:
             report.compliance_status = ComplianceStatus.PASS
 
@@ -710,7 +804,11 @@ class VerificationPipeline:
         report.eligible_for_paper_results = (
             report.execution_status == ExecutionStatus.SUCCESS
             and report.simulation_mode in (SimulationMode.REAL, SimulationMode.RECOVERED)
+            and report.netlist_binding_status == NetlistBindingStatus.MATCH
         )
+        variant_override_records = (report.testbench.metadata or {}).get("variant_overrides", []) if report.testbench else []
+        if any(record.get("application_status") in {"OVERWRITTEN", "NOT_APPLIED", "UNSUPPORTED"} for record in variant_override_records):
+            report.eligible_for_paper_results = False
         report.metric_traces = [
             self._build_metric_trace(result, simulation_results)
             for result in report.spec_results
@@ -786,16 +884,34 @@ class VerificationPipeline:
             "framework_version": self._package_version("spec2testbench"),
             "git_commit": self._git_commit(),
             "python_version": sys.version,
-            "ngspice_version": self._ngspice_version(),
+            "ngspice_version": report.ngspice_version or self._ngspice_version(),
+            "ngspice_command": report.ngspice_command,
+            "ngspice_returncode": report.ngspice_returncode,
+            "raw_result_file": report.raw_result_file,
+            "raw_result_file_exists": report.raw_result_file_exists,
             "pyspice_version": self._package_version("PySpice"),
             "operating_system": platform.platform(),
             "circuit_id": report.circuit_name,
+            "case_id": report.case_id,
+            "parent_circuit_id": report.parent_circuit_id,
             "specification_file": str(spec_path) if spec_path else None,
-            "specification_hash": self._sha256_file(spec_path),
+            "specification_hash": report.specification_sha256 or self._sha256_file(spec_path),
             "netlist_file": str(netlist_path) if netlist_path else None,
-            "netlist_hash": self._sha256_file(netlist_path),
+            "netlist_hash": report.expected_netlist_sha256 or self._sha256_file(netlist_path),
             "testbench_file": None,
             "testbench_hash": self._sha256_text(testbench_text) if testbench_text else None,
+            "expected_netlist_sha256": report.expected_netlist_sha256,
+            "actual_netlist_sha256": report.actual_netlist_sha256,
+            "actual_deck_sha256": report.actual_deck_sha256,
+            "netlist_binding_status": report.netlist_binding_status.value,
+            "required_metric_validation": report.required_metric_validation,
+            "mutation_effectiveness_status": report.mutation_effectiveness_status.value,
+            "measurement_backend": report.measurement_backend,
+            "pyspice_required": report.pyspice_required,
+            "measurement_source": report.measurement_source,
+            "measurement_command": report.measurement_command,
+            "measurement_status": report.measurement_status,
+            "variant_overrides": (report.testbench.metadata or {}).get("variant_overrides", []) if report.testbench else [],
             "simulation_mode": report.simulation_mode.value if report.simulation_mode else None,
             "execution_status": report.execution_status.value,
             "compliance_status": report.compliance_status.value,
@@ -845,8 +961,31 @@ class VerificationPipeline:
 
     @staticmethod
     def _ngspice_version() -> Optional[str]:
-        # Some Windows ngspice builds do not terminate cleanly when version
-        # output is captured by subprocess. Null is safer than blocking a run.
+        candidates = [
+            shutil.which("ngspice_con"),
+            shutil.which("ngspice_con.exe"),
+            shutil.which("ngspice"),
+            shutil.which("ngspice.exe"),
+        ]
+        for candidate in candidates:
+            if not candidate:
+                continue
+            try:
+                result = subprocess.run(
+                    [candidate, "--version"],
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                    shell=False,
+                )
+            except Exception:
+                continue
+            output = (result.stdout or result.stderr or "").strip()
+            if output:
+                for line in output.splitlines():
+                    if "ngspice" in line.lower():
+                        return line.strip("* ")
+                return output.splitlines()[0]
         return None
     
     def _analyze_failed_metrics(self, failed: List[CheckResult], simulation_results: Dict, specification: Specification) -> List[MultimodalResult]:
@@ -872,3 +1011,83 @@ class VerificationPipeline:
     def verify_from_text(self, text: str, netlist_path: Optional[Path] = None) -> VerificationReport:
         specification = self.testbench_gen.generate_from_text(text)
         return self.verify(specification, netlist_path)
+
+    def _validate_required_metrics(
+        self,
+        specification: Specification,
+        simulation_results: Dict[str, Any],
+        testbench: TestBench,
+    ) -> Dict[str, Dict[str, Any]]:
+        validation: Dict[str, Dict[str, Any]] = {}
+        available_analyses = {analysis.type.value for analysis in testbench.analyses}
+        available_signals = {signal.lower() for signal in (specification.input_nodes + specification.output_nodes)}
+        metric_extractor = self.spec_checker.metric_extractor
+        for metric_name in specification.performance_targets.keys():
+            target = specification.get_metric(metric_name) or {}
+            expected_operator = (
+                "range" if target.get("min") is not None and target.get("max") is not None
+                else ">=" if target.get("min") is not None
+                else "<=" if target.get("max") is not None
+                else ""
+            )
+            required_analysis = self._required_analysis_for_metric(metric_name)
+            source_signal = self._source_signal_for_metric(metric_name)
+            signal_ok = (
+                not available_signals
+                or not source_signal
+                or source_signal in {"supply_current", "vout", "out", "vin", "in"}
+                or source_signal in available_signals
+            )
+            validation[metric_name] = {
+                "target_metric_exists_in_specification": specification.has_metric(metric_name),
+                "target_metric_supported_by_extractor": metric_extractor.supports_metric(metric_name),
+                "target_metric_has_recognized_unit": self.spec_checker._to_si(1.0, target.get("unit", "")) is not None,
+                "target_metric_has_operator": bool(expected_operator),
+                "target_metric_has_threshold": target.get("min") is not None or target.get("max") is not None,
+                "required_signals_available": signal_ok,
+                "required_analysis_generated": not required_analysis or required_analysis in available_analyses,
+            }
+        return validation
+
+    @staticmethod
+    def _has_required_metric_validation_errors(validation: Dict[str, Dict[str, Any]]) -> bool:
+        return any(not all(metric_checks.values()) for metric_checks in validation.values())
+
+    def _build_precheck_error_results(
+        self,
+        specification: Specification,
+        validation: Dict[str, Dict[str, Any]],
+    ) -> List[CheckResult]:
+        results: List[CheckResult] = []
+        for metric_name in specification.performance_targets.keys():
+            checks = validation[metric_name]
+            if all(checks.values()):
+                continue
+            missing = [name for name, ok in checks.items() if not ok]
+            target = specification.get_metric(metric_name) or {}
+            results.append(CheckResult(
+                test_name=metric_name,
+                verdict=Verdict.ERROR,
+                measured_value=None,
+                expected_min=target.get("min"),
+                expected_max=target.get("max"),
+                unit=target.get("unit", ""),
+                message="precheck_failed: " + ", ".join(missing),
+                category=self.spec_checker._get_metric_category(metric_name),
+            ))
+        return results
+
+    @staticmethod
+    def _required_analysis_for_metric(metric_name: str) -> str:
+        metric_lower = metric_name.lower()
+        if any(token in metric_lower for token in ("gain", "bandwidth", "ugbw", "gbw", "phase", "cmrr", "psrr")):
+            return "ac"
+        if any(token in metric_lower for token in ("cutoff_frequency", "center_frequency")):
+            return "ac"
+        if any(token in metric_lower for token in ("slew", "settling", "delay", "hysteresis", "v_t_", "frequency", "amplitude")):
+            return "tran"
+        if "thd" in metric_lower:
+            return "fourier"
+        if "pvt" in metric_lower:
+            return "pvt"
+        return "dc"

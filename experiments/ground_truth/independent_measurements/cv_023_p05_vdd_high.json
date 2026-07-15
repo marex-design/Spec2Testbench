@@ -1,0 +1,13 @@
+{
+  "case_id": "cv_023_p05_vdd_high",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "target_metric": "power",
+  "reference": {
+    "method": "physical_mutation_reasoning",
+    "equation": "DC power scales with supply for biased amplifier",
+    "expected_value": null,
+    "unit": "W"
+  },
+  "uses_spec2testbench_verdict": false
+}

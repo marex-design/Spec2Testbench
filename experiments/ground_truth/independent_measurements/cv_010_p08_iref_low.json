@@ -1,0 +1,13 @@
+{
+  "case_id": "cv_010_p08_iref_low",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "target_metric": "quiescent_current",
+  "reference": {
+    "method": "physical_mutation_reasoning",
+    "equation": "load resistance controls output current drawn from the mirror",
+    "expected_value": null,
+    "unit": "A"
+  },
+  "uses_spec2testbench_verdict": false
+}

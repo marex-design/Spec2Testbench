@@ -6,12 +6,15 @@ Compatible with Windows, Linux, and macOS.
 """
 
 import logging
+import csv
 import tempfile
 import subprocess
 import os
 import re
 import shutil
 import copy
+import hashlib
+import json
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 from dataclasses import dataclass, field
@@ -19,7 +22,14 @@ import numpy as np
 
 from ...domain.entities.testbench import TestBench, AnalysisType, Stimulus
 from ...domain.interfaces.icircuit_simulator import ICircuitSimulator
-from ...domain.value_objects.scientific_status import ExecutionStatus, SimulationMode
+from ...domain.value_objects.scientific_status import ExecutionStatus, NetlistBindingStatus, SimulationMode
+from .result_backends import (
+    MetricExtraction,
+    NgspiceMeasureBackend,
+    NgspiceWrdataBackend,
+    PySpiceResultBackend,
+    SimulationArtifacts,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -71,14 +81,19 @@ class PySpiceSimulator(ICircuitSimulator):
         self.ngspice_path = ngspice_path or self._find_ngspice()
         self.timeout = timeout
         self.allow_mock = allow_mock
+        self.disable_pyspice = os.getenv("SPEC2TESTBENCH_DISABLE_PYSPICE", "").lower() in {"1", "true", "yes"}
         self._ngspice_available = self._check_ngspice()
     
     def _find_ngspice(self) -> str:
         """Find a usable ngspice executable path."""
         candidates = [
+            r"C:\ProgramData\chocolatey\lib\ngspice\tools\Spice64\bin\ngspice_con.exe",
+            r"C:\ProgramData\chocolatey\bin\ngspice_con.exe",
             r"C:\ProgramData\chocolatey\lib\ngspice\tools\Spice64\bin\ngspice.exe",
             r"C:\ProgramData\chocolatey\bin\ngspice.exe",
             r"C:\Program Files\ngspice\bin\ngspice.exe",
+            shutil.which("ngspice_con"),
+            shutil.which("ngspice_con.exe"),
             shutil.which("ngspice"),
             shutil.which("ngspice.exe"),
         ]
@@ -137,20 +152,57 @@ class PySpiceSimulator(ICircuitSimulator):
         with tempfile.NamedTemporaryFile(mode='w', suffix='.cir', delete=False, encoding='utf-8') as f:
             f.write(spice_deck)
             spice_file = Path(f.name)
+        expected_netlist_sha = self._sha256_file(netlist_path)
+        actual_netlist_sha = expected_netlist_sha if netlist_path and netlist_path.exists() else self._extract_included_netlist_sha(spice_deck)
+        actual_deck_sha = self._sha256_file(spice_file)
+        binding_status = (
+            NetlistBindingStatus.MATCH
+            if expected_netlist_sha and actual_netlist_sha and expected_netlist_sha == actual_netlist_sha
+            else NetlistBindingStatus.MISMATCH
+            if expected_netlist_sha and actual_netlist_sha
+            else NetlistBindingStatus.NOT_VERIFIED
+        )
         
         try:
+            if binding_status != NetlistBindingStatus.MATCH:
+                return self._error_result(
+                    "netlist_binding_mismatch",
+                    "Expected mutated netlist hash does not match the netlist included in the ngspice deck",
+                    expected_netlist_sha=expected_netlist_sha,
+                    actual_netlist_sha=actual_netlist_sha,
+                    actual_deck_sha=actual_deck_sha,
+                    binding_status=binding_status,
+                    case_id=testbench.case_id,
+                )
             # Run simulation
             raw_file = spice_file.with_suffix('.raw')
             result = self._run_ngspice(spice_file, raw_file)
+            native_artifacts = self._run_native_extraction_passes(netlist_path, testbench)
             
             # Parse results
-            simulation_results = self._parse_results(raw_file, testbench)
+            simulation_results = self._parse_results(raw_file, testbench, native_artifacts=native_artifacts)
             simulation_results['logs'] = result['logs']
             simulation_results['errors'] = result['errors']
             simulation_results['success'] = result['success']
             simulation_results['simulation_mode'] = SimulationMode.REAL.value
             simulation_results['execution_status'] = self._execution_status_from_result(result)
             simulation_results['error_type'] = self._error_type_from_result(result)
+            simulation_results['ngspice_command'] = result.get('command')
+            simulation_results['ngspice_returncode'] = result.get('returncode')
+            simulation_results['raw_result_file'] = result.get('raw_result_file')
+            simulation_results['raw_result_file_exists'] = result.get('raw_result_file_exists')
+            simulation_results['ngspice_version'] = self._get_ngspice_version()
+            simulation_results['case_id'] = testbench.case_id
+            simulation_results['expected_netlist_sha256'] = expected_netlist_sha
+            simulation_results['actual_netlist_sha256'] = actual_netlist_sha
+            simulation_results['actual_deck_sha256'] = actual_deck_sha
+            simulation_results['netlist_binding_status'] = binding_status.value
+            simulation_results['measurement_backend'] = native_artifacts.get('measurement_backend', 'UNAVAILABLE')
+            simulation_results['pyspice_required'] = native_artifacts.get('pyspice_required', True)
+            simulation_results['measurement_source'] = native_artifacts.get('measurement_source')
+            simulation_results['measurement_command'] = native_artifacts.get('measurement_command', '')
+            simulation_results['measurement_status'] = native_artifacts.get('measurement_status', 'UNAVAILABLE')
+            simulation_results['artifacts'] = native_artifacts.get('artifacts', {})
 
             pvt_analysis = next((analysis for analysis in testbench.analyses if analysis.type == AnalysisType.PVT), None)
             if pvt_analysis is not None and (result['success'] or any(simulation_results.get(key) for key in ('dc', 'ac', 'tran', 'transient', 'fourier'))):
@@ -241,7 +293,17 @@ class PySpiceSimulator(ICircuitSimulator):
         
         return results
 
-    def _error_result(self, error_type: str, error_message: str) -> Dict[str, Any]:
+    def _error_result(
+        self,
+        error_type: str,
+        error_message: str,
+        *,
+        expected_netlist_sha: Optional[str] = None,
+        actual_netlist_sha: Optional[str] = None,
+        actual_deck_sha: Optional[str] = None,
+        binding_status: NetlistBindingStatus = NetlistBindingStatus.NOT_VERIFIED,
+        case_id: Optional[str] = None,
+    ) -> Dict[str, Any]:
         execution_status = (
             ExecutionStatus.TIMEOUT
             if "timeout" in error_type.lower() or "timed out" in error_message.lower()
@@ -264,7 +326,33 @@ class PySpiceSimulator(ICircuitSimulator):
             "fourier": {},
             "pvt": {},
             "currents": {},
+            "case_id": case_id,
+            "expected_netlist_sha256": expected_netlist_sha,
+            "actual_netlist_sha256": actual_netlist_sha,
+            "actual_deck_sha256": actual_deck_sha,
+            "netlist_binding_status": binding_status.value,
         }
+
+    @staticmethod
+    def _sha256_file(path: Optional[Path]) -> Optional[str]:
+        if not path or not Path(path).exists():
+            return None
+        digest = hashlib.sha256()
+        with Path(path).open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+
+    def _extract_included_netlist_sha(self, spice_deck: str) -> Optional[str]:
+        for line in spice_deck.splitlines():
+            stripped = line.strip()
+            if not stripped.lower().startswith(".include"):
+                continue
+            path_text = stripped[len(".include"):].strip().strip('"').strip("'")
+            if not path_text:
+                return None
+            return self._sha256_file(Path(path_text))
+        return None
 
     def _execution_status_from_result(self, result: Dict[str, Any]) -> str:
         if result.get("success"):
@@ -557,23 +645,35 @@ class PySpiceSimulator(ICircuitSimulator):
             return {
                 'success': success,
                 'logs': logs,
-                'errors': errors
+                'errors': errors,
+                'command': cmd,
+                'returncode': result.returncode,
+                'raw_result_file': str(raw_file),
+                'raw_result_file_exists': raw_file.exists(),
             }
             
         except subprocess.TimeoutExpired:
             return {
                 'success': False,
                 'logs': [],
-                'errors': [f"Simulation timed out after {effective_timeout} seconds"]
+                'errors': [f"Simulation timed out after {effective_timeout} seconds"],
+                'command': cmd,
+                'returncode': None,
+                'raw_result_file': str(raw_file),
+                'raw_result_file_exists': raw_file.exists(),
             }
         except Exception as e:
             return {
                 'success': False,
                 'logs': [],
-                'errors': [str(e)]
+                'errors': [str(e)],
+                'command': cmd,
+                'returncode': None,
+                'raw_result_file': str(raw_file),
+                'raw_result_file_exists': raw_file.exists(),
             }
     
-    def _parse_results(self, raw_file: Path, testbench: TestBench) -> Dict[str, Any]:
+    def _parse_results(self, raw_file: Path, testbench: TestBench, native_artifacts: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """
         Parse ngspice raw output file.
         
@@ -609,6 +709,36 @@ class PySpiceSimulator(ICircuitSimulator):
             parsed_plots = self._parse_raw_fallback(raw_file)
             if parsed_plots:
                 results.update(self._build_structured_results(parsed_plots))
+
+        if native_artifacts:
+            metric_requests = self._metric_requests(testbench)
+            measurement_config = (getattr(testbench, "metadata", None) or {}).get("measurement", {})
+            self._active_required_backend = measurement_config.get("required_backend")
+            self._active_allow_backend_fallback = measurement_config.get("allow_backend_fallback", True)
+            artifacts = SimulationArtifacts(
+                raw_file=raw_file,
+                stdout_file=Path(native_artifacts["artifacts"]["stdout"]) if native_artifacts.get("artifacts", {}).get("stdout") else None,
+                stderr_file=Path(native_artifacts["artifacts"]["stderr"]) if native_artifacts.get("artifacts", {}).get("stderr") else None,
+                measures_file=Path(native_artifacts["artifacts"]["measures"]) if native_artifacts.get("artifacts", {}).get("measures") else None,
+                vectors_file=Path(native_artifacts["artifacts"]["vectors"]) if native_artifacts.get("artifacts", {}).get("vectors") else None,
+                vector_csv_file=Path(native_artifacts["artifacts"]["vectors_csv"]) if native_artifacts.get("artifacts", {}).get("vectors_csv") else None,
+                vector_metadata_file=Path(native_artifacts["artifacts"]["vector_metadata"]) if native_artifacts.get("artifacts", {}).get("vector_metadata") else None,
+            )
+            backend_results = self._extract_metrics_with_backends(artifacts, metric_requests, raw_file)
+            self._active_required_backend = None
+            self._active_allow_backend_fallback = True
+            results.setdefault("native_metrics", {})
+            results.setdefault("native_extractions", {})
+            for metric_name, extraction in backend_results.items():
+                results["native_extractions"][metric_name] = {
+                    "metric_name": metric_name,
+                    "measured_value": extraction.value,
+                    "status": extraction.status,
+                    "reason": extraction.error or extraction.status,
+                    "synthetic_value_used": False,
+                }
+                if extraction.value is not None:
+                    results["native_metrics"][metric_name] = extraction.value
         
         return results
     
@@ -679,6 +809,11 @@ class PySpiceSimulator(ICircuitSimulator):
                     metrics['power'] = float(abs(supply * current))
 
         tran = results.get('transient') or results.get('tran', {})
+        native_extractions = results.get("native_extractions", {})
+        blocked_native_metrics = {
+            name for name, extraction in native_extractions.items()
+            if extraction.get("status") != "SUCCESS"
+        }
         vout = tran.get('vout', [])
         time = tran.get('time', [])
         if len(vout) > 1 and len(time) > 1:
@@ -690,9 +825,20 @@ class PySpiceSimulator(ICircuitSimulator):
                 metrics['slew_rate_v_s'] = float(sr)
                 metrics['slew_rate'] = float(sr)
             schmitt_metrics = self._extract_schmitt_metrics(tran)
+            if "propagation_delay" in blocked_native_metrics:
+                schmitt_metrics.pop("propagation_delay", None)
+                schmitt_metrics.pop("propagation_delay_s", None)
             metrics.update({key: value for key, value in schmitt_metrics.items() if value is not None})
+            oscillation_validation = self._validate_oscillation(
+                tran,
+                amplitude_threshold=float(testbench.metadata.get("oscillation_amplitude_threshold", 1e-6)),
+                minimum_cycles=int(testbench.metadata.get("oscillation_minimum_cycles", 3)),
+                max_period_cv=float(testbench.metadata.get("oscillation_max_period_cv", 0.25)),
+                min_spectral_prominence=float(testbench.metadata.get("oscillation_min_spectral_prominence", 5.0)),
+            )
+            results["oscillation_validation"] = oscillation_validation
             oscillation_frequency = self._estimate_transient_frequency(tran)
-            if oscillation_frequency is not None:
+            if oscillation_frequency is not None and oscillation_validation["status"] == "VALID_OSCILLATION":
                 metrics['oscillator_frequency'] = float(oscillation_frequency)
                 metrics['frequency_hz'] = float(oscillation_frequency)
             startup_amplitude = self._estimate_startup_amplitude(tran)
@@ -705,9 +851,15 @@ class PySpiceSimulator(ICircuitSimulator):
             metrics['thd_percent'] = float(fourier['thd'])
         if 'fundamental_frequency' in fourier:
             metrics['fundamental_frequency'] = float(fourier['fundamental_frequency'])
+            if results.get("oscillation_validation", {}).get("status") == "VALID_OSCILLATION":
+                metrics.setdefault('oscillator_frequency', float(fourier['fundamental_frequency']))
+                metrics.setdefault('frequency_hz', float(fourier['fundamental_frequency']))
 
         for measurement in testbench.measurements:
-            for container in (metrics, dc, ac, fourier, results.get('pvt', {}).get('summary', {})):
+            extraction = native_extractions.get(measurement.name, {})
+            if extraction and extraction.get("status") != "SUCCESS":
+                continue
+            for container in (results.get('native_metrics', {}), metrics, dc, ac, fourier, results.get('pvt', {}).get('summary', {})):
                 if measurement.name in container:
                     value = container[measurement.name]
                     if value is None:
@@ -716,6 +868,240 @@ class PySpiceSimulator(ICircuitSimulator):
                     break
         
         return metrics
+
+    def _validate_oscillation(
+        self,
+        transient: Dict[str, Any],
+        *,
+        amplitude_threshold: float,
+        minimum_cycles: int,
+        max_period_cv: float,
+        min_spectral_prominence: float,
+    ) -> Dict[str, Any]:
+        time = np.array(transient.get("time", []), dtype=float)
+        vout = np.array(transient.get("vout", []), dtype=float)
+        if time.size < 8 or vout.size < 8:
+            return {"status": "NOT_EVALUATED"}
+
+        vpp = float(np.max(vout) - np.min(vout))
+        if not np.isfinite(vpp) or vpp < amplitude_threshold:
+            return {"status": "AMPLITUDE_TOO_LOW", "vpp": vpp}
+
+        mean_value = float(np.mean(vout))
+        crossings: List[float] = []
+        for index in range(1, len(vout)):
+            if vout[index - 1] <= mean_value < vout[index]:
+                crossings.append(float(time[index]))
+        if len(crossings) < minimum_cycles + 1:
+            return {"status": "INSUFFICIENT_CYCLES", "cycles": max(0, len(crossings) - 1), "vpp": vpp}
+
+        periods = np.diff(crossings)
+        valid_periods = periods[periods > 0]
+        if len(valid_periods) < minimum_cycles:
+            return {"status": "INSUFFICIENT_CYCLES", "cycles": int(len(valid_periods)), "vpp": vpp}
+        period_cv = float(np.std(valid_periods) / np.mean(valid_periods)) if np.mean(valid_periods) > 0 else float("inf")
+        if not np.isfinite(period_cv) or period_cv > max_period_cv:
+            return {"status": "UNSTABLE_PERIOD", "period_cv": period_cv, "vpp": vpp}
+
+        centered = vout - np.mean(vout)
+        dt = float(np.mean(np.diff(time)))
+        if not np.isfinite(dt) or dt <= 0:
+            return {"status": "NOT_EVALUATED", "vpp": vpp}
+        spectrum = np.fft.rfft(centered * np.hanning(centered.size))
+        magnitudes = np.abs(spectrum)
+        if magnitudes.size < 2:
+            return {"status": "NO_VALID_PEAK", "vpp": vpp}
+        dc_mag = max(magnitudes[0], 1e-30)
+        magnitudes[0] = 0.0
+        peak = float(np.max(magnitudes))
+        if peak <= 0:
+            return {"status": "NO_VALID_PEAK", "vpp": vpp}
+        if peak / dc_mag < min_spectral_prominence:
+            return {"status": "DC_DOMINATED", "spectral_prominence": peak / dc_mag, "vpp": vpp}
+        return {
+            "status": "VALID_OSCILLATION",
+            "vpp": vpp,
+            "cycles": int(len(valid_periods)),
+            "period_cv": period_cv,
+            "spectral_prominence": peak / dc_mag,
+        }
+
+    def _run_native_extraction_passes(self, netlist_path: Path, testbench: TestBench) -> Dict[str, Any]:
+        artifact_dir = Path(tempfile.mkdtemp(prefix="spec2tb_native_"))
+        stdout_file = artifact_dir / "ngspice_stdout.txt"
+        stderr_file = artifact_dir / "ngspice_stderr.txt"
+        measures_file = artifact_dir / "measures.txt"
+        vectors_file = artifact_dir / "vectors.dat"
+        vectors_csv = artifact_dir / "vectors.csv"
+        vector_metadata = artifact_dir / "vector_metadata.json"
+
+        measure_deck = self._generate_measure_deck(netlist_path, testbench, measures_file, vectors_file)
+        deck_path = artifact_dir / "native_backend.cir"
+        deck_path.write_text(measure_deck, encoding="utf-8")
+        cmd = [self.ngspice_path, "-b", str(deck_path)]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=self.timeout, check=False, cwd=str(artifact_dir))
+        stdout_file.write_text(result.stdout or "", encoding="utf-8")
+        stderr_file.write_text(result.stderr or "", encoding="utf-8")
+        if result.stdout:
+            measures_file.write_text(result.stdout, encoding="utf-8")
+        if vectors_file.exists():
+            self._wrdata_to_csv(vectors_file, vectors_csv)
+        vector_metadata.write_text(json.dumps({
+            "vectors_file": str(vectors_file) if vectors_file.exists() else None,
+            "vectors_csv": str(vectors_csv) if vectors_csv.exists() else None,
+        }, indent=2), encoding="utf-8")
+        measurement_config = (getattr(testbench, "metadata", None) or {}).get("measurement", {})
+        required_backend = measurement_config.get("required_backend")
+        has_measures = measures_file.exists() and measures_file.read_text(encoding="utf-8", errors="ignore").strip()
+        has_vectors = vectors_file.exists()
+        if required_backend == "NGSPICE_WRDATA":
+            backend = "NGSPICE_WRDATA" if has_vectors else "UNAVAILABLE"
+        elif required_backend == "NGSPICE_MEASURE":
+            backend = "NGSPICE_MEASURE" if has_measures else "UNAVAILABLE"
+        else:
+            backend = "NGSPICE_MEASURE" if has_measures else "NGSPICE_WRDATA" if has_vectors else "UNAVAILABLE"
+        source = str(measures_file if backend == "NGSPICE_MEASURE" else vectors_file if backend == "NGSPICE_WRDATA" else "")
+        return {
+            "measurement_backend": backend,
+            "pyspice_required": False,
+            "measurement_source": source,
+            "measurement_command": " ".join(cmd),
+            "measurement_status": "SUCCESS" if backend != "UNAVAILABLE" and result.returncode == 0 else "UNAVAILABLE",
+            "artifacts": {
+                "stdout": str(stdout_file),
+                "stderr": str(stderr_file),
+                "measures": str(measures_file),
+                "vectors": str(vectors_file),
+                "vectors_csv": str(vectors_csv),
+                "vector_metadata": str(vector_metadata),
+            },
+        }
+
+    def _generate_measure_deck(self, netlist_path: Path, testbench: TestBench, measures_file: Path, vectors_file: Path) -> str:
+        base_deck = self._generate_spice_deck(netlist_path, testbench)
+        lines = base_deck.splitlines()
+        if lines and lines[-1].strip().lower() == ".end":
+            lines = lines[:-1]
+        lines.extend(self._native_measure_commands(testbench))
+        lines.extend(self._native_control_block(testbench, vectors_file))
+        lines.append(".END")
+        return "\n".join(lines) + "\n"
+
+    def _native_measure_commands(self, testbench: TestBench) -> List[str]:
+        commands: List[str] = []
+        required_metrics = set(testbench.metadata.get("required_metrics", [])) if getattr(testbench, "metadata", None) else set()
+        for measurement in testbench.measurements:
+            name = measurement.name
+            if required_metrics and name not in required_metrics:
+                continue
+            if name in {"operating_point", "vout_dc"}:
+                commands.append(".meas op operating_point FIND v(vout) AT=0")
+                commands.append(".meas op vout_dc FIND v(vout) AT=0")
+            elif name in {"quiescent_current", "idd"}:
+                commands.append(".meas op quiescent_current FIND i(vdd) AT=0")
+                commands.append(".meas op idd FIND i(vdd) AT=0")
+            elif name == "power":
+                commands.append(".meas op power param='abs(v(vdd)*i(vdd))'")
+            elif name in {"dc_gain", "dc_gain_db"}:
+                commands.append(".meas ac dc_gain_db FIND vdb(vout) AT=1")
+            elif name == "startup_amplitude":
+                commands.append(".meas tran vmax MAX v(vout)")
+                commands.append(".meas tran vmin MIN v(vout)")
+                commands.append(".meas tran startup_amplitude param='(vmax-vmin)/2'")
+            elif name in {"propagation_delay", "propagation_delay_s"}:
+                commands.append(".meas tran propagation_delay_s TRIG v(vin) VAL=2.5 RISE=1 TARG v(vout) VAL=2.5 RISE=1")
+                commands.append(".meas tran propagation_delay TRIG v(vin) VAL=2.5 RISE=1 TARG v(vout) VAL=2.5 RISE=1")
+        return list(dict.fromkeys(commands))
+
+    def _native_control_block(self, testbench: TestBench, vectors_file: Path) -> List[str]:
+        analysis_types = {analysis.type for analysis in testbench.analyses}
+        required_metrics = set(testbench.metadata.get("required_metrics", [])) if getattr(testbench, "metadata", None) else set()
+        if AnalysisType.AC in analysis_types:
+            return [
+                ".control",
+                "set filetype=ascii",
+                "run",
+                f'wrdata {vectors_file.name} frequency real(v(vout)) imag(v(vout)) real(v(vin)) imag(v(vin))',
+                "quit",
+                ".endc",
+            ]
+        if AnalysisType.TRANSIENT in analysis_types:
+            needs_input = any(name in required_metrics for name in {"propagation_delay", "propagation_delay_s", "v_t_plus", "v_t_minus", "hysteresis_width", "switching_threshold_rising_v", "switching_threshold_falling_v", "hysteresis_width_v"})
+            vector_args = "time v(vin) v(vout)" if needs_input else "time v(vout)"
+            return [
+                ".control",
+                "set filetype=ascii",
+                "run",
+                f'wrdata {vectors_file.name} {vector_args}',
+                "quit",
+                ".endc",
+            ]
+        if AnalysisType.DC in analysis_types:
+            return [
+                ".control",
+                "set filetype=ascii",
+                "run",
+                f'wrdata {vectors_file.name} v(vout)',
+                "quit",
+                ".endc",
+            ]
+        return []
+
+    @staticmethod
+    def _wrdata_to_csv(vectors_file: Path, csv_file: Path) -> None:
+        rows = [line.split() for line in vectors_file.read_text(encoding="utf-8", errors="ignore").splitlines() if line.strip()]
+        with csv_file.open("w", encoding="utf-8", newline="") as handle:
+            writer = csv.writer(handle)
+            writer.writerows(rows)
+
+    def _metric_requests(self, testbench: TestBench) -> List[Dict[str, Any]]:
+        requests = []
+        for measurement in testbench.measurements:
+            requests.append({
+                "name": measurement.name,
+                "unit": measurement.unit,
+                "expression": measurement.expression,
+                "output_threshold": 2.5,
+            })
+        if any(measurement.name == "hysteresis_width" for measurement in testbench.measurements):
+            requests.extend([
+                {"name": "switching_threshold_rising_v", "unit": "V", "output_threshold": 2.5},
+                {"name": "switching_threshold_falling_v", "unit": "V", "output_threshold": 2.5},
+                {"name": "hysteresis_width_v", "unit": "V", "output_threshold": 2.5},
+            ])
+        return requests
+
+    def _extract_metrics_with_backends(self, artifacts: SimulationArtifacts, metric_requests: List[Dict[str, Any]], raw_file: Path) -> Dict[str, MetricExtraction]:
+        required_backend = getattr(self, "_active_required_backend", None)
+        allow_backend_fallback = getattr(self, "_active_allow_backend_fallback", True)
+        native_backends = {
+            "NGSPICE_MEASURE": NgspiceMeasureBackend(),
+            "NGSPICE_WRDATA": NgspiceWrdataBackend(),
+        }
+        if required_backend in native_backends and not allow_backend_fallback:
+            return native_backends[required_backend].extract(artifacts, metric_requests)
+
+        backends = list(native_backends.values())
+        if self.disable_pyspice:
+            merged: Dict[str, MetricExtraction] = {}
+            for backend in backends:
+                backend_results = backend.extract(artifacts, metric_requests)
+                for name, extraction in backend_results.items():
+                    if name not in merged or (merged[name].value is None and extraction.value is not None):
+                        merged[name] = extraction
+            return merged
+        try:
+            from PySpice.Spice.RawFile import RawFile
+            backends.append(PySpiceResultBackend(lambda raw_path: {} if raw_path is None else self.extract_metrics(self._build_structured_results(self._extract_rawfile_plots(RawFile(str(raw_path)))), TestBench(name="raw", category="raw"))))
+        except Exception:
+            pass
+        merged: Dict[str, MetricExtraction] = {}
+        for backend in backends:
+            backend_results = backend.extract(artifacts, metric_requests)
+            for name, extraction in backend_results.items():
+                if name not in merged or (merged[name].value is None and extraction.value is not None):
+                    merged[name] = extraction
+        return merged
 
     def _run_pvt_variants(
         self,
@@ -973,7 +1359,7 @@ class PySpiceSimulator(ICircuitSimulator):
                     input_index = candidate
                     break
             if input_index is not None and "propagation_delay" not in metrics:
-                metrics["propagation_delay"] = max(0.0, output_time - float(time[input_index]))
+                metrics["propagation_delay"] = output_time - float(time[input_index])
                 metrics["propagation_delay_s"] = metrics["propagation_delay"]
 
         if "v_t_plus" in metrics and "v_t_minus" in metrics:
@@ -1446,6 +1832,9 @@ class PySpiceSimulator(ICircuitSimulator):
                 shell=False
             )
             output = result.stdout or result.stderr
+            for line in output.splitlines():
+                if "ngspice" in line.lower():
+                    return line.strip("* ")
             return output.splitlines()[0] if output else "available"
         except Exception:
             return "available"

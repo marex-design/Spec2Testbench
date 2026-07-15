@@ -1,0 +1,14 @@
+{
+  "case_id": "p22_oscillator_nominal_gt",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+  "target_metric": "oscillator_frequency",
+  "reference": {
+    "method": "manual_transient_estimate",
+    "equation": "Period estimated from transient zero crossings",
+    "expected_value": 20000.0,
+    "unit": "Hz",
+    "tolerance_percent": 20
+  },
+  "uses_spec2testbench_verdict": false
+}

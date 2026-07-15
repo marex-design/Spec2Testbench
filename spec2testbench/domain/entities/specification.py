@@ -7,6 +7,7 @@ Point d'entrée du framework : les specs sont ce que l'utilisateur veut vérifie
 from dataclasses import dataclass, field
 from typing import Dict, Any, List, Optional, Tuple, Union
 from pathlib import Path
+import json
 import yaml
 from enum import Enum
 
@@ -29,6 +30,16 @@ class ProcessCorner(Enum):
     SS = "ss"      # Slow-Slow (transistors lents)
     FS = "fs"      # Fast-Slow (NMOS rapide, PMOS lent)
     SF = "sf"      # Slow-Fast (NMOS lent, PMOS rapide)
+
+
+@dataclass
+class VariantOverride:
+    case_id: str
+    target: str
+    parameter_name: str
+    original_value: Any
+    override_value: Any
+    source: str
 
 
 @dataclass
@@ -70,6 +81,10 @@ class Specification:
     technology: str = "CMOS_45nm"
     description: str = ""
     raw_specs: str = ""
+    case_id: Optional[str] = None
+    parent_circuit_id: Optional[str] = None
+    variant_overrides: List[VariantOverride] = field(default_factory=list)
+    measurement: Dict[str, Any] = field(default_factory=dict)
     
     # =========================================================
     # PROPRIÉTÉS COURANTES (getters simplifiés)
@@ -270,6 +285,10 @@ class Specification:
             supply_variation=supply_variation,
             technology=data.get("technology", "CMOS_45nm"),
             description=data.get("description", ""),
+            raw_specs=yaml.dump(data, allow_unicode=True),
+            case_id=data.get("case_id"),
+            parent_circuit_id=data.get("parent_circuit_id"),
+            variant_overrides=cls._load_variant_overrides(path),
         )
     
     @classmethod
@@ -317,6 +336,14 @@ class Specification:
             technology=data.get("technology", "CMOS_45nm"),
             description=data.get("description", ""),
             raw_specs=data.get("raw_specs", ""),
+            case_id=data.get("case_id"),
+            parent_circuit_id=data.get("parent_circuit_id"),
+            variant_overrides=[
+                VariantOverride(**override)
+                for override in data.get("variant_overrides", [])
+                if isinstance(override, dict)
+            ],
+            measurement=data.get("measurement", {}) if isinstance(data.get("measurement", {}), dict) else {},
         )
 
     @staticmethod
@@ -331,10 +358,49 @@ class Specification:
     @classmethod
     def _normalize_metric_target(cls, target: Dict[str, Any]) -> Dict[str, Any]:
         normalized = dict(target)
-        for key in ("min", "max", "typ", "weight"):
+        for key in ("min", "max", "typ", "weight", "absolute_tolerance", "relative_tolerance"):
             if key in normalized:
                 normalized[key] = cls._coerce_numeric(normalized[key])
         return normalized
+
+    @classmethod
+    def _load_variant_overrides(cls, path: Path) -> List[VariantOverride]:
+        mutation_path = path.parent / "mutation.json"
+        if not mutation_path.exists():
+            return []
+        try:
+            mutation = json.loads(mutation_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return []
+
+        case_id = str(mutation.get("case_id", "")).strip()
+        target = str(mutation.get("target_component", "")).strip().upper()
+        original_value = mutation.get("original_value")
+        override_value = mutation.get("mutated_value")
+        source = "controlled_variant"
+        overrides: List[VariantOverride] = []
+
+        if target == "TRAN" and isinstance(override_value, str):
+            tokens = override_value.split()
+            original_tokens = str(original_value).split()
+            if len(tokens) >= 2:
+                overrides.append(VariantOverride(
+                    case_id=case_id,
+                    target="TRAN",
+                    parameter_name="step_time",
+                    original_value=original_tokens[0] if original_tokens else None,
+                    override_value=tokens[0],
+                    source=source,
+                ))
+                overrides.append(VariantOverride(
+                    case_id=case_id,
+                    target="TRAN",
+                    parameter_name="end_time",
+                    original_value=original_tokens[1] if len(original_tokens) > 1 else None,
+                    override_value=tokens[1],
+                    source=source,
+                ))
+        return overrides
 
     @classmethod
     def _normalize_performance_targets(cls, targets: Dict[str, Any]) -> Dict[str, Any]:
@@ -425,6 +491,20 @@ class Specification:
             "temperature_range": self.temperature_range.value,
             "supply_variation": self.supply_variation,
             "description": self.description,
+            "case_id": self.case_id,
+            "parent_circuit_id": self.parent_circuit_id,
+            "variant_overrides": [
+                {
+                    "case_id": override.case_id,
+                    "target": override.target,
+                    "parameter_name": override.parameter_name,
+                    "original_value": override.original_value,
+                    "override_value": override.override_value,
+                    "source": override.source,
+                }
+                for override in self.variant_overrides
+            ],
+            "measurement": self.measurement,
         }
     
     # =========================================================

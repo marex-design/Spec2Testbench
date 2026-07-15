@@ -1,0 +1,5 @@
+run_id: 20260712_195226
+source: results/controlled_violation_results_v2.csv
+effective_cases: 2
+status: NO_GO
+manifest_sha256: 9da8817d4093c43988bbb74e52c2a639e8c024821724eaa5b8fc22ce68f4d8fc

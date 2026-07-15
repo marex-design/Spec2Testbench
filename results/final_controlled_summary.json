@@ -1,0 +1,34 @@
+{
+  "run_id": "20260712_195226",
+  "total_variants": 30,
+  "effective_controlled_violations": 2,
+  "ineffective_mutations": 28,
+  "netlist_binding_mismatches": 2,
+  "detected_effective_violations": 1,
+  "false_pass": 1,
+  "not_evaluated": 0,
+  "violation_detection_recall": 0.5,
+  "false_pass_rate": 0.5,
+  "precision": 0.5,
+  "f1_score": 0.6666666666666666,
+  "decision_coverage": 1.0,
+  "unevaluated_rate": 0.0,
+  "baseline_false_pass_rate": 1.0,
+  "false_pass_reduction": 0.5,
+  "by_family": {
+    "high_pass_filter": {
+      "FALSE_PASS": 1
+    },
+    "oscillator": {
+      "TRUE_FAIL": 1
+    }
+  },
+  "by_metric_category": {
+    "frequency_bandwidth": {
+      "FALSE_PASS": 1
+    },
+    "amplitude_oscillation": {
+      "TRUE_FAIL": 1
+    }
+  }
+}

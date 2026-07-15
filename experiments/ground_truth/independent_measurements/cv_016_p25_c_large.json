@@ -1,0 +1,13 @@
+{
+  "case_id": "cv_016_p25_c_large",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "target_metric": "slew_rate",
+  "reference": {
+    "method": "physical_mutation_reasoning",
+    "equation": "large capacitor attenuates fast transient response",
+    "expected_value": null,
+    "unit": "V/s"
+  },
+  "uses_spec2testbench_verdict": false
+}

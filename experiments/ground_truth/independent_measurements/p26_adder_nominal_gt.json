@@ -1,0 +1,14 @@
+{
+  "case_id": "p26_adder_nominal_gt",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+  "target_metric": "operating_point",
+  "reference": {
+    "method": "manual_dc_estimate",
+    "equation": "Linear summing topology expected to remain simulable and bounded",
+    "expected_value": 0.1,
+    "unit": "V",
+    "tolerance_percent": 20
+  },
+  "uses_spec2testbench_verdict": false
+}

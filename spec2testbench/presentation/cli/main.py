@@ -1,5 +1,5 @@
 """
-Command Line Interface for Spec2TestBench.
+Command Line Interface for Spec2Testbench.
 """
 
 from pathlib import Path
@@ -72,7 +72,7 @@ def verify(
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
 ):
     """Verify a circuit against specifications."""
-    _safe_console_print("\nSpec2TestBench - Verification\n", style="bold cyan")
+    _safe_console_print("\nSpec2Testbench - Verification\n", style="bold cyan")
 
     if not specs.exists():
         console.print(f"[red]Specifications file not found: {specs}[/red]")
@@ -147,7 +147,7 @@ def generate(
     no_llm: bool = typer.Option(False, "--no-llm", help="Disable LLM (use templates only)"),
 ):
     """Generate testbench from specifications."""
-    console.print("\n[bold cyan]Spec2TestBench - TestBench Generation[/bold cyan]\n")
+    console.print("\n[bold cyan]Spec2Testbench - TestBench Generation[/bold cyan]\n")
 
     if not specs.exists():
         console.print(f"[red]Specifications file not found: {specs}[/red]")
@@ -204,7 +204,7 @@ def diagnose(
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output report path"),
 ):
     """Diagnose a circuit failure from waveform image."""
-    console.print("\n[bold cyan]Spec2TestBench - Waveform Diagnosis[/bold cyan]\n")
+    console.print("\n[bold cyan]Spec2Testbench - Waveform Diagnosis[/bold cyan]\n")
 
     if not waveform.exists():
         console.print(f"[red]Waveform file not found: {waveform}[/red]")
@@ -298,7 +298,7 @@ def draw(
     """Draw a schematic figure from a SPICE netlist."""
     from ...infrastructure.schematic import netlist_to_schematic
 
-    console.print("\n[bold cyan]Spec2TestBench - Schematic Drawing[/bold cyan]\n")
+    console.print("\n[bold cyan]Spec2Testbench - Schematic Drawing[/bold cyan]\n")
 
     if not netlist.exists():
         console.print(f"[red]Netlist file not found: {netlist}[/red]")
@@ -325,7 +325,7 @@ def draw(
 @app.command()
 def version():
     """Display version information."""
-    console.print("[bold cyan]Spec2TestBench v0.1.0[/bold cyan]")
+    console.print("[bold cyan]Spec2Testbench v0.1.0[/bold cyan]")
     console.print("From Specs to SPICE Testbenches: LLM-Assisted Analog Verification")
     console.print("\n[dim]License: MIT[/dim]")
     console.print("\n[dim]Supported LLM Providers: OpenAI, DeepSeek, Groq, Gemini, Anthropic[/dim]")

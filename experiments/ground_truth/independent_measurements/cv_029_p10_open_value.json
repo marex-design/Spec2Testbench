@@ -1,0 +1,13 @@
+{
+  "case_id": "cv_029_p10_open_value",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_NON_SIMULABLE",
+  "target_metric": "cutoff_frequency_hz",
+  "reference": {
+    "method": "physical_mutation_reasoning",
+    "equation": "invalid numeric value is intentionally non-simulable",
+    "expected_value": null,
+    "unit": "Hz"
+  },
+  "uses_spec2testbench_verdict": false
+}

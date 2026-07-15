@@ -1,0 +1,5 @@
+simulation_mode: REAL
+allow_mock: false
+paper_eligible_only: true
+case_count: 30
+source_ground_truth_manifest: experiments/ground_truth/ground_truth_manifest.yaml

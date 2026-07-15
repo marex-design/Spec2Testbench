@@ -1,0 +1,421 @@
+cases:
+- case_id: cv_001_p10_c_huge
+  parent_circuit_id: p10_lowpass
+  mutation_type: frequency_bandwidth
+  target_component: C1
+  original_value: 10n
+  mutated_value: '1'
+  target_metric: cutoff_frequency_hz
+  expected_effect: decrease below lower bound
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: fc = 1/(2*pi*10k*1F) = 1.59e-5 Hz
+  circuit_family: low_pass_filter
+  generated_dir: experiments\controlled_violations\generated_cases\cv_001_p10_c_huge
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_001_p10_c_huge\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_001_p10_c_huge\specification.yaml
+- case_id: cv_002_p10_r_huge
+  parent_circuit_id: p10_lowpass
+  mutation_type: frequency_bandwidth
+  target_component: R1
+  original_value: 10k
+  mutated_value: 1G
+  target_metric: cutoff_frequency_hz
+  expected_effect: decrease below lower bound
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: fc = 1/(2*pi*1G*10n) = 0.0159 Hz
+  circuit_family: low_pass_filter
+  generated_dir: experiments\controlled_violations\generated_cases\cv_002_p10_r_huge
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_002_p10_r_huge\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_002_p10_r_huge\specification.yaml
+- case_id: cv_003_p11_c_huge
+  parent_circuit_id: p11_highpass
+  mutation_type: frequency_bandwidth
+  target_component: C1
+  original_value: 10n
+  mutated_value: '1'
+  target_metric: cutoff_frequency_hz
+  expected_effect: decrease below lower bound
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: large C moves corner far below specification range
+  circuit_family: high_pass_filter
+  generated_dir: experiments\controlled_violations\generated_cases\cv_003_p11_c_huge
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_003_p11_c_huge\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_003_p11_c_huge\specification.yaml
+- case_id: cv_004_p12_r_shift
+  parent_circuit_id: p12_bandpass
+  mutation_type: frequency_bandwidth
+  target_component: R1
+  original_value: 10k
+  mutated_value: 100Meg
+  target_metric: center_frequency
+  expected_effect: move outside range
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: large R shifts the RC pole/zero network by four decades
+  circuit_family: band_pass_filter
+  generated_dir: experiments\controlled_violations\generated_cases\cv_004_p12_r_shift
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_004_p12_r_shift\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_004_p12_r_shift\specification.yaml
+- case_id: cv_005_p13_c_shift
+  parent_circuit_id: p13_bandstop
+  mutation_type: frequency_bandwidth
+  target_component: C1
+  original_value: 10n
+  mutated_value: '1'
+  target_metric: center_frequency
+  expected_effect: move outside range
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: large C shifts notch frequency far below expected band
+  circuit_family: notch_filter
+  generated_dir: experiments\controlled_violations\generated_cases\cv_005_p13_c_shift
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_005_p13_c_shift\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_005_p13_c_shift\specification.yaml
+- case_id: cv_006_p01_rd_low
+  parent_circuit_id: p01_amplifier
+  mutation_type: gain
+  target_component: Rload
+  original_value: 10k
+  mutated_value: '1'
+  target_metric: dc_gain_db
+  expected_effect: reduce gain
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: drain load collapse suppresses voltage gain
+  circuit_family: amplifier
+  generated_dir: experiments\controlled_violations\generated_cases\cv_006_p01_rd_low
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_006_p01_rd_low\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_006_p01_rd_low\specification.yaml
+- case_id: cv_007_p02_rd_low
+  parent_circuit_id: p02_amplifier
+  mutation_type: gain
+  target_component: R3
+  original_value: '10000'
+  mutated_value: '1'
+  target_metric: dc_gain_db
+  expected_effect: reduce gain
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: drain load collapse suppresses voltage gain
+  circuit_family: amplifier
+  generated_dir: experiments\controlled_violations\generated_cases\cv_007_p02_rd_low
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_007_p02_rd_low\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_007_p02_rd_low\specification.yaml
+- case_id: cv_008_p03_rd_low
+  parent_circuit_id: p03_amplifier
+  mutation_type: gain
+  target_component: Rload
+  original_value: 10k
+  mutated_value: '1'
+  target_metric: dc_gain_db
+  expected_effect: reduce gain
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: output load collapse suppresses voltage gain
+  circuit_family: amplifier
+  generated_dir: experiments\controlled_violations\generated_cases\cv_008_p03_rd_low
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_008_p03_rd_low\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_008_p03_rd_low\specification.yaml
+- case_id: cv_009_p14_rd_low
+  parent_circuit_id: p14_amplifier
+  mutation_type: gain
+  target_component: Rload
+  original_value: 10k
+  mutated_value: '1'
+  target_metric: dc_gain_db
+  expected_effect: reduce gain
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: load collapse suppresses voltage gain
+  circuit_family: amplifier
+  generated_dir: experiments\controlled_violations\generated_cases\cv_009_p14_rd_low
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_009_p14_rd_low\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_009_p14_rd_low\specification.yaml
+- case_id: cv_010_p08_iref_low
+  parent_circuit_id: p08_currentmirror
+  mutation_type: dc_voltage_current
+  target_component: Rload
+  original_value: '10000'
+  mutated_value: '1'
+  target_metric: quiescent_current
+  expected_effect: increase load current
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: load resistance controls output current drawn from the mirror
+  circuit_family: current_mirror
+  generated_dir: experiments\controlled_violations\generated_cases\cv_010_p08_iref_low
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_010_p08_iref_low\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_010_p08_iref_low\specification.yaml
+- case_id: cv_011_p17_iref_low
+  parent_circuit_id: p17_currentmirror
+  mutation_type: dc_voltage_current
+  target_component: Iref
+  original_value: 100u
+  mutated_value: 1n
+  target_metric: quiescent_current
+  expected_effect: decrease current
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: reference current controls mirrored current directly
+  circuit_family: current_mirror
+  generated_dir: experiments\controlled_violations\generated_cases\cv_011_p17_iref_low
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_011_p17_iref_low\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_011_p17_iref_low\specification.yaml
+- case_id: cv_012_p16_vdd_low
+  parent_circuit_id: p16_opamp
+  mutation_type: dc_voltage_current
+  target_component: Vdd
+  original_value: '5'
+  mutated_value: '0.2'
+  target_metric: operating_point
+  expected_effect: collapse output swing
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: insufficient supply headroom prevents nominal bias point
+  circuit_family: opamp
+  generated_dir: experiments\controlled_violations\generated_cases\cv_012_p16_vdd_low
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_012_p16_vdd_low\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_012_p16_vdd_low\specification.yaml
+- case_id: cv_013_p20_vdd_low
+  parent_circuit_id: p20_opamp
+  mutation_type: dc_voltage_current
+  target_component: Vdd
+  original_value: '5'
+  mutated_value: '0.2'
+  target_metric: operating_point
+  expected_effect: collapse output swing
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: insufficient supply headroom prevents nominal bias point
+  circuit_family: opamp
+  generated_dir: experiments\controlled_violations\generated_cases\cv_013_p20_vdd_low
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_013_p20_vdd_low\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_013_p20_vdd_low\specification.yaml
+- case_id: cv_014_p09_input_slow
+  parent_circuit_id: p09_comparator
+  mutation_type: timing
+  target_component: TRAN
+  original_value: 1U 10M
+  mutated_value: 100U 2
+  target_metric: propagation_delay
+  expected_effect: increase delay
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: coarse/long transient stimulus makes threshold crossing much later
+  circuit_family: comparator
+  generated_dir: experiments\controlled_violations\generated_cases\cv_014_p09_input_slow
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_014_p09_input_slow\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_014_p09_input_slow\specification.yaml
+- case_id: cv_015_p24_c_large
+  parent_circuit_id: p24_integrator
+  mutation_type: timing
+  target_component: Cf
+  original_value: 100n
+  mutated_value: '1'
+  target_metric: settling_time
+  expected_effect: increase time constant
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: larger integration capacitor increases settling time
+  circuit_family: opamp_integrator
+  generated_dir: experiments\controlled_violations\generated_cases\cv_015_p24_c_large
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_015_p24_c_large\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_015_p24_c_large\specification.yaml
+- case_id: cv_016_p25_c_large
+  parent_circuit_id: p25_differentiator
+  mutation_type: timing
+  target_component: C1
+  original_value: 10n
+  mutated_value: '1'
+  target_metric: slew_rate
+  expected_effect: reduce dynamic slope
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: large capacitor attenuates fast transient response
+  circuit_family: opamp_differentiator
+  generated_dir: experiments\controlled_violations\generated_cases\cv_016_p25_c_large
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_016_p25_c_large\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_016_p25_c_large\specification.yaml
+- case_id: cv_017_p22_c_large
+  parent_circuit_id: p22_oscillator
+  mutation_type: amplitude_oscillation
+  target_component: C1
+  original_value: 10n
+  mutated_value: '1'
+  target_metric: oscillator_frequency
+  expected_effect: decrease frequency
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: RC oscillator frequency scales inversely with C
+  circuit_family: oscillator
+  generated_dir: experiments\controlled_violations\generated_cases\cv_017_p22_c_large
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_017_p22_c_large\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_017_p22_c_large\specification.yaml
+- case_id: cv_018_p23_c_large
+  parent_circuit_id: p23_oscillator
+  mutation_type: amplitude_oscillation
+  target_component: C1
+  original_value: 10n
+  mutated_value: '1'
+  target_metric: oscillator_frequency
+  expected_effect: decrease frequency
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: RC oscillator frequency scales inversely with C
+  circuit_family: oscillator
+  generated_dir: experiments\controlled_violations\generated_cases\cv_018_p23_c_large
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_018_p23_c_large\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_018_p23_c_large\specification.yaml
+- case_id: cv_019_p22_vdd_low
+  parent_circuit_id: p22_oscillator
+  mutation_type: amplitude_oscillation
+  target_component: Vdd
+  original_value: '5'
+  mutated_value: '0.1'
+  target_metric: startup_amplitude
+  expected_effect: reduce amplitude
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: supply starvation prevents oscillation amplitude buildup
+  circuit_family: oscillator
+  generated_dir: experiments\controlled_violations\generated_cases\cv_019_p22_vdd_low
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_019_p22_vdd_low\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_019_p22_vdd_low\specification.yaml
+- case_id: cv_020_p28_ref_high
+  parent_circuit_id: p28_schmitt
+  mutation_type: switching_threshold
+  target_component: Vref
+  original_value: '2.5'
+  mutated_value: '100'
+  target_metric: propagation_delay
+  expected_effect: prevent switching
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: reference outside input range prevents valid transition
+  circuit_family: schmitt_trigger
+  generated_dir: experiments\controlled_violations\generated_cases\cv_020_p28_ref_high
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_020_p28_ref_high\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_020_p28_ref_high\specification.yaml
+- case_id: cv_021_p09_ref_high
+  parent_circuit_id: p09_comparator
+  mutation_type: switching_threshold
+  target_component: Vref
+  original_value: '2.5'
+  mutated_value: '100'
+  target_metric: propagation_delay
+  expected_effect: prevent switching
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: reference outside input range prevents valid transition
+  circuit_family: comparator
+  generated_dir: experiments\controlled_violations\generated_cases\cv_021_p09_ref_high
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_021_p09_ref_high\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_021_p09_ref_high\specification.yaml
+- case_id: cv_022_p28_vin_low
+  parent_circuit_id: p28_schmitt
+  mutation_type: switching_threshold
+  target_component: Vin
+  original_value: '2.7'
+  mutated_value: '0.1'
+  target_metric: propagation_delay
+  expected_effect: prevent switching
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: input amplitude never reaches switching threshold
+  circuit_family: schmitt_trigger
+  generated_dir: experiments\controlled_violations\generated_cases\cv_022_p28_vin_low
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_022_p28_vin_low\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_022_p28_vin_low\specification.yaml
+- case_id: cv_023_p05_vdd_high
+  parent_circuit_id: p05_amplifier
+  mutation_type: power_consumption
+  target_component: Vdd
+  original_value: '5'
+  mutated_value: '50'
+  target_metric: power
+  expected_effect: increase power
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: DC power scales with supply for biased amplifier
+  circuit_family: amplifier
+  generated_dir: experiments\controlled_violations\generated_cases\cv_023_p05_vdd_high
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_023_p05_vdd_high\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_023_p05_vdd_high\specification.yaml
+- case_id: cv_024_p18_vdd_high
+  parent_circuit_id: p18_opamp
+  mutation_type: power_consumption
+  target_component: Vdd
+  original_value: '5'
+  mutated_value: '50'
+  target_metric: power
+  expected_effect: increase power
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: DC power scales with supply for biased opamp
+  circuit_family: opamp
+  generated_dir: experiments\controlled_violations\generated_cases\cv_024_p18_vdd_high
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_024_p18_vdd_high\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_024_p18_vdd_high\specification.yaml
+- case_id: cv_025_p06_load_heavy
+  parent_circuit_id: p06_inverter
+  mutation_type: dc_voltage_current
+  target_component: Rload
+  original_value: 100k
+  mutated_value: '1'
+  target_metric: operating_point
+  expected_effect: pull output high/low incorrectly
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: heavy load forces output DC point away from nominal
+  circuit_family: amplifier
+  generated_dir: experiments\controlled_violations\generated_cases\cv_025_p06_load_heavy
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_025_p06_load_heavy\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_025_p06_load_heavy\specification.yaml
+- case_id: cv_026_p07_supply_low
+  parent_circuit_id: p07_inverter
+  mutation_type: dc_voltage_current
+  target_component: Vdd
+  original_value: '5'
+  mutated_value: '0.1'
+  target_metric: operating_point
+  expected_effect: collapse output swing
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: low supply prevents nominal output swing
+  circuit_family: amplifier
+  generated_dir: experiments\controlled_violations\generated_cases\cv_026_p07_supply_low
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_026_p07_supply_low\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_026_p07_supply_low\specification.yaml
+- case_id: cv_027_p19_lo_low
+  parent_circuit_id: p19_mixer
+  mutation_type: amplitude_oscillation
+  target_component: Vlop
+  original_value: '3'
+  mutated_value: '0.001'
+  target_metric: thd
+  expected_effect: reduce mixing product
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: LO amplitude reduction suppresses mixer spectral output
+  circuit_family: mixer
+  generated_dir: experiments\controlled_violations\generated_cases\cv_027_p19_lo_low
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_027_p19_lo_low\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_027_p19_lo_low\specification.yaml
+- case_id: cv_028_p26_input_high
+  parent_circuit_id: p26_adder
+  mutation_type: dc_voltage_current
+  target_component: Vin1
+  original_value: '3'
+  mutated_value: '100'
+  target_metric: operating_point
+  expected_effect: saturate output
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  justification: oversized input drives summing circuit outside nominal range
+  circuit_family: composite
+  generated_dir: experiments\controlled_violations\generated_cases\cv_028_p26_input_high
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_028_p26_input_high\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_028_p26_input_high\specification.yaml
+- case_id: cv_029_p10_open_value
+  parent_circuit_id: p10_lowpass
+  mutation_type: non_simulable
+  target_component: C1
+  original_value: 10n
+  mutated_value: BAD_VALUE
+  target_metric: cutoff_frequency_hz
+  expected_effect: ngspice parse error
+  ground_truth_label: GROUND_TRUTH_NON_SIMULABLE
+  justification: invalid numeric value is intentionally non-simulable
+  circuit_family: low_pass_filter
+  generated_dir: experiments\controlled_violations\generated_cases\cv_029_p10_open_value
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_029_p10_open_value\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_029_p10_open_value\specification.yaml
+- case_id: cv_030_p09_missing_subckt
+  parent_circuit_id: p09_comparator
+  mutation_type: non_simulable
+  target_component: Xcmp
+  original_value: Opamp
+  mutated_value: MissingOpamp
+  target_metric: propagation_delay
+  expected_effect: ngspice subckt error
+  ground_truth_label: GROUND_TRUTH_NON_SIMULABLE
+  justification: undefined subcircuit is intentionally non-simulable
+  circuit_family: comparator
+  generated_dir: experiments\controlled_violations\generated_cases\cv_030_p09_missing_subckt
+  mutated_netlist: experiments\controlled_violations\generated_cases\cv_030_p09_missing_subckt\mutated_netlist.cir
+  specification: experiments\controlled_violations\generated_cases\cv_030_p09_missing_subckt\specification.yaml

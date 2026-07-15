@@ -1,0 +1,13 @@
+{
+  "case_id": "cv_025_p06_load_heavy",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "target_metric": "operating_point",
+  "reference": {
+    "method": "physical_mutation_reasoning",
+    "equation": "heavy load forces output DC point away from nominal",
+    "expected_value": null,
+    "unit": "V"
+  },
+  "uses_spec2testbench_verdict": false
+}

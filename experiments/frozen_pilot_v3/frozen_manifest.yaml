@@ -1,0 +1,7 @@
+name: frozen_pilot_v3
+parent_manifest: experiments/frozen_pilot_v2/frozen_manifest.yaml
+extension_run: 20260712T183206Z
+cases:
+- wrdata_nominal
+- wrdata_controlled_violation
+manifest_sha256: d2f70d2d3ef8611e546a9477edeac3a43c4d864d2419390c095f7be0838d2c42

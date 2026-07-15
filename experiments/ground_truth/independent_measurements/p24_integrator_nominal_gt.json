@@ -1,0 +1,14 @@
+{
+  "case_id": "p24_integrator_nominal_gt",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+  "target_metric": "settling_time",
+  "reference": {
+    "method": "analytical",
+    "equation": "RC/opamp time constant order estimated from configured transient response",
+    "expected_value": 3e-06,
+    "unit": "s",
+    "tolerance_percent": 20
+  },
+  "uses_spec2testbench_verdict": false
+}

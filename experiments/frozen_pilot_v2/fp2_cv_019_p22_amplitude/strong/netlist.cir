@@ -1,0 +1,33 @@
+* AnalogCoder-Pro p22: An RC phase-shift oscillator
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p22\p22.py
+* AnalogCoder-Pro type: Oscillator
+* Inputs: -
+* Outputs: Vout
+
+* Opamp subcircuit imported from AnalogCoder-Pro opamp.py
+.SUBCKT Opamp Vinp Vinn Vout
+.MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5)
+.MODEL pmos_model PMOS (LEVEL=1 KP=5e-05 VTO=-0.5)
+Vdd Vdd 0 0.1
+Vbias Vbias 0 1.5
+M1 Voutp Vinp Source3 Source3 nmos_model W=5e-05 L=1e-06
+M2 Vout Vinn Source3 Source3 nmos_model W=5e-05 L=1e-06
+M3 Source3 Vbias 0 0 nmos_model W=0.0001 L=1e-06
+M4 Voutp Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06
+M5 Vout Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06
+.ENDS Opamp
+
+Vdd Vdd 0 5
+Vref Vref 0 2.5
+R1 Vout N1 10k
+C1 N1 Vref 10n
+R2 N1 N2 10k
+C2 N2 Vref 10n
+R3 N2 N3 10k
+C3 N3 Vref 10n
+Rf Vout Vinn 330k
+Rin N3 Vinn 1
+X1 Vref Vinn Vout Opamp
+
+.TRAN 10U 20M
+.END

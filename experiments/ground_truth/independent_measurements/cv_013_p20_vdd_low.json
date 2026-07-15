@@ -1,0 +1,13 @@
+{
+  "case_id": "cv_013_p20_vdd_low",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "target_metric": "operating_point",
+  "reference": {
+    "method": "physical_mutation_reasoning",
+    "equation": "insufficient supply headroom prevents nominal bias point",
+    "expected_value": null,
+    "unit": "V"
+  },
+  "uses_spec2testbench_verdict": false
+}

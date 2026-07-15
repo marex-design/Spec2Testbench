@@ -1,0 +1,35 @@
+name: frozen_p01_amplifier_gain
+circuit_type: amplifier
+circuit_type_display: Amplifier
+technology: AnalogCoder-Pro/PySpice generic Level-1 models
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+  dc_gain_db:
+    min: -35.0
+    unit: dB
+  quiescent_current:
+    max: 0.05
+    unit: A
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: Vin
+  output_nodes: Vout
+  testbench_note: NA
+  expected_behavior: NA
+test_categories:
+- dc
+- ac
+- transient
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+description: a single-stage common-source amplifier with resistive load R
+case_id: null
+parent_circuit_id: null
+variant_overrides: []

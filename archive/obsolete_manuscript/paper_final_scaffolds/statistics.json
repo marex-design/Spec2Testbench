@@ -1,0 +1,18 @@
+{
+  "effective_violations": 2,
+  "detections": 1,
+  "false_accepts": 1,
+  "detection_recall": 0.5,
+  "false_accept_rate": 0.5,
+  "detection_wilson_95": [
+    0.09452865480086614,
+    0.9054713451991339
+  ],
+  "false_accept_wilson_95": [
+    0.09452865480086614,
+    0.9054713451991339
+  ],
+  "nominal_circuits": 29,
+  "wrdata_cases": 2,
+  "ngspice_measure_cases": 14
+}

@@ -1,0 +1,13 @@
+{
+  "case_id": "cv_005_p13_c_shift",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "target_metric": "center_frequency",
+  "reference": {
+    "method": "physical_mutation_reasoning",
+    "equation": "large C shifts notch frequency far below expected band",
+    "expected_value": null,
+    "unit": "Hz"
+  },
+  "uses_spec2testbench_verdict": false
+}

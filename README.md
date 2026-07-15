@@ -1,132 +1,81 @@
-# Spec2TestBench
+# Spec2Testbench
 
-Spec2TestBench is a Python framework for analog verification from YAML specifications to SPICE testbenches, ngspice simulation, metric extraction, and report generation.
+Spec2Testbench is a Python framework that translates structured analog-circuit specifications into SPICE testbenches, executes ngspice, extracts traceable metrics, checks specification thresholds, and reports execution, compliance, robustness scope, and scientific eligibility as distinct outcomes.
 
-The project supports two execution modes:
+The framework supports a deterministic generation path for reproducible campaigns and an optional LLM-assisted path. The final compliance decision remains deterministic: an LLM may propose an analysis, stimulus, testbench formulation, or measurement, but it does not modify benchmark circuits, specifications, thresholds, parsers, result backends, checkers, or final verdicts during evaluation.
 
-- `--no-llm`: deterministic template-based generation for reproducible baseline campaigns
-- optional LLM-assisted generation: alternative testbench synthesis through supported providers
+## Repository map
 
-## What The Framework Does
+- `spec2testbench/`: framework source code.
+- `tests/`: unit, integration, ngspice, and evidence-integrity tests.
+- `benchmark/analogcoder_pro/`: 28 pedagogical benchmark-aligned netlists.
+- `examples/benchmark_specs/`: YAML specifications used by the ACP-28 campaign.
+- `experiments/`: controlled-violation manifests and frozen experiment definitions.
+- `artifacts/paper_campaign/20260711_094959/`: canonical nominal campaign evidence.
+- `paper_final/`: evidence ledger, revised manuscript, tables, and reference audit.
+- `scripts/`: reproducibility, campaign, validation, and reporting utilities.
 
-Given:
+The ACP-28 netlists are educational benchmark-aligned circuits using simplified device models. They are not industrial, post-layout, or full process-voltage-temperature validation circuits.
 
-- a SPICE netlist
-- a YAML specification with expected metrics and limits
+## Requirements
 
-the framework can:
-
-- generate a compatible testbench
-- run ngspice analyses
-- extract DC, AC, transient, oscillator, and spectral metrics
-- compare results against the specification
-- emit a verification verdict and a report
-- draw a schematic from the netlist
-
-## Current Scope
-
-The active benchmark in this repository is centered on the `AnalogCoder-Pro` 28-circuit set stored under [benchmark](/E:/my_organisation/Memoire%20Maruba/code/Spec2Testbench/benchmark).
-
-Current repository organization:
-
-- `benchmark/analogcoder_pro`: reference benchmark netlists
-- `benchmark/industrial`: industrial-style benchmark scaffold for future extension
-- `examples/benchmark_specs`: YAML specifications aligned with the active benchmark
-- `spec2testbench`: framework source code
-- `scripts`: benchmark generation, campaign, reporting, and utility scripts
-- `docs`: paper sources and supporting writing material
-- `results`: generated campaign outputs
-- `testbenches/benchmark`: generated reference testbenches when campaigns are run
+- Python 3.10 or newer.
+- A working ngspice executable for real simulations.
+- PySpice only for workflows that explicitly use its optional parsing interface.
+- Provider-specific Python packages and API credentials only for optional LLM-assisted workflows.
 
 ## Installation
 
 ```bash
-pip install -e .
+python -m venv .venv
+python -m pip install --upgrade pip
+python -m pip install -e .
 ```
 
-Optional dependencies commonly used in this project:
+Install optional development and simulator integrations when required:
 
 ```bash
-pip install openai schemdraw
+python -m pip install -e ".[dev,pyspice,llm]"
 ```
 
-You also need a working `ngspice` installation available from the execution environment.
-
-## LLM Configuration
-
-Supported providers in the current codebase:
-
-- `openai`
-- `deepseek`
-- `groq`
-- `gemini`
-- `anthropic`
-
-Typical PowerShell setup:
-
-```powershell
-$env:LLM_PROVIDER="deepseek"
-$env:DEEPSEEK_API_KEY="your_key"
-```
-
-## CLI Commands
+## Deterministic verification
 
 ```bash
-spec2testbench verify --specs examples/benchmark_specs/p01.yaml --netlist benchmark/analogcoder_pro/p01.cir --no-llm
-spec2testbench generate --specs examples/benchmark_specs/p01.yaml
-spec2testbench diagnose --waveform path/to/waveform.png
-spec2testbench draw --netlist benchmark/analogcoder_pro/p01.cir --output results/p01.png
-spec2testbench config
-spec2testbench providers
+spec2testbench verify \
+  --specs examples/benchmark_specs/p01_amplifier.yaml \
+  --netlist benchmark/analogcoder_pro/p01_amplifier.cir \
+  --no-llm
 ```
 
-## Benchmark Campaign Scripts
-
-Baseline framework campaign on the 28 reference circuits:
+Run the automated suite:
 
 ```bash
-python scripts/run_reference_28_framework_campaign.py
+python -m pytest
 ```
 
-LLM vs baseline comparison:
+Tests marked `ngspice` require a local ngspice installation. LLM-provider availability must not be interpreted as circuit success or failure.
+
+## Reproducing the paper campaign
+
+The canonical evidence used by the manuscript is identified in `paper_final/canonical_evidence_ledger.csv`. A new campaign can be launched with:
 
 ```bash
-python scripts/run_llm_mode_comparison.py
+python scripts/run_paper_campaign.py
 ```
 
-Paper-ready benchmark table generation:
+This creates a new timestamped directory and must not overwrite the canonical run. See `REPRO.md` for the evidence-preserving workflow and backend validation commands.
 
-```bash
-python scripts/generate_reference_28_paper_table.py
-```
+## Scientific scope
 
-## Outputs
+Spec2Testbench is positioned as a complementary verification layer downstream of circuit generation and optimization. AnalogCoder-Pro performs structural, operating-point, DC-sweep, functional, and multimodal checks during its own generation and optimization workflow; Spec2Testbench adds independent, specification-centered evidence and provenance.
 
-Typical generated artifacts:
+Mock execution is useful for software development but is not scientifically eligible. Missing measurements are reported as not evaluated rather than replaced by synthetic values. Simplified voltage and temperature checks are not presented as full industrial PVT validation.
 
-- CSV summaries
-- JSON result dumps
-- Markdown verification reports
-- schematic images
+## Citation and license
 
-Most outputs are written under `results/`.
+Citation metadata is available in `CITATION.cff`. Spec2Testbench is distributed under the MIT License; see `LICENSE`.
 
-## Notes For The Paper
+Authors:
 
-At this stage, the framework is strongest on:
-
-- reproducible non-LLM verification
-- benchmark-aligned YAML-to-testbench generation
-- automatic metric extraction and verdicting
-- paper-ready result aggregation
-
-The optional LLM path is integrated, but should be presented carefully in the paper unless a stable multi-model evaluation is included.
-
-## License
-
-MIT License
-
-## Authors
-
-- Exauce Kambale Maruba - `exauce.kambale@unikin.ac.cd`
-- Christian Moanda Ndeko - `christianmoanda@yahoo.fr`
+- Exauce Kambale Maruba (`exauce.kambale@unikin.ac.cd`)
+- Christian-Marie Moanda Ndeko Mosengo (`christianmoanda@yahoo.fr`)

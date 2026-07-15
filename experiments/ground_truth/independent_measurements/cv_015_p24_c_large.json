@@ -1,0 +1,13 @@
+{
+  "case_id": "cv_015_p24_c_large",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "target_metric": "settling_time",
+  "reference": {
+    "method": "physical_mutation_reasoning",
+    "equation": "larger integration capacitor increases settling time",
+    "expected_value": null,
+    "unit": "s"
+  },
+  "uses_spec2testbench_verdict": false
+}

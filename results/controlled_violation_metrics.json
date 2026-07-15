@@ -1,0 +1,118 @@
+{
+  "run_id": "20260711_104940",
+  "artifact_dir": "artifacts\\controlled_violation_campaign\\20260711_104940",
+  "total_controlled_violations": 30,
+  "real_simulations": 30,
+  "simulation_errors": 2,
+  "expected_violations_detected": 0,
+  "false_pass": 28,
+  "false_fail": 0,
+  "non_simulable_cases": 2,
+  "non_simulable_detected": 2,
+  "violation_detection_rate": 0.0,
+  "false_pass_rate": 1.0,
+  "false_fail_rate": 0.0,
+  "precision": 0.0,
+  "recall": 0.0,
+  "f1_score": 0.0,
+  "accuracy": 0.06666666666666667,
+  "results_by_metric_category": {
+    "frequency_bandwidth": {
+      "FALSE_PASS": 5
+    },
+    "gain": {
+      "FALSE_PASS": 4
+    },
+    "dc_voltage_current": {
+      "FALSE_PASS": 7
+    },
+    "timing": {
+      "FALSE_PASS": 3
+    },
+    "amplitude_oscillation": {
+      "FALSE_PASS": 4
+    },
+    "switching_threshold": {
+      "FALSE_PASS": 3
+    },
+    "power_consumption": {
+      "FALSE_PASS": 2
+    },
+    "non_simulable": {
+      "TRUE_NON_SIMULABLE": 2
+    }
+  },
+  "results_by_circuit_family": {
+    "low_pass_filter": {
+      "FALSE_PASS": 2,
+      "TRUE_NON_SIMULABLE": 1
+    },
+    "high_pass_filter": {
+      "FALSE_PASS": 1
+    },
+    "band_pass_filter": {
+      "FALSE_PASS": 1
+    },
+    "notch_filter": {
+      "FALSE_PASS": 1
+    },
+    "amplifier": {
+      "FALSE_PASS": 7
+    },
+    "current_mirror": {
+      "FALSE_PASS": 2
+    },
+    "opamp": {
+      "FALSE_PASS": 3
+    },
+    "comparator": {
+      "FALSE_PASS": 2,
+      "TRUE_NON_SIMULABLE": 1
+    },
+    "opamp_integrator": {
+      "FALSE_PASS": 1
+    },
+    "opamp_differentiator": {
+      "FALSE_PASS": 1
+    },
+    "oscillator": {
+      "FALSE_PASS": 3
+    },
+    "schmitt_trigger": {
+      "FALSE_PASS": 2
+    },
+    "mixer": {
+      "FALSE_PASS": 1
+    },
+    "composite": {
+      "FALSE_PASS": 1
+    }
+  },
+  "results_by_mutation_type": {
+    "frequency_bandwidth": {
+      "FALSE_PASS": 5
+    },
+    "gain": {
+      "FALSE_PASS": 4
+    },
+    "dc_voltage_current": {
+      "FALSE_PASS": 7
+    },
+    "timing": {
+      "FALSE_PASS": 3
+    },
+    "amplitude_oscillation": {
+      "FALSE_PASS": 4
+    },
+    "switching_threshold": {
+      "FALSE_PASS": 3
+    },
+    "power_consumption": {
+      "FALSE_PASS": 2
+    },
+    "non_simulable": {
+      "TRUE_NON_SIMULABLE": 2
+    }
+  },
+  "simulable_noncompliant_count": 0
+}

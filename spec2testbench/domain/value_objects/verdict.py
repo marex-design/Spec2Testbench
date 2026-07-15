@@ -369,6 +369,9 @@ class CheckResult:
     
     waveform_path: Optional[str] = None
     """Chemin vers l'image de la forme d'onde (si générée)"""
+
+    diagnostics: Optional[dict] = None
+    """Diagnostic détaillé de comparaison/mesure."""
     
     def __post_init__(self):
         """Validation post-initialisation."""
@@ -421,6 +424,7 @@ class CheckResult:
             "message": self.message,
             "category": self.category,
             "waveform_path": self.waveform_path,
+            "diagnostics": self.diagnostics,
         }
     
     def __str__(self) -> str:

@@ -130,6 +130,8 @@ class SpecChecker(ISpecChecker):
         expected_min = target.get("min") if isinstance(target, dict) else target
         expected_max = target.get("max") if isinstance(target, dict) else None
         unit = target.get("unit", "") if isinstance(target, dict) else ""
+        absolute_tolerance = target.get("absolute_tolerance") if isinstance(target, dict) else None
+        relative_tolerance = target.get("relative_tolerance") if isinstance(target, dict) else None
         
         # Handle missing measured value
         if measured_value is None:
@@ -163,8 +165,14 @@ class SpecChecker(ISpecChecker):
             )
         
         # Determine verdict
-        verdict, message = self._compute_verdict(
-            metric_name, measured_si, expected_min_si, expected_max_si, unit
+        verdict, message, diagnostics = self._compute_verdict(
+            metric_name,
+            measured_si,
+            expected_min_si,
+            expected_max_si,
+            unit,
+            absolute_tolerance=absolute_tolerance,
+            relative_tolerance=relative_tolerance,
         )
         
         return CheckResult(
@@ -176,6 +184,8 @@ class SpecChecker(ISpecChecker):
             unit=unit,
             message=message,
             category=self._get_metric_category(metric_name)
+            ,
+            diagnostics=diagnostics,
         )
     
     def extract_metrics(self, 
@@ -288,31 +298,49 @@ class SpecChecker(ISpecChecker):
                          measured: float,
                          expected_min: Optional[float],
                          expected_max: Optional[float],
-                         unit: str) -> Tuple[Verdict, str]:
+                         unit: str,
+                         *,
+                         absolute_tolerance: Optional[float] = None,
+                         relative_tolerance: Optional[float] = None) -> Tuple[Verdict, str, dict]:
         """Compute verdict based on measured value and expectations."""
+        diagnostics = {
+            "measured_raw": measured,
+            "measured_normalized": measured,
+            "threshold_raw": expected_min if expected_min is not None else expected_max,
+            "threshold_normalized": expected_min if expected_min is not None else expected_max,
+            "operator": "within" if expected_min is not None and expected_max is not None else ">=" if expected_min is not None else "<=" if expected_max is not None else "",
+            "absolute_tolerance": absolute_tolerance,
+            "relative_tolerance": relative_tolerance,
+            "comparison_result": False,
+        }
+        abs_tol = float(absolute_tolerance) if absolute_tolerance is not None else 0.0
+        rel_tol = float(relative_tolerance) if relative_tolerance is not None else 0.0
         
         # Check against minimum
         if expected_min is not None:
-            if self._within_numeric_tolerance(measured, expected_min):
-                measured = expected_min
-            if measured < expected_min:
+            minimum_allowed = expected_min - max(abs_tol, rel_tol * abs(expected_min))
+            if measured < minimum_allowed:
                 margin = self._relative_margin(expected_min - measured, expected_min)
                 if margin < self.warning_margin:
-                    return Verdict.WARNING, f"{metric_name} = {measured:.4g} {unit} (close to min {expected_min} {unit})"
-                return Verdict.FAIL, f"{metric_name} = {measured:.4g} {unit} < {expected_min} {unit}"
+                    diagnostics["comparison_result"] = False
+                    return Verdict.WARNING, f"{metric_name} = {measured:.4g} {unit} (close to min {expected_min} {unit})", diagnostics
+                diagnostics["comparison_result"] = False
+                return Verdict.FAIL, f"{metric_name} = {measured:.4g} {unit} < {expected_min} {unit}", diagnostics
         
         # Check against maximum
         if expected_max is not None:
-            if self._within_numeric_tolerance(measured, expected_max):
-                measured = expected_max
-            if measured > expected_max:
+            maximum_allowed = expected_max + max(abs_tol, rel_tol * abs(expected_max))
+            if measured > maximum_allowed:
                 margin = self._relative_margin(measured - expected_max, expected_max)
                 if margin < self.warning_margin:
-                    return Verdict.WARNING, f"{metric_name} = {measured:.4g} {unit} (close to max {expected_max} {unit})"
-                return Verdict.FAIL, f"{metric_name} = {measured:.4g} {unit} > {expected_max} {unit}"
+                    diagnostics["comparison_result"] = False
+                    return Verdict.WARNING, f"{metric_name} = {measured:.4g} {unit} (close to max {expected_max} {unit})", diagnostics
+                diagnostics["comparison_result"] = False
+                return Verdict.FAIL, f"{metric_name} = {measured:.4g} {unit} > {expected_max} {unit}", diagnostics
         
         # Within range
-        return Verdict.PASS, f"{metric_name} = {measured:.4g} {unit}"
+        diagnostics["comparison_result"] = True
+        return Verdict.PASS, f"{metric_name} = {measured:.4g} {unit}", diagnostics
     
     def _to_si(self, value: Optional[float], unit: str) -> Optional[float]:
         """Convert value with unit to SI base unit."""
@@ -341,11 +369,6 @@ class SpecChecker(ISpecChecker):
             return float("inf") if abs(delta) > 0 else 0.0
         return abs(delta) / denominator
 
-    @classmethod
-    def _within_numeric_tolerance(cls, measured: float, expected: float) -> bool:
-        scale = max(abs(measured), abs(expected), 1.0)
-        return abs(measured - expected) <= cls.ABSOLUTE_TOLERANCE * scale
-    
     def _get_metric_category(self, metric_name: str) -> str:
         """Determine category from metric name."""
         metric_lower = metric_name.lower()

@@ -1,0 +1,13 @@
+{
+  "case_id": "cv_003_p11_c_huge",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "target_metric": "cutoff_frequency_hz",
+  "reference": {
+    "method": "physical_mutation_reasoning",
+    "equation": "large C moves corner far below specification range",
+    "expected_value": null,
+    "unit": "Hz"
+  },
+  "uses_spec2testbench_verdict": false
+}

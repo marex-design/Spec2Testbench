@@ -1,7 +1,7 @@
 # SKY130 Initial Industrial Subset
 
 This initial subset turns the former industrial scaffold into a benchmark tier
-that is compatible with the current Spec2TestBench flow.
+that is compatible with the current Spec2Testbench flow.
 
 Included first-wave cases:
 

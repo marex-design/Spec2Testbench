@@ -1,0 +1,34 @@
+name: frozen_p17_currentmirror_current
+circuit_type: current_mirror
+circuit_type_display: Current Mirror
+technology: AnalogCoder-Pro/PySpice generic Level-1 models
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+  quiescent_current:
+    max: 0.05
+    unit: A
+    min: 0.0001
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: Iref
+  output_nodes: Iout
+  testbench_note: NA
+  expected_behavior: NA
+test_categories:
+- dc
+- transient
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+description: A cascode current mirror with 4 mosfets (2 stacked at input side with
+  diode-connected, 2 stacked at output side), reference current source input Iref
+  (connected to Vdd) and resistive load R
+case_id: null
+parent_circuit_id: null
+variant_overrides: []

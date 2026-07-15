@@ -5,7 +5,7 @@ from enum import Enum
 
 class CircuitType(Enum):
     """
-    Types of analog circuits supported by Spec2TestBench.
+    Types of analog circuits supported by Spec2Testbench.
     
     Basé sur les 13 types de circuits du benchmark AnalogCoder-Pro :
     - Amplifiers, operational amplifiers, current mirrors

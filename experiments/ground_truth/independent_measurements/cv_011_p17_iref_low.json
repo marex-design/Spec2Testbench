@@ -1,0 +1,13 @@
+{
+  "case_id": "cv_011_p17_iref_low",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "target_metric": "quiescent_current",
+  "reference": {
+    "method": "physical_mutation_reasoning",
+    "equation": "reference current controls mirrored current directly",
+    "expected_value": null,
+    "unit": "A"
+  },
+  "uses_spec2testbench_verdict": false
+}

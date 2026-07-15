@@ -1,0 +1,13 @@
+{
+  "case_id": "cv_018_p23_c_large",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "target_metric": "oscillator_frequency",
+  "reference": {
+    "method": "physical_mutation_reasoning",
+    "equation": "RC oscillator frequency scales inversely with C",
+    "expected_value": null,
+    "unit": "Hz"
+  },
+  "uses_spec2testbench_verdict": false
+}

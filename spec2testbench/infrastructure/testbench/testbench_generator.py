@@ -11,6 +11,7 @@ from typing import List, Optional, Tuple, Dict, Any
 from pathlib import Path
 
 from ...domain.entities.specification import Specification
+from ...domain.entities.specification import VariantOverride
 from ...domain.entities.testbench import (
     TestBench, Stimulus, AnalysisConfig, Measurement, AnalysisType
 )
@@ -274,6 +275,7 @@ class TestBenchGenerator(ITestBenchGenerator):
             merged.stimuli.extend(tb.stimuli)
             merged.analyses.extend(tb.analyses)
             merged.measurements.extend(tb.measurements)
+            merged.metadata.update(tb.metadata)
 
         merged.stimuli = self._deduplicate_stimulus_objects(merged.stimuli)
         merged.analyses = self._deduplicate_analysis_objects(merged.analyses)
@@ -791,6 +793,7 @@ class TestBenchGenerator(ITestBenchGenerator):
                 }
             )
         ]
+        variant_override_records = self._apply_variant_overrides(spec, stimuli, analyses)
         
         measurements = [
             Measurement(
@@ -849,7 +852,41 @@ class TestBenchGenerator(ITestBenchGenerator):
             stimuli=stimuli,
             analyses=analyses,
             measurements=measurements,
+            metadata={
+                "variant_overrides": variant_override_records,
+                "oscillation_amplitude_threshold": float(spec.get_metric_min("startup_amplitude") or 1e-6),
+                "oscillation_minimum_cycles": 3,
+                "oscillation_max_period_cv": 0.25,
+                "oscillation_min_spectral_prominence": 5.0,
+            },
         )
+
+    def _apply_variant_overrides(
+        self,
+        spec: Specification,
+        stimuli: List[Stimulus],
+        analyses: List[AnalysisConfig],
+    ) -> List[Dict[str, Any]]:
+        records: List[Dict[str, Any]] = []
+        transient_analysis = next((analysis for analysis in analyses if analysis.type == AnalysisType.TRANSIENT), None)
+        for override in spec.variant_overrides:
+            record = {
+                "case_id": override.case_id,
+                "target": override.target,
+                "parameter": override.parameter_name,
+                "requested_value": override.override_value,
+                "applied_value": None,
+                "application_status": "UNSUPPORTED",
+                "source": override.source,
+            }
+            if override.target == "TRAN" and transient_analysis is not None:
+                transient_analysis.parameters[override.parameter_name] = override.override_value
+                record["applied_value"] = transient_analysis.parameters.get(override.parameter_name)
+                record["application_status"] = "APPLIED" if str(record["applied_value"]) == str(override.override_value) else "OVERWRITTEN"
+            elif override.target == "TRAN":
+                record["application_status"] = "NOT_APPLIED"
+            records.append(record)
+        return records
     
     def _create_pvt_testbench(self, spec: Specification) -> TestBench:
         """Create PVT testbench using templates."""

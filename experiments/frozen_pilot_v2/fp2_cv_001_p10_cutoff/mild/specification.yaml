@@ -1,0 +1,27 @@
+name: frozen_p10_lowpass_cutoff
+circuit_type: low_pass_filter
+circuit_type_display: Low-Pass Filter
+technology: AnalogCoder-Pro/PySpice generic Level-1 models
+performance_targets:
+  cutoff_frequency_hz:
+    min: 1000.0
+    unit: Hz
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: Vin
+  output_nodes: Vout
+  testbench_note: The testbench applies a 1Hz-1GHz frequency sweep signal to Vin.
+  expected_behavior: Vout should show minimal attenuation at low frequencies and progressively
+    decrease in amplitude as frequency increases.
+test_categories:
+- ac
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+description: a passive low-pass filter
+case_id: null
+parent_circuit_id: null
+variant_overrides: []

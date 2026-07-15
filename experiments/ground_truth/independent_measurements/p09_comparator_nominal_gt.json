@@ -1,0 +1,14 @@
+{
+  "case_id": "p09_comparator_nominal_gt",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+  "target_metric": "propagation_delay",
+  "reference": {
+    "method": "manual_transient_estimate",
+    "equation": "Input and output transition timing inspected independently",
+    "expected_value": 1e-05,
+    "unit": "s",
+    "tolerance_percent": 20
+  },
+  "uses_spec2testbench_verdict": false
+}

@@ -1,3 +1,5 @@
+import json
+
 from spec2testbench.application.usecases.run_verification import VerificationPipeline, VerificationReport
 from spec2testbench.domain.entities.specification import Specification
 from spec2testbench.domain.entities.testbench import AnalysisConfig, AnalysisType, Stimulus, TestBench
@@ -6,6 +8,7 @@ from spec2testbench.domain.value_objects.verdict import CheckResult, Verdict, Va
 from spec2testbench.domain.value_objects.scientific_status import (
     ComplianceStatus,
     ExecutionStatus,
+    NetlistBindingStatus,
     ScientificCategory,
     SimulationMode,
 )
@@ -25,6 +28,151 @@ def test_metric_extractor_accepts_transient_aliases():
     }
 
     assert extractor.extract(results, "slew_rate") == 2_000_000.0
+
+
+def test_controlled_variant_override_applies_to_transient_analysis(tmp_path):
+    spec_path = tmp_path / "specification.yaml"
+    mutation_path = tmp_path / "mutation.json"
+    spec_path.write_text(
+        "\n".join([
+            "name: override_case",
+            "circuit_type: comparator",
+            "performance_targets:",
+            "  propagation_delay:",
+            "    max: 0.001",
+            "    unit: s",
+            "input_conditions:",
+            "  vdd: 5.0",
+            "  vss: 0.0",
+            "  vcm: 2.5",
+            "  input_nodes: Vin",
+            "  output_nodes: Vout",
+            "test_categories:",
+            "  - transient",
+            "",
+        ]),
+        encoding="utf-8",
+    )
+    mutation_path.write_text(json.dumps({
+        "case_id": "cv_override",
+        "target_component": "TRAN",
+        "original_value": "1U 10M",
+        "mutated_value": "100U 2",
+    }), encoding="utf-8")
+
+    specification = Specification.from_yaml(spec_path)
+    testbench = FrameworkTestBenchGenerator(use_llm=False).generate(specification)
+    transient = next(analysis for analysis in testbench.analyses if analysis.type == AnalysisType.TRANSIENT)
+
+    assert transient.parameters["step_time"] == "100U"
+    assert transient.parameters["end_time"] == "2"
+    assert testbench.metadata["variant_overrides"][0]["application_status"] == "APPLIED"
+
+
+def test_missing_measure_does_not_fall_back_to_synthetic_zero():
+    simulator = PySpiceSimulator(allow_mock=False)
+    testbench = TestBench(
+        name="schmitt",
+        category="transient",
+        circuit_name="schmitt",
+        analyses=[AnalysisConfig(type=AnalysisType.TRANSIENT, parameters={})],
+        measurements=[],
+        metadata={"required_metrics": ["propagation_delay"]},
+    )
+    results = {
+        "transient": {
+            "time": [0.0, 1.0, 2.0, 3.0],
+            "vin": [2.3, 2.4, 2.6, 2.7],
+            "vout": [0.0, 5.0, 5.0, 5.0],
+        },
+        "native_extractions": {
+            "propagation_delay": {
+                "metric_name": "propagation_delay",
+                "measured_value": None,
+                "status": "NOT_EVALUATED",
+                "reason": "NGSPICE_MEASURE_MISSING",
+                "synthetic_value_used": False,
+            }
+        },
+    }
+
+    metrics = simulator.extract_metrics(results, testbench)
+
+    assert "propagation_delay" not in metrics
+
+
+def test_metric_extractor_does_not_reconstruct_missing_propagation_delay():
+    extractor = MetricExtractor()
+    results = {
+        "transient": {
+            "time": [0.0, 1.0, 2.0, 3.0],
+            "vin": [2.3, 2.4, 2.6, 2.7],
+            "vout": [0.0, 5.0, 5.0, 5.0],
+        },
+        "native_extractions": {
+            "propagation_delay": {
+                "metric_name": "propagation_delay",
+                "measured_value": None,
+                "status": "NOT_EVALUATED",
+                "reason": "NGSPICE_MEASURE_MISSING",
+                "synthetic_value_used": False,
+            }
+        },
+    }
+
+    assert extractor.extract(results, "propagation_delay") is None
+
+
+def test_small_threshold_minimum_does_not_snap_to_pass():
+    checker = SpecChecker()
+    specification = Specification(
+        name="tiny_threshold",
+        circuit_type=CircuitType.OSCILLATOR,
+        performance_targets={"startup_amplitude": {"min": 1e-12, "unit": "V"}},
+    )
+
+    result = checker.verify_single_metric("startup_amplitude", 1.17961e-16, specification)
+
+    assert result.verdict == Verdict.FAIL
+    assert result.diagnostics["comparison_result"] is False
+
+
+def test_small_threshold_explicit_tolerance_can_pass():
+    checker = SpecChecker()
+    specification = Specification(
+        name="tiny_threshold_tol",
+        circuit_type=CircuitType.OSCILLATOR,
+        performance_targets={"startup_amplitude": {"min": 1e-12, "unit": "V", "absolute_tolerance": 1e-12}},
+    )
+
+    result = checker.verify_single_metric("startup_amplitude", 1.17961e-16, specification)
+
+    assert result.verdict == Verdict.PASS
+    assert result.diagnostics["absolute_tolerance"] == 1e-12
+
+
+def test_invalid_oscillation_blocks_frequency_metric():
+    simulator = PySpiceSimulator(allow_mock=False)
+    testbench = TestBench(
+        name="oscillator",
+        category="transient",
+        circuit_name="oscillator",
+        analyses=[AnalysisConfig(type=AnalysisType.TRANSIENT, parameters={})],
+        measurements=[],
+        metadata={"oscillation_amplitude_threshold": 1e-6},
+    )
+    results = {
+        "transient": {
+            "time": [0.0, 1e-6, 2e-6, 3e-6, 4e-6, 5e-6, 6e-6, 7e-6],
+            "vout": [2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5],
+        },
+        "fourier": {"fundamental_frequency": 2e4},
+    }
+
+    metrics = simulator.extract_metrics(results, testbench)
+
+    assert results["oscillation_validation"]["status"] == "AMPLITUDE_TOO_LOW"
+    assert "oscillator_frequency" not in metrics
 
 
 def test_unit_conversions_use_exact_units():
@@ -76,6 +224,17 @@ def test_verification_report_treats_error_as_overall_error():
 
     assert report.compliance_status == ComplianceStatus.NOT_EVALUATED
     assert report.scientific_category == ScientificCategory.UNEVALUATED
+    assert report.overall_verdict == ValidationStatus.RUN
+
+
+def test_empty_check_list_never_produces_pass():
+    report = VerificationReport(
+        circuit_name="demo",
+        testbench_generation_success=True,
+        simulation_success=True,
+    )
+
+    assert report.compliance_status == ComplianceStatus.NOT_EVALUATED
     assert report.overall_verdict == ValidationStatus.RUN
 
 
@@ -140,6 +299,103 @@ def test_successful_real_simulation_all_specs_pass():
     assert report.compliance_status == ComplianceStatus.PASS
     assert report.scientific_category == ScientificCategory.SIMULABLE_COMPLIANT
     assert report.eligible_for_paper_results is True
+
+
+def test_missing_required_metric_stays_not_evaluated_not_pass():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="missing_required",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"dc_gain_db": {"min": 20, "unit": "dB"}},
+        test_categories=["ac"],
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": True,
+            "simulation_mode": SimulationMode.REAL.value,
+            "metrics": {},
+            "ac": {},
+        },
+    )
+
+    assert report.compliance_status == ComplianceStatus.NOT_EVALUATED
+    assert report.overall_verdict == ValidationStatus.RUN
+    assert report.spec_results[0].verdict == Verdict.ERROR
+
+
+def test_missing_required_metric_does_not_hide_another_failure():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="mixed_required",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={
+            "dc_gain_db": {"min": 20, "unit": "dB"},
+            "phase_margin": {"min": 60, "unit": "deg"},
+        },
+        test_categories=["ac"],
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": True,
+            "simulation_mode": SimulationMode.REAL.value,
+            "metrics": {"phase_margin": 20},
+            "ac": {"phase_margin": 20},
+        },
+    )
+
+    assert report.spec_results[0].verdict == Verdict.ERROR
+    assert report.spec_results[1].verdict == Verdict.FAIL
+    assert report.compliance_status == ComplianceStatus.FAIL
+
+
+def test_wrong_metric_target_precheck_marks_case_not_evaluated():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="wrong_metric",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"unknown_metric_name": {"min": 1.0, "unit": "V"}},
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": True,
+            "simulation_mode": SimulationMode.REAL.value,
+            "metrics": {"unknown_metric_name": 2.0},
+            "dc": {"unknown_metric_name": 2.0},
+        },
+    )
+
+    assert report.compliance_status == ComplianceStatus.NOT_EVALUATED
+    assert "precheck_failed" in report.spec_results[0].message
+
+
+def test_netlist_binding_mismatch_is_not_paper_eligible():
+    pipeline = VerificationPipeline(use_llm=False)
+    specification = Specification(
+        name="binding_case",
+        circuit_type=CircuitType.AMPLIFIER,
+        performance_targets={"operating_point": {"min": 0.8, "max": 1.2, "unit": "V"}},
+    )
+
+    report = pipeline.verify(
+        specification,
+        simulation_results={
+            "success": False,
+            "execution_status": ExecutionStatus.ERROR.value,
+            "simulation_mode": SimulationMode.REAL.value,
+            "netlist_binding_status": NetlistBindingStatus.MISMATCH.value,
+            "errors": ["Expected mutated netlist hash does not match the netlist included in the ngspice deck"],
+        },
+    )
+
+    assert report.netlist_binding_status == NetlistBindingStatus.MISMATCH
+    assert report.compliance_status == ComplianceStatus.NOT_EVALUATED
+    assert report.eligible_for_paper_results is False
 
 
 def test_successful_real_simulation_one_spec_fails():
@@ -555,6 +811,15 @@ def test_pwl_stimulus_renders_valid_spice():
     )
 
     assert stimulus.to_spice() == "Vvin Vin 0 PWL(0 0.8 20u 4.2 40u 0.8)"
+
+
+def test_simulator_extracts_included_netlist_hash(tmp_path):
+    simulator = PySpiceSimulator()
+    netlist = tmp_path / "variant.cir"
+    netlist.write_text("R1 in out 1k\n.end\n", encoding="utf-8")
+    deck = f'.include "{netlist.as_posix()}"\n.end\n'
+
+    assert simulator._extract_included_netlist_sha(deck) == simulator._sha256_file(netlist)
 
 
 def test_metric_extractor_extracts_schmitt_hysteresis_metrics():

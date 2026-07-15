@@ -37,6 +37,12 @@ class MetricExtractor:
             Metric value or None if not found
         """
         metric_lower = metric_name.lower()
+        oscillation_status = results.get("oscillation_validation", {}).get("status")
+        if metric_lower in {"oscillator_frequency", "frequency_hz", "fundamental_frequency"} and oscillation_status not in {None, "VALID_OSCILLATION"}:
+            return None
+        native_extraction = results.get("native_extractions", {}).get(metric_lower, {})
+        if metric_lower in {"propagation_delay", "propagation_delay_s"} and native_extraction and native_extraction.get("status") != "SUCCESS":
+            return None
 
         direct_value = self._lookup_metric_value(results, self._candidate_names(metric_lower, metric_name))
         if direct_value is not None:
@@ -84,6 +90,57 @@ class MetricExtractor:
         
         logger.warning(f"Metric '{metric_name}' not found in results")
         return None
+
+    def supports_metric(self, metric_name: str) -> bool:
+        metric_lower = metric_name.lower()
+        extractors = {
+            "operating_point",
+            "vout_dc",
+            "quiescent_current",
+            "idd",
+            "dc_gain",
+            "gain",
+            "bandwidth",
+            "cutoff_frequency",
+            "gbw",
+            "ugbw",
+            "unity_gain_frequency",
+            "phase_margin",
+            "slew_rate",
+            "settling_time",
+            "propagation_delay",
+            "v_t_plus",
+            "v_t_minus",
+            "hysteresis_width",
+            "oscillator_frequency",
+            "frequency_hz",
+            "startup_amplitude",
+            "power",
+            "current",
+            "thd",
+            "cmrr",
+            "psrr",
+            "pvt",
+        }
+        known_aliases = {
+            alias.lower()
+            for aliases in (
+                self._candidate_names("operating_point", "operating_point"),
+                self._candidate_names("quiescent_current", "quiescent_current"),
+                self._candidate_names("dc_gain", "dc_gain"),
+                self._candidate_names("bandwidth", "bandwidth"),
+                self._candidate_names("unity_gain_frequency", "unity_gain_frequency"),
+                self._candidate_names("phase_margin", "phase_margin"),
+                self._candidate_names("propagation_delay", "propagation_delay"),
+                self._candidate_names("v_t_plus", "v_t_plus"),
+                self._candidate_names("v_t_minus", "v_t_minus"),
+                self._candidate_names("hysteresis_width", "hysteresis_width"),
+                self._candidate_names("oscillator_frequency", "oscillator_frequency"),
+                self._candidate_names("thd", "thd"),
+            )
+            for alias in aliases
+        }
+        return any(key in metric_lower for key in extractors) or metric_lower in known_aliases
 
     def _candidate_names(self, metric_lower: str, metric_name: str) -> List[str]:
         aliases = {
@@ -347,6 +404,9 @@ class MetricExtractor:
         return abs(v_t_plus - v_t_minus)
 
     def _extract_frequency(self, results: Dict[str, Any]) -> Optional[float]:
+        oscillation_status = results.get("oscillation_validation", {}).get("status")
+        if oscillation_status not in {None, "VALID_OSCILLATION"}:
+            return None
         tran_data = results.get("transient") or results.get("tran", {})
         time = tran_data.get("time", [])
         vout = self._get_waveform(tran_data, "out")

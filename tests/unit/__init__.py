@@ -1,1 +1,1 @@
-"""Unit tests for Spec2TestBench."""
+"""Unit tests for Spec2Testbench."""

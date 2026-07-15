@@ -1,0 +1,11 @@
+{
+  "python": "3.12.2",
+  "operating_system": "Windows 10",
+  "ngspice": "ngspice-41 : Circuit level simulation program",
+  "pyspice_disabled_campaign": true,
+  "git_commit": "2373572107fae2e602abf0d0f918be081af09c89",
+  "ngspice_executable": "C:\\ProgramData\\chocolatey\\bin\\ngspice.exe",
+  "architecture": "AMD64",
+  "mock_allowed": false,
+  "frozen_pilot_v3_manifest_sha256": "4EBDB125184C1F56B82792D9EB79726C521A44EC977E65C5E394BC691929150F"
+}

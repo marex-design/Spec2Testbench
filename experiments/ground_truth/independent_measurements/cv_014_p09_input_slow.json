@@ -1,0 +1,13 @@
+{
+  "case_id": "cv_014_p09_input_slow",
+  "source": "pre_execution_independent_reference",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "target_metric": "propagation_delay",
+  "reference": {
+    "method": "physical_mutation_reasoning",
+    "equation": "coarse/long transient stimulus makes threshold crossing much later",
+    "expected_value": null,
+    "unit": "s"
+  },
+  "uses_spec2testbench_verdict": false
+}
