@@ -289,6 +289,7 @@ class Specification:
             case_id=data.get("case_id"),
             parent_circuit_id=data.get("parent_circuit_id"),
             variant_overrides=cls._load_variant_overrides(path),
+            measurement=data.get("measurement", {}) if isinstance(data.get("measurement", {}), dict) else {},
         )
     
     @classmethod

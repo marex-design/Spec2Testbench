@@ -220,14 +220,23 @@ class TestbenchPlanCompiler:
             "unit": measurement_plan.expected_unit,
             "preferred_backend": measurement_plan.backend_preference.value,
             "output_threshold": output_threshold,
+            "input_node": primary_input,
+            "output_node": primary_output,
         }
         request.update(dict(measurement_plan.measurement_parameters))
 
+        definition = get_metric_definition(measurement_plan.metric_name)
+        if definition is not None:
+            request.setdefault("metric_definition_version", definition.definition_version)
+            request.setdefault("quantity_type", definition.quantity_type.value if definition.quantity_type else None)
+            request.setdefault("measurement_expression_id", definition.measurement_expression_id)
+            request.setdefault("semantic_guards", sorted(definition.required_semantic_guards.keys()))
+
         if measurement_plan.metric_name in {"dc_gain", "dc_gain_db", "cutoff_frequency_hz", "bandwidth"}:
-            request.setdefault("out_real_column", 1)
-            request.setdefault("out_imag_column", 2)
-            request.setdefault("in_real_column", 3)
-            request.setdefault("in_imag_column", 4)
+            request.setdefault("in_real_column", 1)
+            request.setdefault("in_imag_column", 2)
+            request.setdefault("out_real_column", 3)
+            request.setdefault("out_imag_column", 4)
         elif measurement_plan.metric_name in {"frequency_hz", "oscillator_frequency", "startup_amplitude"}:
             request.setdefault("time_column", 0)
             request.setdefault("value_column", 1)
@@ -235,6 +244,4 @@ class TestbenchPlanCompiler:
             request.setdefault("time_column", 0)
             request.setdefault("vin_column", 1)
             request.setdefault("vout_column", 2)
-        request.setdefault("input_node", primary_input)
-        request.setdefault("output_node", primary_output)
         return request

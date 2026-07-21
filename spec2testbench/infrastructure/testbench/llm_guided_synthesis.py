@@ -13,6 +13,39 @@ from ...domain.entities.testbench import AnalysisConfig, AnalysisType, Measureme
 logger = logging.getLogger(__name__)
 
 
+_SPICE_SCALE_SUFFIXES = {
+    "t": 1e12,
+    "g": 1e9,
+    "meg": 1e6,
+    "k": 1e3,
+    "m": 1e-3,
+    "u": 1e-6,
+    "n": 1e-9,
+    "p": 1e-12,
+    "f": 1e-15,
+}
+
+
+def _parse_spice_number(text: str) -> Optional[float]:
+    raw = (text or "").strip()
+    if not raw:
+        return None
+    try:
+        return float(raw)
+    except ValueError:
+        pass
+
+    match = re.fullmatch(r"([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)([a-zA-Z]+)", raw)
+    if not match:
+        return None
+    magnitude = float(match.group(1))
+    suffix = match.group(2).lower()
+    scale = _SPICE_SCALE_SUFFIXES.get(suffix)
+    if scale is None:
+        return None
+    return magnitude * scale
+
+
 @dataclass
 class SourceRecord:
     name: str
@@ -175,20 +208,14 @@ class NetlistInspector:
     def _extract_dc_value(body: str) -> Optional[float]:
         dc_match = re.search(r"(?i)\bDC\s+([^\s]+)", body)
         value = dc_match.group(1) if dc_match else body.split()[0]
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            return None
+        return _parse_spice_number(value)
 
     @staticmethod
     def _extract_ac_magnitude(body: str) -> Optional[float]:
         ac_match = re.search(r"(?i)\bAC\s+([^\s]+)", body)
         if not ac_match:
             return None
-        try:
-            return float(ac_match.group(1))
-        except ValueError:
-            return None
+        return _parse_spice_number(ac_match.group(1))
 
 
 class TestbenchPlanValidator:
@@ -394,6 +421,8 @@ Hard rules:
         if transient is not None:
             params.update(dict(transient.parameters))
             chosen_type = transient.type
+            if ac_magnitude is not None:
+                params["ac_magnitude"] = ac_magnitude
         elif ac_magnitude is not None:
             chosen_type = "ac"
             params["magnitude"] = ac_magnitude
@@ -446,6 +475,8 @@ Hard rules:
         else:
             if "dc_value" in stimulus.parameters:
                 data["dc_value"] = stimulus.parameters.get("dc_value")
+            if "ac_magnitude" in stimulus.parameters:
+                data["ac_magnitude"] = stimulus.parameters.get("ac_magnitude")
             data["transient"] = dict(stimulus.parameters)
         return data
 

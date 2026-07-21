@@ -55,6 +55,14 @@ class MetricTrace:
     extraction_method: str
     raw_result_file: Optional[str]
     error: Optional[str]
+    metric_definition_version: Optional[str] = None
+    quantity_type: Optional[str] = None
+    measurement_expression_id: Optional[str] = None
+    input_node: Optional[str] = None
+    output_node: Optional[str] = None
+    input_ac_magnitude: Optional[float] = None
+    reference_frequency_hz: Optional[float] = None
+    measurement_backend: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -71,6 +79,14 @@ class MetricTrace:
             "extraction_method": self.extraction_method,
             "raw_result_file": self.raw_result_file,
             "error": self.error,
+            "metric_definition_version": self.metric_definition_version,
+            "quantity_type": self.quantity_type,
+            "measurement_expression_id": self.measurement_expression_id,
+            "input_node": self.input_node,
+            "output_node": self.output_node,
+            "input_ac_magnitude": self.input_ac_magnitude,
+            "reference_frequency_hz": self.reference_frequency_hz,
+            "measurement_backend": self.measurement_backend,
         }
 
 
@@ -487,6 +503,7 @@ class VerificationPipeline:
             'measurement_source': result.get('measurement_source'),
             'measurement_command': result.get('measurement_command'),
             'measurement_status': result.get('measurement_status'),
+            'measurement_requests': (testbench.metadata or {}).get('measurement_requests', []),
         }
 
         # Treat extracted structured data as a successful simulation even if an
@@ -834,6 +851,13 @@ class VerificationPipeline:
             else "FAIL" if result.verdict == Verdict.FAIL
             else "NOT_EVALUATED"
         )
+        request_by_name = {
+            item.get("name"): item
+            for item in simulation_results.get("measurement_requests", [])
+            if isinstance(item, dict) and item.get("name")
+        }
+        request = request_by_name.get(result.test_name, {})
+        native_extraction = (simulation_results.get("native_extractions", {}) or {}).get(result.test_name, {})
         return MetricTrace(
             metric_name=result.test_name,
             measured_value=result.measured_value,
@@ -848,6 +872,14 @@ class VerificationPipeline:
             extraction_method=self._extraction_method_for_metric(result.test_name),
             raw_result_file=simulation_results.get("raw_result_file"),
             error=result.message if result.verdict == Verdict.ERROR else None,
+            metric_definition_version=request.get("metric_definition_version") or native_extraction.get("metric_definition_version"),
+            quantity_type=request.get("quantity_type") or native_extraction.get("quantity_type"),
+            measurement_expression_id=request.get("measurement_expression_id") or native_extraction.get("measurement_expression_id"),
+            input_node=request.get("input_node") or native_extraction.get("input_node"),
+            output_node=request.get("output_node") or native_extraction.get("output_node"),
+            input_ac_magnitude=request.get("input_ac_magnitude") or native_extraction.get("input_ac_magnitude"),
+            reference_frequency_hz=request.get("reference_frequency_hz") or native_extraction.get("reference_frequency_hz"),
+            measurement_backend=native_extraction.get("measurement_backend") or simulation_results.get("measurement_backend"),
         )
 
     @staticmethod
@@ -914,6 +946,7 @@ class VerificationPipeline:
             "measurement_source": report.measurement_source,
             "measurement_command": report.measurement_command,
             "measurement_status": report.measurement_status,
+            "measurement_requests": (report.testbench.metadata or {}).get("measurement_requests", []) if report.testbench else [],
             "variant_overrides": (report.testbench.metadata or {}).get("variant_overrides", []) if report.testbench else [],
             "simulation_mode": report.simulation_mode.value if report.simulation_mode else None,
             "execution_status": report.execution_status.value,

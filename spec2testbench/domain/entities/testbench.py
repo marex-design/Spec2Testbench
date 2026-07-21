@@ -133,20 +133,38 @@ class Stimulus:
             tf = self.parameters.get('fall', '1N')
             pw = self.parameters.get('width', '1U')
             period = self.parameters.get('period', '2U')
-            return f"V{self.name} {self.node_positive} {self.node_negative} PULSE({v1} {v2} {td} {tr} {tf} {pw} {period})"
+            line = f"V{self.name} {self.node_positive} {self.node_negative}"
+            if self.parameters.get('dc_value') is not None:
+                line += f" DC {self.parameters.get('dc_value')}"
+            if self.parameters.get('ac_magnitude') is not None:
+                line += f" AC {self.parameters.get('ac_magnitude')}"
+            line += f" PULSE({v1} {v2} {td} {tr} {tf} {pw} {period})"
+            return line
         
         elif self.type == "sin":
             offset = self.parameters.get('offset', 0)
             amplitude = self.parameters.get('amplitude', 1)
             frequency = self.parameters.get('frequency', 1e6)
-            return f"V{self.name} {self.node_positive} {self.node_negative} SIN({offset} {amplitude} {frequency})"
+            line = f"V{self.name} {self.node_positive} {self.node_negative}"
+            if self.parameters.get('dc_value') is not None:
+                line += f" DC {self.parameters.get('dc_value')}"
+            if self.parameters.get('ac_magnitude') is not None:
+                line += f" AC {self.parameters.get('ac_magnitude')}"
+            line += f" SIN({offset} {amplitude} {frequency})"
+            return line
 
         elif self.type == "pwl":
             points = self.parameters.get('points', [])
             if not points:
                 return f"V{self.name} {self.node_positive} {self.node_negative} 0"
             pwl_str = " ".join([f"{t} {v}" for t, v in points])
-            return f"V{self.name} {self.node_positive} {self.node_negative} PWL({pwl_str})"
+            line = f"V{self.name} {self.node_positive} {self.node_negative}"
+            if self.parameters.get('dc_value') is not None:
+                line += f" DC {self.parameters.get('dc_value')}"
+            if self.parameters.get('ac_magnitude') is not None:
+                line += f" AC {self.parameters.get('ac_magnitude')}"
+            line += f" PWL({pwl_str})"
+            return line
         
         else:
             return f"V{self.name} {self.node_positive} {self.node_negative} {self.parameters.get('value', 0)}"

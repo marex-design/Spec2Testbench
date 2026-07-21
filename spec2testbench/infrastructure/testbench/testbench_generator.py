@@ -17,6 +17,7 @@ from ...domain.entities.testbench import (
 )
 from ...domain.value_objects.circuit_type import CircuitType
 from ...domain.interfaces.itestbench_generator import ITestBenchGenerator
+from ...application.services.llm_metric_registry import get_metric_definition
 from .llm_guided_synthesis import (
     LLMGuidedPlanner,
     NetlistInspector,
@@ -139,6 +140,7 @@ class TestBenchGenerator(ITestBenchGenerator):
         
         if netlist_path:
             self.attach_execution_plan(merged, specification, netlist_path)
+        self._attach_measurement_metadata(merged, specification)
 
         # Generate PySpice code
         merged.generate_pyspice_code()
@@ -166,6 +168,160 @@ class TestBenchGenerator(ITestBenchGenerator):
             "sources": [source.__dict__ for source in inspection.sources],
         }
         return testbench
+
+    def _attach_measurement_metadata(
+        self,
+        testbench: TestBench,
+        specification: Specification,
+    ) -> None:
+        metadata = dict(testbench.metadata or {})
+        input_node = self._primary_input_node(specification)
+        output_node = self._primary_output_node(specification)
+        output_threshold = float((specification.vdd + specification.vss) / 2.0)
+        input_ac_magnitude = self._infer_input_ac_magnitude(testbench, input_node)
+        reference_frequency_hz = self._infer_reference_frequency_hz(testbench)
+
+        measurement_requests: list[dict[str, Any]] = []
+        for measurement in testbench.measurements:
+            definition = get_metric_definition(measurement.name)
+            request: dict[str, Any] = {
+                "name": measurement.name,
+                "unit": measurement.unit or (definition.expected_unit if definition else ""),
+                "expression": measurement.expression,
+                "preferred_backend": definition.preferred_backend.value if definition else "AUTO",
+                "metric_definition_version": definition.definition_version if definition else "unversioned",
+                "quantity_type": definition.quantity_type.value if definition and definition.quantity_type else None,
+                "measurement_expression_id": definition.measurement_expression_id if definition else measurement.name.upper(),
+                "semantic_guards": sorted(definition.required_semantic_guards.keys()) if definition else [],
+                "output_threshold": output_threshold,
+                "input_node": input_node,
+                "output_node": measurement.node or output_node,
+            }
+            if measurement.name in {"dc_gain", "dc_gain_db", "absolute_output_dbv", "absolute_input_dbv", "transfer_magnitude_linear", "transfer_phase_deg", "cutoff_frequency_hz", "bandwidth"}:
+                request.setdefault("in_real_column", 1)
+                request.setdefault("in_imag_column", 2)
+                request.setdefault("out_real_column", 3)
+                request.setdefault("out_imag_column", 4)
+                request["input_ac_magnitude"] = input_ac_magnitude
+                request["reference_frequency_hz"] = reference_frequency_hz
+            elif measurement.name in {"frequency_hz", "oscillator_frequency", "startup_amplitude"}:
+                request.setdefault("time_column", 0)
+                request.setdefault("value_column", 1)
+            elif measurement.name in {"v_t_plus", "v_t_minus", "hysteresis_width"}:
+                request.setdefault("time_column", 0)
+                request.setdefault("vin_column", 1)
+                request.setdefault("vout_column", 2)
+            measurement_requests.append(request)
+
+        if any(measurement.name == "hysteresis_width" for measurement in testbench.measurements):
+            measurement_requests.extend([
+                {
+                    "name": "switching_threshold_rising_v",
+                    "unit": "V",
+                    "preferred_backend": "NGSPICE_WRDATA",
+                    "metric_definition_version": "switching_threshold_rising_v1",
+                    "quantity_type": None,
+                    "measurement_expression_id": "TRAN_SWITCHING_THRESHOLD_RISING",
+                    "semantic_guards": ["requires_input_and_output_waveforms"],
+                    "output_threshold": output_threshold,
+                    "time_column": 0,
+                    "vin_column": 1,
+                    "vout_column": 2,
+                    "input_node": input_node,
+                    "output_node": output_node,
+                },
+                {
+                    "name": "switching_threshold_falling_v",
+                    "unit": "V",
+                    "preferred_backend": "NGSPICE_WRDATA",
+                    "metric_definition_version": "switching_threshold_falling_v1",
+                    "quantity_type": None,
+                    "measurement_expression_id": "TRAN_SWITCHING_THRESHOLD_FALLING",
+                    "semantic_guards": ["requires_input_and_output_waveforms"],
+                    "output_threshold": output_threshold,
+                    "time_column": 0,
+                    "vin_column": 1,
+                    "vout_column": 2,
+                    "input_node": input_node,
+                    "output_node": output_node,
+                },
+                {
+                    "name": "hysteresis_width_v",
+                    "unit": "V",
+                    "preferred_backend": "NGSPICE_WRDATA",
+                    "metric_definition_version": "hysteresis_width_v1",
+                    "quantity_type": None,
+                    "measurement_expression_id": "TRAN_HYSTERESIS_WIDTH",
+                    "semantic_guards": ["requires_input_and_output_waveforms"],
+                    "output_threshold": output_threshold,
+                    "time_column": 0,
+                    "vin_column": 1,
+                    "vout_column": 2,
+                    "input_node": input_node,
+                    "output_node": output_node,
+                },
+            ])
+
+        measurement_config = dict(specification.measurement or {})
+        metadata.setdefault("required_metrics", list(specification.performance_targets.keys()))
+        metadata["measurement"] = {**dict(metadata.get("measurement", {})), **measurement_config}
+        metadata["measurement_context"] = {
+            "input_node": input_node,
+            "output_node": output_node,
+            "output_threshold": output_threshold,
+            "input_ac_magnitude": input_ac_magnitude,
+            "reference_frequency_hz": reference_frequency_hz,
+        }
+        metadata["measurement_requests"] = measurement_requests
+        testbench.metadata = metadata
+
+    def _infer_input_ac_magnitude(self, testbench: TestBench, input_node: str) -> float | None:
+        plan = (testbench.metadata or {}).get("llm_guided_plan", {})
+        for source_action in plan.get("source_actions", []):
+            source = source_action.get("new_source", {})
+            if source.get("node_positive") == input_node and source.get("ac_magnitude") is not None:
+                try:
+                    return float(source["ac_magnitude"])
+                except (TypeError, ValueError):
+                    return None
+
+        for stimulus in testbench.stimuli:
+            if stimulus.node_positive != input_node:
+                continue
+            if stimulus.type == "ac":
+                try:
+                    return float(stimulus.parameters.get("magnitude", 1.0))
+                except (TypeError, ValueError):
+                    return None
+            if stimulus.type in {"pulse", "sin", "pwl"} and stimulus.parameters.get("ac_magnitude") is not None:
+                try:
+                    return float(stimulus.parameters["ac_magnitude"])
+                except (TypeError, ValueError):
+                    return None
+
+        inspection = (testbench.metadata or {}).get("netlist_inspection", {})
+        for source in inspection.get("sources", []):
+            if source.get("node_positive") == input_node and source.get("ac_magnitude") is not None:
+                try:
+                    return float(source["ac_magnitude"])
+                except (TypeError, ValueError):
+                    return None
+        return None
+
+    @staticmethod
+    def _infer_reference_frequency_hz(testbench: TestBench) -> float | None:
+        for analysis in testbench.analyses:
+            if analysis.type != AnalysisType.AC:
+                continue
+            for key in ("start_freq", "frequency_start_hz"):
+                value = analysis.parameters.get(key)
+                if value is None:
+                    continue
+                try:
+                    return float(value)
+                except (TypeError, ValueError):
+                    return None
+        return None
     
     def generate_for_category(self, 
                               specification: Specification, 

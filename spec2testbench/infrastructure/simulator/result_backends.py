@@ -27,6 +27,7 @@ class MetricExtraction:
     unit: str
     status: str
     error: Optional[str] = None
+    backend: Optional[str] = None
 
 
 class SimulationResultBackend(ABC):
@@ -50,9 +51,9 @@ class NgspiceMeasureBackend(SimulationResultBackend):
             metric_name = request["name"]
             entry = parsed.get(metric_name)
             if entry is None:
-                results[metric_name] = MetricExtraction(metric_name, None, request.get("unit", ""), "NOT_EVALUATED", "NGSPICE_MEASURE_FAILED")
+                results[metric_name] = MetricExtraction(metric_name, None, request.get("unit", ""), "NOT_EVALUATED", "NGSPICE_MEASURE_FAILED", self.backend_name)
                 continue
-            results[metric_name] = MetricExtraction(metric_name, entry["value"], request.get("unit", ""), entry["status"], entry.get("error"))
+            results[metric_name] = MetricExtraction(metric_name, entry["value"], request.get("unit", ""), entry["status"], entry.get("error"), self.backend_name)
         return results
 
 
@@ -71,20 +72,21 @@ class NgspiceWrdataBackend(SimulationResultBackend):
                     request.get("unit", ""),
                     "NOT_EVALUATED",
                     str(exc),
+                    self.backend_name,
                 )
             return results
         for request in metric_requests:
             metric_name = request["name"]
             extractor = WRDATA_EXTRACTORS.get(metric_name)
             if extractor is None:
-                results[metric_name] = MetricExtraction(metric_name, None, request.get("unit", ""), "NOT_EVALUATED", "WRDATA_UNSUPPORTED_METRIC")
+                results[metric_name] = MetricExtraction(metric_name, None, request.get("unit", ""), "NOT_EVALUATED", "WRDATA_UNSUPPORTED_METRIC", self.backend_name)
                 continue
             try:
                 value = extractor(parsed, request)
             except ValueError as exc:
-                results[metric_name] = MetricExtraction(metric_name, None, request.get("unit", ""), "NOT_EVALUATED", str(exc))
+                results[metric_name] = MetricExtraction(metric_name, None, request.get("unit", ""), "NOT_EVALUATED", str(exc), self.backend_name)
                 continue
-            results[metric_name] = MetricExtraction(metric_name, value, request.get("unit", ""), "SUCCESS")
+            results[metric_name] = MetricExtraction(metric_name, value, request.get("unit", ""), "SUCCESS", backend=self.backend_name)
         return results
 
 
@@ -105,6 +107,7 @@ class PySpiceResultBackend(SimulationResultBackend):
                 request.get("unit", ""),
                 "SUCCESS" if value is not None else "NOT_EVALUATED",
                 None if value is not None else "PYSPICE_METRIC_UNAVAILABLE",
+                self.backend_name,
             )
         return results
 
@@ -217,32 +220,49 @@ def compute_hysteresis_width(parsed: dict[str, np.ndarray], request: dict[str, A
 
 
 def compute_dc_gain_db(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
-    data = parsed["data"]
-    freq = data[:, 0]
-    out_real = data[:, request.get("out_real_column", 1)]
-    out_imag = data[:, request.get("out_imag_column", 2)]
-    in_real = data[:, request.get("in_real_column", 3)]
-    in_imag = data[:, request.get("in_imag_column", 4)]
-    out_mag = np.sqrt(out_real ** 2 + out_imag ** 2)
-    in_mag = np.sqrt(in_real ** 2 + in_imag ** 2)
-    ratio = np.divide(out_mag, in_mag, out=np.full_like(out_mag, np.nan), where=in_mag > 0)
-    index = int(np.argmin(freq))
-    value = ratio[index]
-    if not np.isfinite(value) or value <= 0:
+    _, transfer, _, _ = _transfer_data_at_reference(parsed, request)
+    magnitude = abs(transfer)
+    if not np.isfinite(magnitude) or magnitude <= 0:
         raise ValueError("INVALID_GAIN_RATIO")
-    return float(20.0 * np.log10(value))
+    return float(20.0 * np.log10(magnitude))
+
+
+def compute_absolute_output_dbv(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    _, _, _, vout = _transfer_data_at_reference(parsed, request)
+    magnitude = abs(vout)
+    if not np.isfinite(magnitude) or magnitude <= 0:
+        raise ValueError("INVALID_OUTPUT_MAGNITUDE")
+    return float(20.0 * np.log10(magnitude))
+
+
+def compute_absolute_input_dbv(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    _, _, vin, _ = _transfer_data_at_reference(parsed, request)
+    magnitude = abs(vin)
+    if not np.isfinite(magnitude) or magnitude <= 0:
+        raise ValueError("INVALID_INPUT_MAGNITUDE")
+    return float(20.0 * np.log10(magnitude))
+
+
+def compute_transfer_magnitude_linear(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    _, transfer, _, _ = _transfer_data_at_reference(parsed, request)
+    magnitude = abs(transfer)
+    if not np.isfinite(magnitude) or magnitude <= 0:
+        raise ValueError("INVALID_GAIN_RATIO")
+    return float(magnitude)
+
+
+def compute_transfer_phase_deg(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    _, transfer, _, _ = _transfer_data_at_reference(parsed, request)
+    if not np.isfinite(transfer.real) or not np.isfinite(transfer.imag):
+        raise ValueError("INVALID_GAIN_RATIO")
+    return float(np.degrees(np.angle(transfer)))
 
 
 def compute_cutoff_frequency(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
     data = parsed["data"]
     freq = data[:, 0]
-    out_real = data[:, request.get("out_real_column", 1)]
-    out_imag = data[:, request.get("out_imag_column", 2)]
-    in_real = data[:, request.get("in_real_column", 3)]
-    in_imag = data[:, request.get("in_imag_column", 4)]
-    out_mag = np.sqrt(out_real ** 2 + out_imag ** 2)
-    in_mag = np.sqrt(in_real ** 2 + in_imag ** 2)
-    ratio = np.divide(out_mag, in_mag, out=np.full_like(out_mag, np.nan), where=in_mag > 0)
+    transfer = _transfer_series(parsed, request)
+    ratio = np.abs(transfer)
     finite = ratio[np.isfinite(ratio)]
     if len(finite) == 0:
         raise ValueError("INVALID_GAIN_RATIO")
@@ -272,6 +292,43 @@ def _compute_switching_threshold(parsed: dict[str, np.ndarray], request: dict[st
     raise ValueError("NO_OUTPUT_TRANSITION")
 
 
+def _transfer_series(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> np.ndarray:
+    data = parsed["data"]
+    in_real = data[:, request.get("in_real_column", 1)]
+    in_imag = data[:, request.get("in_imag_column", 2)]
+    out_real = data[:, request.get("out_real_column", 3)]
+    out_imag = data[:, request.get("out_imag_column", 4)]
+    vin = in_real + 1j * in_imag
+    vout = out_real + 1j * out_imag
+    vin_mag = np.abs(vin)
+    return np.divide(vout, vin, out=np.full_like(vout, np.nan + 0j, dtype=np.complex128), where=vin_mag > 0)
+
+
+def _transfer_data_at_reference(
+    parsed: dict[str, np.ndarray],
+    request: dict[str, Any],
+) -> tuple[float, complex, complex, complex]:
+    data = parsed["data"]
+    freq = data[:, 0]
+    index = int(np.argmin(freq))
+    in_real = float(data[index, request.get("in_real_column", 1)])
+    in_imag = float(data[index, request.get("in_imag_column", 2)])
+    out_real = float(data[index, request.get("out_real_column", 3)])
+    out_imag = float(data[index, request.get("out_imag_column", 4)])
+    vin = complex(in_real, in_imag)
+    vout = complex(out_real, out_imag)
+    if not np.isfinite(vin.real) or not np.isfinite(vin.imag):
+        raise ValueError("INPUT_VECTOR_MISSING")
+    if not np.isfinite(vout.real) or not np.isfinite(vout.imag):
+        raise ValueError("OUTPUT_VECTOR_MISSING")
+    if abs(vin) <= 0:
+        raise ValueError("INPUT_VECTOR_ZERO")
+    transfer = vout / vin
+    if not np.isfinite(transfer.real) or not np.isfinite(transfer.imag):
+        raise ValueError("INVALID_GAIN_RATIO")
+    return float(freq[index]), transfer, vin, vout
+
+
 def _column(parsed: dict[str, np.ndarray], index: int) -> np.ndarray:
     data = parsed["data"]
     if data.shape[1] <= index:
@@ -288,6 +345,10 @@ WRDATA_EXTRACTORS = {
     "switching_threshold_falling_v": compute_switching_threshold_falling,
     "hysteresis_width_v": compute_hysteresis_width,
     "dc_gain_db": compute_dc_gain_db,
+    "absolute_output_dbv": compute_absolute_output_dbv,
+    "absolute_input_dbv": compute_absolute_input_dbv,
+    "transfer_magnitude_linear": compute_transfer_magnitude_linear,
+    "transfer_phase_deg": compute_transfer_phase_deg,
     "cutoff_frequency_hz": compute_cutoff_frequency,
     "bandwidth": compute_cutoff_frequency,
 }

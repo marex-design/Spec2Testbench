@@ -23,6 +23,7 @@ import numpy as np
 from ...domain.entities.testbench import TestBench, AnalysisType, Stimulus
 from ...domain.interfaces.icircuit_simulator import ICircuitSimulator
 from ...domain.value_objects.scientific_status import ExecutionStatus, NetlistBindingStatus, SimulationMode
+from ...application.services.llm_metric_registry import get_metric_definition
 from .result_backends import (
     MetricExtraction,
     NgspiceMeasureBackend,
@@ -64,6 +65,17 @@ class PySpiceSimulator(ICircuitSimulator):
         Linux: sudo apt-get install ngspice
         macOS: brew install ngspice
     """
+    _SPICE_SCALE_SUFFIXES = {
+        "t": 1e12,
+        "g": 1e9,
+        "meg": 1e6,
+        "k": 1e3,
+        "m": 1e-3,
+        "u": 1e-6,
+        "n": 1e-9,
+        "p": 1e-12,
+        "f": 1e-15,
+    }
     
     def __init__(
         self,
@@ -83,6 +95,26 @@ class PySpiceSimulator(ICircuitSimulator):
         self.allow_mock = allow_mock
         self.disable_pyspice = os.getenv("SPEC2TESTBENCH_DISABLE_PYSPICE", "").lower() in {"1", "true", "yes"}
         self._ngspice_available = self._check_ngspice()
+
+    @classmethod
+    def _parse_spice_numeric(cls, value: Any) -> Optional[float]:
+        raw = str(value or "").strip()
+        if not raw:
+            return None
+        try:
+            return float(raw)
+        except ValueError:
+            pass
+
+        match = re.fullmatch(r"([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)([a-zA-Z]+)", raw)
+        if not match:
+            return None
+        magnitude = float(match.group(1))
+        suffix = match.group(2).lower()
+        scale = cls._SPICE_SCALE_SUFFIXES.get(suffix)
+        if scale is None:
+            return None
+        return magnitude * scale
     
     def _find_ngspice(self) -> str:
         """Find a usable ngspice executable path."""
@@ -501,10 +533,17 @@ class PySpiceSimulator(ICircuitSimulator):
 
         transient = source.get("transient", {})
         dc_value = source.get("dc_value")
+        ac_magnitude = source.get("ac_magnitude")
         prefix = f"V{name} {pos} {neg}"
+        prefix_parts = [prefix]
+        if dc_value is not None:
+            prefix_parts.append(f"DC {dc_value}")
+        if ac_magnitude is not None:
+            prefix_parts.append(f"AC {ac_magnitude}")
+        prefix = " ".join(prefix_parts)
         if source_type == "pulse":
             return (
-                f"{prefix} DC {dc_value if dc_value is not None else transient.get('v1', 0)} "
+                f"{prefix} "
                 f"PULSE({transient.get('v1', 0)} {transient.get('v2', 1)} "
                 f"{transient.get('delay', 0)} {transient.get('rise', '1N')} "
                 f"{transient.get('fall', '1N')} {transient.get('width', '1U')} "
@@ -512,7 +551,7 @@ class PySpiceSimulator(ICircuitSimulator):
             )
         if source_type == "sin":
             return (
-                f"{prefix} DC {dc_value if dc_value is not None else transient.get('offset', 0)} "
+                f"{prefix} "
                 f"SIN({transient.get('offset', 0)} {transient.get('amplitude', 1)} "
                 f"{transient.get('frequency', 1e6)})"
             )
@@ -642,10 +681,7 @@ class PySpiceSimulator(ICircuitSimulator):
         body = match.group("body").strip()
         dc_match = re.search(r"(?i)\bDC\s+([^\s]+)", body)
         raw_value = dc_match.group(1) if dc_match else body.split()[0]
-        try:
-            return float(raw_value)
-        except ValueError:
-            return None
+        return self._parse_spice_numeric(raw_value)
 
     def _preferred_stimulus_types(self, analysis_types: set[AnalysisType]) -> List[str]:
         if AnalysisType.AC in analysis_types:
@@ -823,13 +859,23 @@ class PySpiceSimulator(ICircuitSimulator):
             self._active_allow_backend_fallback = True
             results.setdefault("native_metrics", {})
             results.setdefault("native_extractions", {})
+            request_by_name = {request["name"]: request for request in metric_requests}
             for metric_name, extraction in backend_results.items():
+                request = request_by_name.get(metric_name, {})
                 results["native_extractions"][metric_name] = {
                     "metric_name": metric_name,
                     "measured_value": extraction.value,
                     "status": extraction.status,
                     "reason": extraction.error or extraction.status,
                     "synthetic_value_used": False,
+                    "measurement_backend": extraction.backend,
+                    "metric_definition_version": request.get("metric_definition_version"),
+                    "quantity_type": request.get("quantity_type"),
+                    "measurement_expression_id": request.get("measurement_expression_id"),
+                    "input_node": request.get("input_node"),
+                    "output_node": request.get("output_node"),
+                    "input_ac_magnitude": request.get("input_ac_magnitude"),
+                    "reference_frequency_hz": request.get("reference_frequency_hz"),
                 }
                 if extraction.value is not None:
                     results["native_metrics"][metric_name] = extraction.value
@@ -1145,8 +1191,9 @@ class PySpiceSimulator(ICircuitSimulator):
                 "set filetype=ascii",
                 "set wr_singlescale",
                 "run",
-                f'wrdata {vectors_file.name} real(v({output_node})) imag(v({output_node})) '
-                f'real(v({input_node})) imag(v({input_node}))',
+                "setplot ac1",
+                f'wrdata {vectors_file.name} real(v({input_node})) imag(v({input_node})) '
+                f'real(v({output_node})) imag(v({output_node}))',
                 "quit",
                 ".endc",
             ]
@@ -1182,6 +1229,7 @@ class PySpiceSimulator(ICircuitSimulator):
                 "set filetype=ascii",
                 "set wr_singlescale",
                 "run",
+                "setplot tran1",
                 f'wrdata {vectors_file.name} {vector_args}',
                 "quit",
                 ".endc",
@@ -1233,23 +1281,135 @@ class PySpiceSimulator(ICircuitSimulator):
         metadata = getattr(testbench, "metadata", None) or {}
         if metadata.get("measurement_requests"):
             return [dict(item) for item in metadata["measurement_requests"]]
-        requests = []
-        measurement_context = metadata.get("measurement_context", {})
+        measurement_context = self._infer_measurement_context(testbench)
         output_threshold = measurement_context.get("output_threshold", 2.5)
+        input_ac_magnitude = measurement_context.get("input_ac_magnitude")
+        reference_frequency_hz = measurement_context.get("reference_frequency_hz")
+        requests = []
         for measurement in testbench.measurements:
-            requests.append({
+            definition = get_metric_definition(measurement.name)
+            request = {
                 "name": measurement.name,
                 "unit": measurement.unit,
                 "expression": measurement.expression,
+                "preferred_backend": definition.preferred_backend.value if definition else "AUTO",
+                "metric_definition_version": definition.definition_version if definition else "unversioned",
+                "quantity_type": definition.quantity_type.value if definition and definition.quantity_type else None,
+                "measurement_expression_id": definition.measurement_expression_id if definition else measurement.name.upper(),
+                "semantic_guards": sorted(definition.required_semantic_guards.keys()) if definition else [],
                 "output_threshold": output_threshold,
-            })
+                "input_node": measurement_context.get("input_node", "vin"),
+                "output_node": measurement.node or measurement_context.get("output_node", "vout"),
+            }
+            if measurement.name in {"dc_gain", "dc_gain_db", "absolute_output_dbv", "absolute_input_dbv", "transfer_magnitude_linear", "transfer_phase_deg", "cutoff_frequency_hz", "bandwidth"}:
+                request.setdefault("in_real_column", 1)
+                request.setdefault("in_imag_column", 2)
+                request.setdefault("out_real_column", 3)
+                request.setdefault("out_imag_column", 4)
+                request["input_ac_magnitude"] = input_ac_magnitude
+                request["reference_frequency_hz"] = reference_frequency_hz
+            elif measurement.name in {"frequency_hz", "oscillator_frequency", "startup_amplitude"}:
+                request.setdefault("time_column", 0)
+                request.setdefault("value_column", 1)
+            elif measurement.name in {"v_t_plus", "v_t_minus", "hysteresis_width"}:
+                request.setdefault("time_column", 0)
+                request.setdefault("vin_column", 1)
+                request.setdefault("vout_column", 2)
+            requests.append(request)
         if any(measurement.name == "hysteresis_width" for measurement in testbench.measurements):
             requests.extend([
-                {"name": "switching_threshold_rising_v", "unit": "V", "output_threshold": output_threshold},
-                {"name": "switching_threshold_falling_v", "unit": "V", "output_threshold": output_threshold},
-                {"name": "hysteresis_width_v", "unit": "V", "output_threshold": output_threshold},
+                {
+                    "name": "switching_threshold_rising_v",
+                    "unit": "V",
+                    "preferred_backend": "NGSPICE_WRDATA",
+                    "metric_definition_version": "switching_threshold_rising_v1",
+                    "quantity_type": None,
+                    "measurement_expression_id": "TRAN_SWITCHING_THRESHOLD_RISING",
+                    "semantic_guards": ["requires_input_and_output_waveforms"],
+                    "output_threshold": output_threshold,
+                    "time_column": 0,
+                    "vin_column": 1,
+                    "vout_column": 2,
+                    "input_node": measurement_context.get("input_node", "vin"),
+                    "output_node": measurement_context.get("output_node", "vout"),
+                },
+                {
+                    "name": "switching_threshold_falling_v",
+                    "unit": "V",
+                    "preferred_backend": "NGSPICE_WRDATA",
+                    "metric_definition_version": "switching_threshold_falling_v1",
+                    "quantity_type": None,
+                    "measurement_expression_id": "TRAN_SWITCHING_THRESHOLD_FALLING",
+                    "semantic_guards": ["requires_input_and_output_waveforms"],
+                    "output_threshold": output_threshold,
+                    "time_column": 0,
+                    "vin_column": 1,
+                    "vout_column": 2,
+                    "input_node": measurement_context.get("input_node", "vin"),
+                    "output_node": measurement_context.get("output_node", "vout"),
+                },
+                {
+                    "name": "hysteresis_width_v",
+                    "unit": "V",
+                    "preferred_backend": "NGSPICE_WRDATA",
+                    "metric_definition_version": "hysteresis_width_v1",
+                    "quantity_type": None,
+                    "measurement_expression_id": "TRAN_HYSTERESIS_WIDTH",
+                    "semantic_guards": ["requires_input_and_output_waveforms"],
+                    "output_threshold": output_threshold,
+                    "time_column": 0,
+                    "vin_column": 1,
+                    "vout_column": 2,
+                    "input_node": measurement_context.get("input_node", "vin"),
+                    "output_node": measurement_context.get("output_node", "vout"),
+                },
             ])
         return requests
+
+    def _infer_measurement_context(self, testbench: TestBench) -> Dict[str, Any]:
+        metadata = getattr(testbench, "metadata", None) or {}
+        if metadata.get("measurement_context"):
+            return dict(metadata["measurement_context"])
+
+        input_node = "vin"
+        output_node = "vout"
+        for stimulus in testbench.stimuli:
+            if stimulus.node_positive and stimulus.node_positive != "0":
+                input_node = stimulus.node_positive
+                break
+        for measurement in testbench.measurements:
+            if measurement.node:
+                output_node = measurement.node
+                break
+
+        input_ac_magnitude = None
+        for stimulus in testbench.stimuli:
+            if stimulus.node_positive != input_node:
+                continue
+            if stimulus.type == "ac":
+                input_ac_magnitude = self._parse_spice_numeric(stimulus.parameters.get("magnitude"))
+            elif stimulus.parameters.get("ac_magnitude") is not None:
+                input_ac_magnitude = self._parse_spice_numeric(stimulus.parameters.get("ac_magnitude"))
+            if input_ac_magnitude is not None:
+                break
+
+        reference_frequency_hz = None
+        for analysis in testbench.analyses:
+            if analysis.type != AnalysisType.AC:
+                continue
+            reference_frequency_hz = self._parse_spice_numeric(
+                analysis.parameters.get("start_freq", analysis.parameters.get("frequency_start_hz"))
+            )
+            if reference_frequency_hz is not None:
+                break
+
+        return {
+            "input_node": input_node,
+            "output_node": output_node,
+            "output_threshold": 2.5,
+            "input_ac_magnitude": input_ac_magnitude,
+            "reference_frequency_hz": reference_frequency_hz,
+        }
 
     def _extract_metrics_with_backends(self, artifacts: SimulationArtifacts, metric_requests: List[Dict[str, Any]], raw_file: Path) -> Dict[str, MetricExtraction]:
         required_backend = getattr(self, "_active_required_backend", None)

@@ -7,6 +7,10 @@ from ...domain.entities.testbench_plan import (
     MeasurementBackendPreference,
     StimulusType,
 )
+from ...domain.value_objects.metric_semantics import (
+    ACQuantityType,
+    TRANSFER_GAIN_V2,
+)
 
 
 @dataclass(frozen=True)
@@ -17,12 +21,17 @@ class MetricDefinition:
     expected_unit: str
     required_nodes: tuple[str, ...]
     preferred_backend: MeasurementBackendPreference
+    definition_version: str
+    quantity_type: str | None
+    measurement_expression_id: str
     required_semantic_guards: dict[str, bool]
 
     def to_dict(self) -> dict[str, object]:
         data = asdict(self)
         data["compatible_analysis_types"] = [item.value for item in self.compatible_analysis_types]
         data["preferred_backend"] = self.preferred_backend.value
+        if isinstance(self.quantity_type, ACQuantityType):
+            data["quantity_type"] = self.quantity_type.value
         return data
 
 
@@ -34,6 +43,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="V",
         required_nodes=("output",),
         preferred_backend=MeasurementBackendPreference.NGSPICE_MEASURE,
+        definition_version="operating_point_v1",
+        quantity_type=None,
+        measurement_expression_id="OPERATING_POINT_VOLTAGE",
         required_semantic_guards={},
     ),
     "vout_dc": MetricDefinition(
@@ -43,6 +55,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="V",
         required_nodes=("output",),
         preferred_backend=MeasurementBackendPreference.NGSPICE_MEASURE,
+        definition_version="operating_point_alias_v1",
+        quantity_type=None,
+        measurement_expression_id="OPERATING_POINT_VOLTAGE",
         required_semantic_guards={},
     ),
     "quiescent_current": MetricDefinition(
@@ -52,6 +67,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="A",
         required_nodes=(),
         preferred_backend=MeasurementBackendPreference.NGSPICE_MEASURE,
+        definition_version="quiescent_current_v1",
+        quantity_type=None,
+        measurement_expression_id="QUIESCENT_CURRENT",
         required_semantic_guards={},
     ),
     "idd": MetricDefinition(
@@ -61,6 +79,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="A",
         required_nodes=(),
         preferred_backend=MeasurementBackendPreference.NGSPICE_MEASURE,
+        definition_version="quiescent_current_alias_v1",
+        quantity_type=None,
+        measurement_expression_id="QUIESCENT_CURRENT",
         required_semantic_guards={},
     ),
     "power": MetricDefinition(
@@ -70,25 +91,102 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="W",
         required_nodes=(),
         preferred_backend=MeasurementBackendPreference.NGSPICE_MEASURE,
+        definition_version="power_v1",
+        quantity_type=None,
+        measurement_expression_id="POWER_FROM_SUPPLY_CURRENT",
         required_semantic_guards={},
     ),
     "dc_gain": MetricDefinition(
         metric_name="dc_gain",
-        semantic_definition="Low-frequency voltage gain from input node to output node in decibels.",
+        semantic_definition="Low-frequency voltage transfer gain defined as 20*log10(abs(Vout/Vin)).",
         compatible_analysis_types=(AnalysisType.AC,),
         expected_unit="dB",
         required_nodes=("input", "output"),
         preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
-        required_semantic_guards={},
+        definition_version=TRANSFER_GAIN_V2,
+        quantity_type=ACQuantityType.TRANSFER_GAIN_DB,
+        measurement_expression_id="AC_TRANSFER_GAIN_DB",
+        required_semantic_guards={
+            "ac_input_exists": True,
+            "ac_input_nonzero": True,
+            "input_output_vectors_finite": True,
+            "complex_transfer_ratio_valid": True,
+        },
     ),
     "dc_gain_db": MetricDefinition(
         metric_name="dc_gain_db",
-        semantic_definition="Low-frequency voltage gain from input node to output node in decibels.",
+        semantic_definition="Low-frequency voltage transfer gain defined as 20*log10(abs(Vout/Vin)).",
         compatible_analysis_types=(AnalysisType.AC,),
         expected_unit="dB",
         required_nodes=("input", "output"),
         preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
-        required_semantic_guards={},
+        definition_version=TRANSFER_GAIN_V2,
+        quantity_type=ACQuantityType.TRANSFER_GAIN_DB,
+        measurement_expression_id="AC_TRANSFER_GAIN_DB",
+        required_semantic_guards={
+            "ac_input_exists": True,
+            "ac_input_nonzero": True,
+            "input_output_vectors_finite": True,
+            "complex_transfer_ratio_valid": True,
+        },
+    ),
+    "absolute_output_dbv": MetricDefinition(
+        metric_name="absolute_output_dbv",
+        semantic_definition="Absolute output amplitude defined as 20*log10(abs(Vout)/1V).",
+        compatible_analysis_types=(AnalysisType.AC,),
+        expected_unit="dBV",
+        required_nodes=("output",),
+        preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
+        definition_version="absolute_output_dbv_v1",
+        quantity_type=ACQuantityType.ABSOLUTE_OUTPUT_DBV,
+        measurement_expression_id="AC_ABSOLUTE_OUTPUT_DBV",
+        required_semantic_guards={"output_vector_finite": True},
+    ),
+    "absolute_input_dbv": MetricDefinition(
+        metric_name="absolute_input_dbv",
+        semantic_definition="Absolute input amplitude defined as 20*log10(abs(Vin)/1V).",
+        compatible_analysis_types=(AnalysisType.AC,),
+        expected_unit="dBV",
+        required_nodes=("input",),
+        preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
+        definition_version="absolute_input_dbv_v1",
+        quantity_type=ACQuantityType.ABSOLUTE_INPUT_DBV,
+        measurement_expression_id="AC_ABSOLUTE_INPUT_DBV",
+        required_semantic_guards={"input_vector_finite": True},
+    ),
+    "transfer_magnitude_linear": MetricDefinition(
+        metric_name="transfer_magnitude_linear",
+        semantic_definition="Low-frequency transfer magnitude defined as abs(Vout/Vin).",
+        compatible_analysis_types=(AnalysisType.AC,),
+        expected_unit="V/V",
+        required_nodes=("input", "output"),
+        preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
+        definition_version="transfer_magnitude_linear_v1",
+        quantity_type=ACQuantityType.TRANSFER_MAGNITUDE_LINEAR,
+        measurement_expression_id="AC_TRANSFER_MAGNITUDE_LINEAR",
+        required_semantic_guards={
+            "ac_input_exists": True,
+            "ac_input_nonzero": True,
+            "input_output_vectors_finite": True,
+            "complex_transfer_ratio_valid": True,
+        },
+    ),
+    "transfer_phase_deg": MetricDefinition(
+        metric_name="transfer_phase_deg",
+        semantic_definition="Low-frequency transfer phase defined as angle(Vout/Vin) in degrees.",
+        compatible_analysis_types=(AnalysisType.AC,),
+        expected_unit="deg",
+        required_nodes=("input", "output"),
+        preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
+        definition_version="transfer_phase_deg_v1",
+        quantity_type=ACQuantityType.TRANSFER_PHASE_DEG,
+        measurement_expression_id="AC_TRANSFER_PHASE_DEG",
+        required_semantic_guards={
+            "ac_input_exists": True,
+            "ac_input_nonzero": True,
+            "input_output_vectors_finite": True,
+            "complex_transfer_ratio_valid": True,
+        },
     ),
     "cutoff_frequency_hz": MetricDefinition(
         metric_name="cutoff_frequency_hz",
@@ -97,6 +195,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="Hz",
         required_nodes=("input", "output"),
         preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
+        definition_version="cutoff_frequency_v1",
+        quantity_type=None,
+        measurement_expression_id="AC_CUTOFF_FREQUENCY_HZ",
         required_semantic_guards={"requires_ac_sweep": True},
     ),
     "bandwidth": MetricDefinition(
@@ -106,6 +207,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="Hz",
         required_nodes=("input", "output"),
         preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
+        definition_version="bandwidth_alias_v1",
+        quantity_type=None,
+        measurement_expression_id="AC_CUTOFF_FREQUENCY_HZ",
         required_semantic_guards={"requires_ac_sweep": True},
     ),
     "unity_gain_frequency": MetricDefinition(
@@ -115,6 +219,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="Hz",
         required_nodes=("input", "output"),
         preferred_backend=MeasurementBackendPreference.AUTO,
+        definition_version="unity_gain_frequency_v1",
+        quantity_type=None,
+        measurement_expression_id="AC_UNITY_GAIN_FREQUENCY",
         required_semantic_guards={"requires_ac_sweep": True},
     ),
     "ugbw": MetricDefinition(
@@ -124,6 +231,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="Hz",
         required_nodes=("input", "output"),
         preferred_backend=MeasurementBackendPreference.AUTO,
+        definition_version="unity_gain_frequency_alias_v1",
+        quantity_type=None,
+        measurement_expression_id="AC_UNITY_GAIN_FREQUENCY",
         required_semantic_guards={"requires_ac_sweep": True},
     ),
     "phase_margin": MetricDefinition(
@@ -133,6 +243,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="deg",
         required_nodes=("input", "output"),
         preferred_backend=MeasurementBackendPreference.AUTO,
+        definition_version="phase_margin_v1",
+        quantity_type=None,
+        measurement_expression_id="AC_PHASE_MARGIN",
         required_semantic_guards={"requires_ac_sweep": True},
     ),
     "slew_rate": MetricDefinition(
@@ -142,6 +255,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="V/s",
         required_nodes=("output",),
         preferred_backend=MeasurementBackendPreference.AUTO,
+        definition_version="slew_rate_v1",
+        quantity_type=None,
+        measurement_expression_id="TRAN_SLEW_RATE",
         required_semantic_guards={"requires_output_waveform": True},
     ),
     "settling_time": MetricDefinition(
@@ -151,6 +267,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="s",
         required_nodes=("output",),
         preferred_backend=MeasurementBackendPreference.AUTO,
+        definition_version="settling_time_v1",
+        quantity_type=None,
+        measurement_expression_id="TRAN_SETTLING_TIME",
         required_semantic_guards={"requires_output_waveform": True},
     ),
     "propagation_delay": MetricDefinition(
@@ -160,6 +279,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="s",
         required_nodes=("input", "output"),
         preferred_backend=MeasurementBackendPreference.NGSPICE_MEASURE,
+        definition_version="propagation_delay_v1",
+        quantity_type=None,
+        measurement_expression_id="TRAN_PROPAGATION_DELAY",
         required_semantic_guards={"requires_input_and_output_waveforms": True},
     ),
     "propagation_delay_s": MetricDefinition(
@@ -169,6 +291,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="s",
         required_nodes=("input", "output"),
         preferred_backend=MeasurementBackendPreference.NGSPICE_MEASURE,
+        definition_version="propagation_delay_alias_v1",
+        quantity_type=None,
+        measurement_expression_id="TRAN_PROPAGATION_DELAY",
         required_semantic_guards={"requires_input_and_output_waveforms": True},
     ),
     "frequency_hz": MetricDefinition(
@@ -178,6 +303,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="Hz",
         required_nodes=("output",),
         preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
+        definition_version="oscillator_frequency_v1",
+        quantity_type=None,
+        measurement_expression_id="TRAN_OSCILLATOR_FREQUENCY",
         required_semantic_guards={"requires_valid_oscillation": True},
     ),
     "oscillator_frequency": MetricDefinition(
@@ -187,6 +315,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="Hz",
         required_nodes=("output",),
         preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
+        definition_version="oscillator_frequency_alias_v1",
+        quantity_type=None,
+        measurement_expression_id="TRAN_OSCILLATOR_FREQUENCY",
         required_semantic_guards={"requires_valid_oscillation": True},
     ),
     "startup_amplitude": MetricDefinition(
@@ -196,6 +327,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="V",
         required_nodes=("output",),
         preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
+        definition_version="startup_amplitude_v1",
+        quantity_type=None,
+        measurement_expression_id="TRAN_STARTUP_AMPLITUDE",
         required_semantic_guards={"requires_output_waveform": True},
     ),
     "v_t_plus": MetricDefinition(
@@ -205,6 +339,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="V",
         required_nodes=("input", "output"),
         preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
+        definition_version="switching_threshold_rising_v1",
+        quantity_type=None,
+        measurement_expression_id="TRAN_SWITCHING_THRESHOLD_RISING",
         required_semantic_guards={"requires_input_and_output_waveforms": True},
     ),
     "v_t_minus": MetricDefinition(
@@ -214,6 +351,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="V",
         required_nodes=("input", "output"),
         preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
+        definition_version="switching_threshold_falling_v1",
+        quantity_type=None,
+        measurement_expression_id="TRAN_SWITCHING_THRESHOLD_FALLING",
         required_semantic_guards={"requires_input_and_output_waveforms": True},
     ),
     "hysteresis_width": MetricDefinition(
@@ -223,6 +363,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="V",
         required_nodes=("input", "output"),
         preferred_backend=MeasurementBackendPreference.NGSPICE_WRDATA,
+        definition_version="hysteresis_width_v1",
+        quantity_type=None,
+        measurement_expression_id="TRAN_HYSTERESIS_WIDTH",
         required_semantic_guards={"requires_input_and_output_waveforms": True},
     ),
     "thd": MetricDefinition(
@@ -232,6 +375,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="%",
         required_nodes=("output",),
         preferred_backend=MeasurementBackendPreference.AUTO,
+        definition_version="thd_v1",
+        quantity_type=None,
+        measurement_expression_id="FOURIER_THD_PERCENT",
         required_semantic_guards={"requires_output_waveform": True},
     ),
     "thd_percent": MetricDefinition(
@@ -241,6 +387,9 @@ METRIC_DEFINITIONS: dict[str, MetricDefinition] = {
         expected_unit="%",
         required_nodes=("output",),
         preferred_backend=MeasurementBackendPreference.AUTO,
+        definition_version="thd_alias_v1",
+        quantity_type=None,
+        measurement_expression_id="FOURIER_THD_PERCENT",
         required_semantic_guards={"requires_output_waveform": True},
     ),
 }
@@ -271,4 +420,3 @@ def require_metric_definition(metric_name: str) -> MetricDefinition:
     if definition is None:
         raise KeyError(f"Unsupported metric definition: {metric_name}")
     return definition
-

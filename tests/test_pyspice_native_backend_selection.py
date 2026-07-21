@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from spec2testbench.domain.entities.testbench import AnalysisConfig, AnalysisType, Measurement, TestBench
 from spec2testbench.infrastructure.simulator.pyspice_simulator import PySpiceSimulator
+from spec2testbench.infrastructure.testbench.llm_guided_synthesis import NetlistInspector
 
 
 def _ac_testbench() -> TestBench:
@@ -47,3 +48,38 @@ def test_native_backend_selection_returns_mixed_only_for_conflicting_preferences
         preferred_backends={"NGSPICE_MEASURE", "NGSPICE_WRDATA"},
     )
     assert backend == "MIXED"
+
+
+def test_native_control_block_selects_ac_plot_and_uses_vin_then_vout_columns():
+    simulator = PySpiceSimulator(allow_mock=True)
+    commands = simulator._native_control_block(_ac_testbench(), vectors_file=__import__("pathlib").Path("vectors.dat"))
+
+    assert "setplot ac1" in commands
+    assert any("real(v(vin)) imag(v(vin)) real(v(vout)) imag(v(vout))" in command.lower() for command in commands)
+
+
+def test_guided_source_renders_multimode_pulse_with_ac_and_dc():
+    simulator = PySpiceSimulator(allow_mock=True)
+    rendered = simulator._render_guided_source(
+        {
+            "target_name": "in",
+            "new_source": {
+                "kind": "voltage",
+                "type": "pulse",
+                "node_positive": "Vin",
+                "node_negative": "0",
+                "dc_value": 2.5,
+                "ac_magnitude": 1.0,
+                "transient": {"v1": 1.25, "v2": 3.75, "rise": "1n", "fall": "1n", "width": "10u", "period": "20u"},
+            },
+        }
+    )
+
+    assert rendered == "Vin Vin 0 DC 2.5 AC 1.0 PULSE(1.25 3.75 0 1n 1n 10u 20u)"
+
+
+def test_netlist_inspector_parses_spice_scaled_ac_magnitude():
+    inspection = NetlistInspector.inspect_text("Vin Vin 0 DC 1.0 AC 1n\n")
+
+    assert inspection.sources[0].dc_value == 1.0
+    assert inspection.sources[0].ac_magnitude == 1e-9

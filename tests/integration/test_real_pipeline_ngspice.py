@@ -39,6 +39,16 @@ def _integration_enabled() -> bool:
     return os.getenv("RUN_NGSPICE_INTEGRATION", "").lower() in {"1", "true", "yes"}
 
 
+def _run_twice(case_id: str):
+    pipeline = VerificationPipeline(use_llm=False, allow_mock=False, timeout_seconds=60)
+    spec_path = Path(f"examples/benchmark_specs/{case_id}.yaml")
+    netlist_path = Path(f"benchmark/analogcoder_pro/{case_id}.cir")
+    return [
+        pipeline.verify_from_yaml(spec_path, netlist_path),
+        pipeline.verify_from_yaml(spec_path, netlist_path),
+    ]
+
+
 @pytest.mark.parametrize("case_id,spec_path,netlist_path", CASES)
 def test_real_pipeline_ngspice_family_smoke(case_id, spec_path, netlist_path, tmp_path):
     if not _integration_enabled():
@@ -118,3 +128,49 @@ def test_real_pipeline_detects_non_oscillating_variant_as_not_evaluated():
     assert report.execution_status == ExecutionStatus.SUCCESS
     assert osc_trace.status == "NOT_EVALUATED"
     assert report.compliance_status == ComplianceStatus.NOT_EVALUATED
+
+
+def test_p22_replay_is_deterministic():
+    if not _integration_enabled():
+        pytest.skip("Set RUN_NGSPICE_INTEGRATION=1 to run ngspice integration tests")
+    if not PySpiceSimulator(allow_mock=False).is_available:
+        pytest.skip("ngspice executable is not available")
+
+    first, second = _run_twice("p22_oscillator")
+    first_trace = next(trace for trace in first.metric_traces if trace.metric_name == "oscillator_frequency")
+    second_trace = next(trace for trace in second.metric_traces if trace.metric_name == "oscillator_frequency")
+    first_amp = next(trace for trace in first.metric_traces if trace.metric_name == "startup_amplitude")
+    second_amp = next(trace for trace in second.metric_traces if trace.metric_name == "startup_amplitude")
+
+    assert first.execution_status == ExecutionStatus.SUCCESS
+    assert second.execution_status == ExecutionStatus.SUCCESS
+    assert first.compliance_status == ComplianceStatus.NOT_EVALUATED
+    assert second.compliance_status == ComplianceStatus.NOT_EVALUATED
+    assert first_trace.status == second_trace.status == "NOT_EVALUATED"
+    assert first_trace.measured_value is None
+    assert second_trace.measured_value is None
+    assert first_amp.status == second_amp.status == "PASS"
+    assert first_amp.measured_value == pytest.approx(second_amp.measured_value, abs=1e-18)
+
+
+def test_p23_replay_is_deterministic():
+    if not _integration_enabled():
+        pytest.skip("Set RUN_NGSPICE_INTEGRATION=1 to run ngspice integration tests")
+    if not PySpiceSimulator(allow_mock=False).is_available:
+        pytest.skip("ngspice executable is not available")
+
+    first, second = _run_twice("p23_oscillator")
+    first_trace = next(trace for trace in first.metric_traces if trace.metric_name == "oscillator_frequency")
+    second_trace = next(trace for trace in second.metric_traces if trace.metric_name == "oscillator_frequency")
+    first_amp = next(trace for trace in first.metric_traces if trace.metric_name == "startup_amplitude")
+    second_amp = next(trace for trace in second.metric_traces if trace.metric_name == "startup_amplitude")
+
+    assert first.execution_status == ExecutionStatus.SUCCESS
+    assert second.execution_status == ExecutionStatus.SUCCESS
+    assert first.compliance_status == ComplianceStatus.FAIL
+    assert second.compliance_status == ComplianceStatus.FAIL
+    assert first_trace.status == second_trace.status == "NOT_EVALUATED"
+    assert first_trace.measured_value is None
+    assert second_trace.measured_value is None
+    assert first_amp.status == second_amp.status == "FAIL"
+    assert first_amp.measured_value == pytest.approx(second_amp.measured_value, abs=0.0)
