@@ -197,17 +197,25 @@ class TestBenchGenerator(ITestBenchGenerator):
                 "input_node": input_node,
                 "output_node": measurement.node or output_node,
             }
-            if measurement.name in {"dc_gain", "dc_gain_db", "absolute_output_dbv", "absolute_input_dbv", "transfer_magnitude_linear", "transfer_phase_deg", "cutoff_frequency_hz", "bandwidth"}:
+            if measurement.name in {"operating_point", "vout_dc"}:
+                request.setdefault("value_column", 1)
+            elif measurement.name in {"quiescent_current", "idd"}:
+                request.setdefault("current_column", 2)
+                request["supply_voltage"] = float(specification.vdd)
+            elif measurement.name == "power":
+                request.setdefault("current_column", 2)
+                request["supply_voltage"] = float(specification.vdd)
+            elif measurement.name in {"dc_gain", "dc_gain_db", "absolute_output_dbv", "absolute_input_dbv", "transfer_magnitude_linear", "transfer_phase_deg", "cutoff_frequency_hz", "bandwidth", "unity_gain_frequency", "ugbw", "phase_margin"}:
                 request.setdefault("in_real_column", 1)
                 request.setdefault("in_imag_column", 2)
                 request.setdefault("out_real_column", 3)
                 request.setdefault("out_imag_column", 4)
                 request["input_ac_magnitude"] = input_ac_magnitude
                 request["reference_frequency_hz"] = reference_frequency_hz
-            elif measurement.name in {"frequency_hz", "oscillator_frequency", "startup_amplitude"}:
+            elif measurement.name in {"frequency_hz", "oscillator_frequency", "startup_amplitude", "fundamental_frequency", "thd", "thd_percent"}:
                 request.setdefault("time_column", 0)
                 request.setdefault("value_column", 1)
-            elif measurement.name in {"v_t_plus", "v_t_minus", "hysteresis_width"}:
+            elif measurement.name in {"propagation_delay", "propagation_delay_s", "v_t_plus", "v_t_minus", "hysteresis_width"}:
                 request.setdefault("time_column", 0)
                 request.setdefault("vin_column", 1)
                 request.setdefault("vout_column", 2)
@@ -271,6 +279,7 @@ class TestBenchGenerator(ITestBenchGenerator):
             "output_threshold": output_threshold,
             "input_ac_magnitude": input_ac_magnitude,
             "reference_frequency_hz": reference_frequency_hz,
+            "supply_voltage": float(specification.vdd),
         }
         metadata["measurement_requests"] = measurement_requests
         testbench.metadata = metadata

@@ -777,6 +777,21 @@ def test_ac_stimulus_preserves_dc_bias_when_collapsed():
     assert collapsed[0].to_spice() == "Vvin Vin 0 DC 2.5 AC 1"
 
 
+def test_ac_stimulus_can_recover_dc_bias_from_existing_vin_source_name():
+    simulator = PySpiceSimulator()
+    stimuli = [
+        Stimulus(name="vin", type="ac", parameters={"magnitude": 1}, node_positive="Vin", node_negative="0"),
+    ]
+    analyses = [AnalysisConfig(type=AnalysisType.AC, parameters={"start_freq": 1, "stop_freq": 1e3})]
+    existing_text = "Vdd Vdd 0 5\nVin Vin 0 DC 1.0 AC 1n\nR1 out Vdd 1k\n.end\n"
+
+    collapsed = simulator._collapse_stimuli(stimuli, analyses, existing_text)
+
+    assert len(collapsed) == 1
+    assert collapsed[0].parameters["dc_value"] == 1.0
+    assert collapsed[0].to_spice() == "Vvin Vin 0 DC 1.0 AC 1"
+
+
 def test_extract_metrics_prefers_supply_current_for_quiescent_current():
     simulator = PySpiceSimulator()
     results = {

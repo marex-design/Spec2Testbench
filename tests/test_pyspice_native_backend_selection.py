@@ -56,6 +56,7 @@ def test_native_control_block_selects_ac_plot_and_uses_vin_then_vout_columns():
 
     assert "setplot ac1" in commands
     assert any("real(v(vin)) imag(v(vin)) real(v(vout)) imag(v(vout))" in command.lower() for command in commands)
+    assert not any(command.strip().lower().startswith("meas ") for command in commands)
 
 
 def test_guided_source_renders_multimode_pulse_with_ac_and_dc():

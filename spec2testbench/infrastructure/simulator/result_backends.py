@@ -184,6 +184,24 @@ def compute_amplitude_pp(parsed: dict[str, np.ndarray], request: dict[str, Any])
     return float(np.max(values) - np.min(values))
 
 
+def compute_dc_output_value(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    values = _column(parsed, request.get("value_column", -1))
+    return float(values[-1])
+
+
+def compute_dc_current_value(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    values = _column(parsed, request.get("current_column", 2))
+    return float(abs(values[-1]))
+
+
+def compute_dc_power_value(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    current = compute_dc_current_value(parsed, request)
+    supply_voltage = float(request.get("supply_voltage") or 0.0)
+    if not np.isfinite(supply_voltage) or supply_voltage <= 0:
+        raise ValueError("SUPPLY_VOLTAGE_MISSING")
+    return float(abs(supply_voltage * current))
+
+
 def compute_startup_amplitude(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
     return compute_amplitude_pp(parsed, request) / 2.0
 
@@ -217,6 +235,20 @@ def compute_hysteresis_width(parsed: dict[str, np.ndarray], request: dict[str, A
     rising = compute_switching_threshold_rising(parsed, request)
     falling = compute_switching_threshold_falling(parsed, request)
     return abs(rising - falling)
+
+
+def compute_propagation_delay(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    time = _column(parsed, request.get("time_column", 0))
+    vin = _column(parsed, request.get("vin_column", 1))
+    vout = _column(parsed, request.get("vout_column", 2))
+    threshold = request.get("output_threshold")
+    if threshold is None:
+        threshold = float(np.min(vout) + np.max(vout)) / 2.0
+    input_crossing = _find_signal_crossing(time, vin, float(threshold), rising=True)
+    output_crossing = _find_signal_crossing(time, vout, float(threshold), rising=True)
+    if input_crossing is None or output_crossing is None:
+        raise ValueError("NO_OUTPUT_TRANSITION")
+    return float(max(0.0, output_crossing - input_crossing))
 
 
 def compute_dc_gain_db(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
@@ -263,15 +295,105 @@ def compute_cutoff_frequency(parsed: dict[str, np.ndarray], request: dict[str, A
     freq = data[:, 0]
     transfer = _transfer_series(parsed, request)
     ratio = np.abs(transfer)
-    finite = ratio[np.isfinite(ratio)]
+    finite_mask = np.isfinite(ratio)
+    finite = ratio[finite_mask]
     if len(finite) == 0:
         raise ValueError("INVALID_GAIN_RATIO")
-    dc_gain = finite[0]
-    target = dc_gain / math.sqrt(2.0)
+    peak_index = int(np.nanargmax(np.where(finite_mask, ratio, np.nan)))
+    peak_gain = float(ratio[peak_index])
+    if not np.isfinite(peak_gain) or peak_gain <= 0:
+        raise ValueError("INVALID_GAIN_RATIO")
+    target = peak_gain / math.sqrt(2.0)
+
+    if peak_index == 0:
+        cutoff = _find_crossing(freq, ratio, target, rising=False, start_index=1, stop_index=len(freq))
+        if cutoff is None:
+            raise ValueError("CUTOFF_NOT_FOUND")
+        return cutoff
+    if peak_index == len(freq) - 1:
+        cutoff = _find_crossing(freq, ratio, target, rising=True, start_index=1, stop_index=len(freq))
+        if cutoff is None:
+            raise ValueError("CUTOFF_NOT_FOUND")
+        return cutoff
+
+    lower_cutoff = _find_crossing(freq[: peak_index + 1], ratio[: peak_index + 1], target, rising=True, start_index=1, stop_index=peak_index + 1)
+    upper_cutoff = _find_crossing(freq, ratio, target, rising=False, start_index=peak_index + 1, stop_index=len(freq))
+    if lower_cutoff is None or upper_cutoff is None or upper_cutoff <= lower_cutoff:
+        raise ValueError("CUTOFF_NOT_FOUND")
+    if str(request.get("name") or "").strip().lower() == "bandwidth":
+        return float(upper_cutoff - lower_cutoff)
+    return float(lower_cutoff)
+
+
+def compute_unity_gain_frequency(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    data = parsed["data"]
+    freq = data[:, 0]
+    ratio = np.abs(_transfer_series(parsed, request))
+    cutoff = _find_crossing(freq, ratio, 1.0, rising=False, start_index=1, stop_index=len(freq))
+    if cutoff is not None:
+        return cutoff
+    cutoff = _find_crossing(freq, ratio, 1.0, rising=True, start_index=1, stop_index=len(freq))
+    if cutoff is not None:
+        return cutoff
+    raise ValueError("UNITY_GAIN_NOT_FOUND")
+
+
+def compute_phase_margin(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    data = parsed["data"]
+    freq = data[:, 0]
+    transfer = _transfer_series(parsed, request)
+    phase = np.degrees(np.angle(transfer))
+    ugf = compute_unity_gain_frequency(parsed, request)
+
+    if len(freq) < 2 or len(phase) < 2:
+        raise ValueError("INSUFFICIENT_PHASE_DATA")
+
+    phase_at_ugf = None
     for index in range(1, len(freq)):
-        if ratio[index] <= target < ratio[index - 1]:
-            return float(interpolate_crossing(freq[index - 1], ratio[index - 1], freq[index], ratio[index], target))
-    raise ValueError("CUTOFF_NOT_FOUND")
+        left = float(freq[index - 1])
+        right = float(freq[index])
+        if left <= ugf <= right or right <= ugf <= left:
+            phase_at_ugf = float(interpolate_value_at_x(left, float(phase[index - 1]), right, float(phase[index]), ugf))
+            break
+    if phase_at_ugf is None:
+        nearest = int(np.argmin(np.abs(freq - ugf)))
+        phase_at_ugf = float(phase[nearest])
+    return float(max(0.0, min(180.0, 180.0 + phase_at_ugf)))
+
+
+def compute_fundamental_frequency(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    return compute_frequency_hz(parsed, request)
+
+
+def compute_thd_percent(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    time = _column(parsed, request.get("time_column", 0))
+    values = _column(parsed, request.get("value_column", 1))
+    if len(time) < 8 or len(values) < 8:
+        raise ValueError("INSUFFICIENT_TRANSIENT_DATA")
+    dt = float(np.mean(np.diff(time)))
+    if not np.isfinite(dt) or dt <= 0:
+        raise ValueError("INVALID_TIMEBASE")
+
+    windowed = (values - np.mean(values)) * np.hanning(len(values))
+    spectrum = np.fft.rfft(windowed)
+    frequencies = np.fft.rfftfreq(len(values), dt)
+    magnitudes = np.abs(spectrum)
+    if len(magnitudes) < 2:
+        raise ValueError("INSUFFICIENT_SPECTRAL_DATA")
+
+    magnitudes[0] = 0.0
+    fundamental_index = int(np.argmax(magnitudes))
+    fundamental_magnitude = float(magnitudes[fundamental_index])
+    if fundamental_index <= 0 or not np.isfinite(fundamental_magnitude) or fundamental_magnitude <= 0:
+        raise ValueError("FUNDAMENTAL_NOT_FOUND")
+
+    sum_squares = 0.0
+    for harmonic_order in range(2, 6):
+        target_frequency = harmonic_order * float(frequencies[fundamental_index])
+        harmonic_index = int(np.argmin(np.abs(frequencies - target_frequency)))
+        harmonic_magnitude = float(magnitudes[harmonic_index]) if harmonic_index < len(magnitudes) else 0.0
+        sum_squares += harmonic_magnitude ** 2
+    return float(100.0 * math.sqrt(sum_squares) / max(fundamental_magnitude, 1e-30))
 
 
 def _compute_switching_threshold(parsed: dict[str, np.ndarray], request: dict[str, Any], direction: str) -> float:
@@ -329,6 +451,46 @@ def _transfer_data_at_reference(
     return float(freq[index]), transfer, vin, vout
 
 
+def _find_crossing(
+    freq: np.ndarray,
+    values: np.ndarray,
+    target: float,
+    *,
+    rising: bool,
+    start_index: int,
+    stop_index: int,
+) -> float | None:
+    for index in range(start_index, stop_index):
+        previous = float(values[index - 1])
+        current = float(values[index])
+        if not np.isfinite(previous) or not np.isfinite(current):
+            continue
+        if rising and previous <= target <= current:
+            return float(interpolate_crossing(float(freq[index - 1]), previous, float(freq[index]), current, target))
+        if not rising and previous >= target >= current:
+            return float(interpolate_crossing(float(freq[index - 1]), previous, float(freq[index]), current, target))
+    return None
+
+
+def _find_signal_crossing(
+    time: np.ndarray,
+    values: np.ndarray,
+    target: float,
+    *,
+    rising: bool,
+) -> float | None:
+    for index in range(1, len(values)):
+        previous = float(values[index - 1])
+        current = float(values[index])
+        if not np.isfinite(previous) or not np.isfinite(current):
+            continue
+        if rising and previous <= target <= current:
+            return float(interpolate_crossing(float(time[index - 1]), previous, float(time[index]), current, target))
+        if not rising and previous >= target >= current:
+            return float(interpolate_crossing(float(time[index - 1]), previous, float(time[index]), current, target))
+    return None
+
+
 def _column(parsed: dict[str, np.ndarray], index: int) -> np.ndarray:
     data = parsed["data"]
     if data.shape[1] <= index:
@@ -338,9 +500,16 @@ def _column(parsed: dict[str, np.ndarray], index: int) -> np.ndarray:
 
 WRDATA_EXTRACTORS = {
     "amplitude_pp": compute_amplitude_pp,
+    "operating_point": compute_dc_output_value,
+    "vout_dc": compute_dc_output_value,
+    "quiescent_current": compute_dc_current_value,
+    "idd": compute_dc_current_value,
+    "power": compute_dc_power_value,
     "startup_amplitude": compute_startup_amplitude,
     "frequency_hz": compute_frequency_hz,
     "oscillator_frequency": compute_frequency_hz,
+    "propagation_delay": compute_propagation_delay,
+    "propagation_delay_s": compute_propagation_delay,
     "switching_threshold_rising_v": compute_switching_threshold_rising,
     "switching_threshold_falling_v": compute_switching_threshold_falling,
     "hysteresis_width_v": compute_hysteresis_width,
@@ -351,4 +520,10 @@ WRDATA_EXTRACTORS = {
     "transfer_phase_deg": compute_transfer_phase_deg,
     "cutoff_frequency_hz": compute_cutoff_frequency,
     "bandwidth": compute_cutoff_frequency,
+    "unity_gain_frequency": compute_unity_gain_frequency,
+    "ugbw": compute_unity_gain_frequency,
+    "phase_margin": compute_phase_margin,
+    "fundamental_frequency": compute_fundamental_frequency,
+    "thd": compute_thd_percent,
+    "thd_percent": compute_thd_percent,
 }

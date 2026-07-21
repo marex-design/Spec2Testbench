@@ -133,6 +133,15 @@ class VerificationReport:
     measurement_command: Optional[str] = None
     measurement_status: Optional[str] = None
     pyspice_required: bool = True
+    compiled_plan_sha256: Optional[str] = None
+    serialized_deck_sha256: Optional[str] = None
+    executed_file_sha256: Optional[str] = None
+    post_execution_file_sha256: Optional[str] = None
+    ngspice_input_file_path: Optional[str] = None
+    generated_testbench_path: Optional[str] = None
+    generated_testbench_sha256: Optional[str] = None
+    generated_testbench_alias_byte_identical: Optional[bool] = None
+    post_serialization_deck_mutation: Optional[bool] = None
 
     def __post_init__(self) -> None:
         if self.simulation_success and self.execution_status == ExecutionStatus.SKIPPED:
@@ -352,7 +361,8 @@ class VerificationPipeline:
                specification: Specification,
                netlist_path: Optional[Path] = None,
                simulation_results: Optional[Dict[str, Any]] = None,
-               spec_path: Optional[Path] = None) -> VerificationReport:
+               spec_path: Optional[Path] = None,
+               testbench: Optional[TestBench] = None) -> VerificationReport:
         logger.info(f"Starting verification for {specification.name}")
         started = time.time()
         report = VerificationReport(circuit_name=specification.name)
@@ -361,11 +371,19 @@ class VerificationPipeline:
         report.parent_circuit_id = specification.parent_circuit_id
         
         try:
-            logger.info("Step 1/4: Generating testbench...")
-            testbench = self.testbench_gen.generate(specification, netlist_path=netlist_path)
+            if testbench is None:
+                logger.info("Step 1/4: Generating testbench...")
+                testbench = self.testbench_gen.generate(specification, netlist_path=netlist_path)
+            else:
+                logger.info("Step 1/4: Reusing provided testbench...")
             testbench.case_id = report.case_id
             testbench.metadata["required_metrics"] = list(specification.performance_targets.keys())
-            testbench.metadata["measurement"] = dict(getattr(specification, "measurement", {}) or {})
+            testbench.metadata["measurement"] = {
+                **dict(testbench.metadata.get("measurement", {})),
+                **dict(getattr(specification, "measurement", {}) or {}),
+            }
+            if not testbench.metadata.get("measurement_requests"):
+                self.testbench_gen._attach_measurement_metadata(testbench, specification)
             if netlist_path:
                 testbench.netlist_path = str(netlist_path)
             report.testbench = testbench
@@ -407,6 +425,19 @@ class VerificationPipeline:
             report.measurement_command = simulation_results.get("measurement_command")
             report.measurement_status = simulation_results.get("measurement_status")
             report.pyspice_required = bool(simulation_results.get("pyspice_required", True))
+            report.compiled_plan_sha256 = simulation_results.get("compiled_plan_sha256")
+            report.serialized_deck_sha256 = simulation_results.get("serialized_deck_sha256")
+            report.executed_file_sha256 = simulation_results.get("executed_file_sha256")
+            report.post_execution_file_sha256 = simulation_results.get("post_execution_file_sha256")
+            report.ngspice_input_file_path = simulation_results.get("ngspice_input_file_path")
+            report.generated_testbench_path = simulation_results.get("generated_testbench_path")
+            report.generated_testbench_sha256 = simulation_results.get("generated_testbench_sha256")
+            report.generated_testbench_alias_byte_identical = simulation_results.get("generated_testbench_alias_byte_identical")
+            report.post_serialization_deck_mutation = simulation_results.get("post_serialization_deck_mutation")
+            simulation_results.setdefault(
+                "measurement_requests",
+                list((testbench.metadata or {}).get("measurement_requests", [])),
+            )
 
             # Native backends are authoritative when they provide a finite
             # extraction. This prevents the compliance checker from silently
@@ -419,7 +450,13 @@ class VerificationPipeline:
             if report.execution_status == ExecutionStatus.SUCCESS:
                 report.required_metric_validation = self._validate_required_metrics(specification, simulation_results, testbench)
                 if self._has_required_metric_validation_errors(report.required_metric_validation):
-                    report.spec_results = self._build_precheck_error_results(specification, report.required_metric_validation)
+                    precheck_results = self._build_precheck_error_results(specification, report.required_metric_validation)
+                    verified_results = self.spec_checker.verify(simulation_results, specification)
+                    precheck_names = {result.test_name for result in precheck_results}
+                    report.spec_results = precheck_results + [
+                        result for result in verified_results
+                        if result.test_name not in precheck_names
+                    ]
                 else:
                     report.spec_results = self.spec_checker.verify(simulation_results, specification)
             else:
@@ -510,12 +547,12 @@ class VerificationPipeline:
         # upstream wrapper returned a conservative success flag.
         has_structured_results = any(
             simulation_results.get(key) for key in ('dc', 'ac', 'transient', 'fourier', 'pvt')
-        ) or bool(simulation_results.get('metrics'))
+        ) or bool(simulation_results.get('metrics')) or bool(simulation_results.get('native_metrics'))
         if has_structured_results:
             simulation_results['success'] = True
             simulation_results['execution_status'] = ExecutionStatus.SUCCESS.value
 
-        if not any(simulation_results.get(key) for key in ('dc', 'ac', 'transient', 'fourier', 'pvt')):
+        if not any(simulation_results.get(key) for key in ('dc', 'ac', 'transient', 'fourier', 'pvt')) and not simulation_results.get('native_metrics'):
             if self.allow_mock:
                 mock_results = self._run_mock_simulation(testbench)
                 mock_results['logs'] = simulation_results['logs'] or mock_results['logs']
@@ -946,6 +983,15 @@ class VerificationPipeline:
             "measurement_source": report.measurement_source,
             "measurement_command": report.measurement_command,
             "measurement_status": report.measurement_status,
+            "compiled_plan_sha256": report.compiled_plan_sha256,
+            "serialized_deck_sha256": report.serialized_deck_sha256,
+            "executed_file_sha256": report.executed_file_sha256,
+            "post_execution_file_sha256": report.post_execution_file_sha256,
+            "ngspice_input_file_path": report.ngspice_input_file_path,
+            "generated_testbench_path": report.generated_testbench_path,
+            "generated_testbench_sha256": report.generated_testbench_sha256,
+            "generated_testbench_alias_byte_identical": report.generated_testbench_alias_byte_identical,
+            "post_serialization_deck_mutation": report.post_serialization_deck_mutation,
             "measurement_requests": (report.testbench.metadata or {}).get("measurement_requests", []) if report.testbench else [],
             "variant_overrides": (report.testbench.metadata or {}).get("variant_overrides", []) if report.testbench else [],
             "simulation_mode": report.simulation_mode.value if report.simulation_mode else None,

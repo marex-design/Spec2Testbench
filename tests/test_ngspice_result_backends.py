@@ -6,6 +6,7 @@ from spec2testbench.infrastructure.simulator.result_backends import (
     compute_absolute_output_dbv,
     compute_amplitude_pp,
     compute_cutoff_frequency,
+    compute_dc_output_value,
     compute_dc_gain_db,
     compute_frequency_hz,
     compute_hysteresis_width,
@@ -115,6 +116,13 @@ def test_frequency_and_amplitude_pp():
     parsed = {"data": np.column_stack([time, vout])}
     assert compute_amplitude_pp(parsed, {"value_column": 1}) == 2.0
     assert round(compute_frequency_hz(parsed, {"time_column": 0, "value_column": 1}), 6) == 0.5
+
+
+def test_wrdata_can_extract_dc_operating_point():
+    import numpy as np
+
+    parsed = {"data": np.array([[0.0, 0.9]])}
+    assert compute_dc_output_value(parsed, {"value_column": 1}) == pytest.approx(0.9)
 
 
 def test_gain_and_cutoff():
