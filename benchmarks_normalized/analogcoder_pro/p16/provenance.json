@@ -1,0 +1,10 @@
+{
+  "case_id": "p16_opamp",
+  "source_path": "benchmark/analogcoder_pro/p16_opamp.cir",
+  "source_sha256": "2c13a8e0aaf4730cf7fc1f228287f37342eaecc3455d9277f1b7a84ce2709c8c",
+  "original_dut_logical_sha256": "eb75d738dc412adbf9b9f09e34dad9492ba497ff29e90a192d450a5fe01b3c42",
+  "canonical_dut_logical_sha256": "eb75d738dc412adbf9b9f09e34dad9492ba497ff29e90a192d450a5fe01b3c42",
+  "classification_sha256": "d11dc579f2a3a4778f977703efd170cf05934e41c0a39eaea85bb7fae65e9c75",
+  "metadata_sha256": "2f6657cfc75a18f10b69f5fde4014a4ce9fc5995332591762e0f337ec4291d44",
+  "canonical_dut_sha256": "50f3f91cd56b3effdc639071340a67376f2fcb52098bdbf105f4509574b3729c"
+}

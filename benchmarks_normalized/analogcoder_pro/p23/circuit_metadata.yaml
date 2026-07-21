@@ -1,0 +1,95 @@
+case_id: p23_oscillator
+declared_type: Oscillator
+declared_topology: A Wien Bridge oscillator
+description: A Wien Bridge oscillator
+inferred_topology: Wien bridge oscillator
+topology_match_status: MATCH
+signal_inputs: []
+bias_inputs:
+- Vbias
+- Vref
+supplies:
+- Vdd
+outputs:
+- Vout
+- Voutp
+internal_nodes:
+- N1
+- N2
+- Source3
+- Vinn
+- Vinp
+sources:
+- name: Vdd
+  positive_node: Vdd
+  negative_node: '0'
+  role: SUPPLY_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vdd Vdd 0 5
+  original_dc_value: 5.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vbias
+  positive_node: Vbias
+  negative_node: '0'
+  role: BIAS_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vbias Vbias 0 1.5
+  original_dc_value: 1.5
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vdd
+  positive_node: Vdd
+  negative_node: '0'
+  role: SUPPLY_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vdd Vdd 0 5
+  original_dc_value: 5.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vref
+  positive_node: Vref
+  negative_node: '0'
+  role: BIAS_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vref Vref 0 2.5
+  original_dc_value: 2.5
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+replaceable_sources: []
+nonreplaceable_sources:
+- Vdd
+- Vbias
+- Vdd
+- Vref
+embedded_analyses:
+- .TRAN 10U 20M
+embedded_measurements: []
+compatible_metrics:
+- metric_name: oscillator_frequency
+  status: IMPLEMENTED_AND_COMPATIBLE
+  topology: Wien bridge oscillator
+- metric_name: startup_amplitude
+  status: IMPLEMENTED_AND_COMPATIBLE
+  topology: Wien bridge oscillator
+anomalies:
+- case_id: p23_oscillator
+  code: DUPLICATE_ELEMENT_NAME
+  details: Duplicate SPICE element names detected
+- case_id: p23_oscillator
+  code: FLOATING_NODE_CANDIDATE
+  details: Vinp has degree 1
+manual_review_required: false
+audit_status: READY

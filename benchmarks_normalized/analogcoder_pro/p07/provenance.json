@@ -1,0 +1,10 @@
+{
+  "case_id": "p07_inverter",
+  "source_path": "benchmark/analogcoder_pro/p07_inverter.cir",
+  "source_sha256": "d2846b9031cad7f8f2e941d0b7695ab692bb2ddfe353c5c371d31538541db70a",
+  "original_dut_logical_sha256": "f2cf77409ecc143bb8174cf1b6e93be1d5045856305a447af27bfc42414ab65f",
+  "canonical_dut_logical_sha256": "f2cf77409ecc143bb8174cf1b6e93be1d5045856305a447af27bfc42414ab65f",
+  "classification_sha256": "a2d9818a1533f2c0bdcbac3c4a5fd2ede7efd1e9a419dffc3fac87dd9ce73dbd",
+  "metadata_sha256": "196df0de334083095242e1a1226886d76a660d426f23c1bbf8042555f41c8037",
+  "canonical_dut_sha256": "bc83427144de2a9bba3edc2a27e5259818033e6f54e5807e1eade5b93b947a77"
+}

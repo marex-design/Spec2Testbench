@@ -1,0 +1,15 @@
+case_id,line_number,raw_line,candidate_categories,selected_category,confidence,selection_reason,manual_review_required
+p15_amplifier,1,* AnalogCoder-Pro p15: A single-stage amplifier (common-source with PMOS diode-connected load (gate and drain are shorted)),COMMENT,COMMENT,1.0,Comment line,False
+p15_amplifier,2,* Source: analogcoder\AnalogCoderPro-master\sample_design\p15\p15.py,COMMENT,COMMENT,1.0,Comment line,False
+p15_amplifier,3,* AnalogCoder-Pro type: Amplifier,COMMENT,COMMENT,1.0,Comment line,False
+p15_amplifier,4,* Inputs: Vin,COMMENT,COMMENT,1.0,Comment line,False
+p15_amplifier,5,* Outputs: Vout,COMMENT,COMMENT,1.0,Comment line,False
+p15_amplifier,7,.MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5),MODEL_DEFINITION,MODEL_DEFINITION,1.0,Model definition,False
+p15_amplifier,8,.MODEL pmos_model PMOS (LEVEL=1 KP=5e-05 VTO=-0.5),MODEL_DEFINITION,MODEL_DEFINITION,1.0,Model definition,False
+p15_amplifier,10,Vdd Vdd 0 5,SUPPLY_SOURCE,SUPPLY_SOURCE,0.95,Source name or rail node matches supply naming,False
+p15_amplifier,11,Vin Vin 0 DC 1 AC 1n,SIGNAL_SOURCE,SIGNAL_SOURCE,0.95,Source matches declared signal input or carries AC/transient stimulus,False
+p15_amplifier,12,M1 Vout Vin 0 0 nmos_model W=5e-05 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p15_amplifier,13,M2 Vout Vout Vdd Vdd pmos_model W=5e-05 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p15_amplifier,15,.OP,EMBEDDED_ANALYSIS_DIRECTIVE,EMBEDDED_ANALYSIS_DIRECTIVE,1.0,Embedded analysis directive,False
+p15_amplifier,16,.AC DEC 100 1 1G,EMBEDDED_ANALYSIS_DIRECTIVE,EMBEDDED_ANALYSIS_DIRECTIVE,1.0,Embedded analysis directive,False
+p15_amplifier,17,.END,END_DIRECTIVE,END_DIRECTIVE,1.0,Deck end directive,False

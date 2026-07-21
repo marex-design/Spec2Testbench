@@ -1,0 +1,124 @@
+case_id: p19_mixer
+declared_type: Mixer
+declared_topology: "A Gilbert cell mixer to make Voutp - Voutn \u221D (Vrfp - Vrfn)\
+  \ \xD7 (Vlop - Vlon)"
+description: "A Gilbert cell mixer to make Voutp - Voutn \u221D (Vrfp - Vrfn) \xD7\
+  \ (Vlop - Vlon)"
+inferred_topology: Gilbert-cell mixer
+topology_match_status: PARTIAL_MATCH
+signal_inputs:
+- Vlon
+- Vlop
+- Vrfn
+- Vrfp
+bias_inputs:
+- Vbias
+supplies:
+- Vdd
+outputs:
+- Voutn
+- Voutp
+internal_nodes:
+- RFn_out
+- RFp_out
+- SourceNode
+sources:
+- name: Vdd
+  positive_node: Vdd
+  negative_node: '0'
+  role: SUPPLY_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vdd Vdd 0 5
+  original_dc_value: 5.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vbias
+  positive_node: Vbias
+  negative_node: '0'
+  role: BIAS_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vbias Vbias 0 1.5
+  original_dc_value: 1.5
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vrfp
+  positive_node: Vrfp
+  negative_node: '0'
+  role: SIGNAL_SOURCE
+  replaceable_by_testbench: true
+  original_definition: Vrfp Vrfp 0 2.5
+  original_dc_value: 2.5
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vrfn
+  positive_node: Vrfn
+  negative_node: '0'
+  role: SIGNAL_SOURCE
+  replaceable_by_testbench: true
+  original_definition: Vrfn Vrfn 0 2.5
+  original_dc_value: 2.5
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vlop
+  positive_node: Vlop
+  negative_node: '0'
+  role: SIGNAL_SOURCE
+  replaceable_by_testbench: true
+  original_definition: Vlop Vlop 0 3
+  original_dc_value: 3.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vlon
+  positive_node: Vlon
+  negative_node: '0'
+  role: SIGNAL_SOURCE
+  replaceable_by_testbench: true
+  original_definition: Vlon Vlon 0 2
+  original_dc_value: 2.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+replaceable_sources:
+- Vrfp
+- Vrfn
+- Vlop
+- Vlon
+nonreplaceable_sources:
+- Vdd
+- Vbias
+embedded_analyses:
+- .TRAN 1U 20M
+embedded_measurements: []
+compatible_metrics: []
+anomalies:
+- case_id: p19_mixer
+  code: TRANSIENT_ANALYSIS_WITH_CONSTANT_INPUT
+  details: Vrfp drives TRAN with a constant source definition
+- case_id: p19_mixer
+  code: TRANSIENT_ANALYSIS_WITH_CONSTANT_INPUT
+  details: Vrfn drives TRAN with a constant source definition
+- case_id: p19_mixer
+  code: TRANSIENT_ANALYSIS_WITH_CONSTANT_INPUT
+  details: Vlop drives TRAN with a constant source definition
+- case_id: p19_mixer
+  code: TRANSIENT_ANALYSIS_WITH_CONSTANT_INPUT
+  details: Vlon drives TRAN with a constant source definition
+manual_review_required: false
+audit_status: READY

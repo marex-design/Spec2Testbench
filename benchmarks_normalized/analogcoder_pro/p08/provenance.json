@@ -1,0 +1,10 @@
+{
+  "case_id": "p08_currentmirror",
+  "source_path": "benchmark/analogcoder_pro/p08_currentmirror.cir",
+  "source_sha256": "979262d6b52f240093d99cb90d214f717755a4a0dd00eb55a2cc4eb3335999f3",
+  "original_dut_logical_sha256": "fb39e682c26c1ede5406c41447ebb61aacb7631ef3319b85a7c4609d0f2a3a07",
+  "canonical_dut_logical_sha256": "fb39e682c26c1ede5406c41447ebb61aacb7631ef3319b85a7c4609d0f2a3a07",
+  "classification_sha256": "5d23d2890583026c6e6a7ab6a73d2989ce1b84b04643329528a459f63d7f1e88",
+  "metadata_sha256": "9645a25dc0289510bb23c6278082a79b665391ccf6d6b1b7bc4cf5a65b8ac84d",
+  "canonical_dut_sha256": "7c2686f494a6d5ee346ec2f3f7dbe22a072c49107b217b92a2ee397c22e4d2e7"
+}

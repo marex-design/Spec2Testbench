@@ -1054,14 +1054,12 @@ class PySpiceSimulator(ICircuitSimulator):
             for request in measurement_requests
             if request.get("preferred_backend") in {"NGSPICE_MEASURE", "NGSPICE_WRDATA"}
         }
-        if required_backend == "NGSPICE_WRDATA":
-            backend = "NGSPICE_WRDATA" if has_vectors else "UNAVAILABLE"
-        elif required_backend == "NGSPICE_MEASURE":
-            backend = "NGSPICE_MEASURE" if has_measures else "UNAVAILABLE"
-        elif has_measures and has_vectors and len(preferred_backends) > 1:
-            backend = "MIXED"
-        else:
-            backend = "NGSPICE_MEASURE" if has_measures else "NGSPICE_WRDATA" if has_vectors else "UNAVAILABLE"
+        backend = self._select_native_backend(
+            required_backend=required_backend,
+            has_measures=bool(has_measures),
+            has_vectors=has_vectors,
+            preferred_backends=preferred_backends,
+        )
         if backend == "NGSPICE_MEASURE":
             source = str(measures_file)
         elif backend == "NGSPICE_WRDATA":
@@ -1116,7 +1114,9 @@ class PySpiceSimulator(ICircuitSimulator):
             elif name == "power":
                 commands.append(".meas op power param='abs(v(vdd)*i(vdd))'")
             elif name in {"dc_gain", "dc_gain_db"}:
-                commands.append(f".meas ac dc_gain_db FIND vdb({output_node}) AT=1")
+                commands.append(f".meas ac vin_mag FIND vm({input_node}) AT=1")
+                commands.append(f".meas ac vout_mag FIND vm({output_node}) AT=1")
+                commands.append(".meas ac dc_gain_db param='20*log10(vout_mag/vin_mag)'")
             elif name == "startup_amplitude":
                 commands.append(f".meas tran vmax MAX v({output_node})")
                 commands.append(f".meas tran vmin MIN v({output_node})")
@@ -1143,8 +1143,9 @@ class PySpiceSimulator(ICircuitSimulator):
             return [
                 ".control",
                 "set filetype=ascii",
+                "set wr_singlescale",
                 "run",
-                f'wrdata {vectors_file.name} frequency real(v({output_node})) imag(v({output_node})) '
+                f'wrdata {vectors_file.name} real(v({output_node})) imag(v({output_node})) '
                 f'real(v({input_node})) imag(v({input_node}))',
                 "quit",
                 ".endc",
@@ -1175,10 +1176,11 @@ class PySpiceSimulator(ICircuitSimulator):
                     "hysteresis_width_v",
                 }
             )
-            vector_args = f"time v({input_node}) v({output_node})" if needs_input else f"time v({output_node})"
+            vector_args = f"v({input_node}) v({output_node})" if needs_input else f"v({output_node})"
             return [
                 ".control",
                 "set filetype=ascii",
+                "set wr_singlescale",
                 "run",
                 f'wrdata {vectors_file.name} {vector_args}',
                 "quit",
@@ -1188,12 +1190,37 @@ class PySpiceSimulator(ICircuitSimulator):
             return [
                 ".control",
                 "set filetype=ascii",
+                "set wr_singlescale",
                 "run",
                 f'wrdata {vectors_file.name} v({output_node})',
                 "quit",
                 ".endc",
             ]
         return []
+
+    @staticmethod
+    def _select_native_backend(
+        *,
+        required_backend: Optional[str],
+        has_measures: bool,
+        has_vectors: bool,
+        preferred_backends: set[str],
+    ) -> str:
+        if required_backend == "NGSPICE_WRDATA":
+            return "NGSPICE_WRDATA" if has_vectors else "UNAVAILABLE"
+        if required_backend == "NGSPICE_MEASURE":
+            return "NGSPICE_MEASURE" if has_measures else "UNAVAILABLE"
+        if preferred_backends == {"NGSPICE_WRDATA"}:
+            return "NGSPICE_WRDATA" if has_vectors else "UNAVAILABLE"
+        if preferred_backends == {"NGSPICE_MEASURE"}:
+            return "NGSPICE_MEASURE" if has_measures else "UNAVAILABLE"
+        if has_measures and has_vectors and len(preferred_backends) > 1:
+            return "MIXED"
+        if has_measures:
+            return "NGSPICE_MEASURE"
+        if has_vectors:
+            return "NGSPICE_WRDATA"
+        return "UNAVAILABLE"
 
     @staticmethod
     def _wrdata_to_csv(vectors_file: Path, csv_file: Path) -> None:

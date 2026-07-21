@@ -1,0 +1,10 @@
+{
+  "case_id": "p18_opamp",
+  "source_path": "benchmark/analogcoder_pro/p18_opamp.cir",
+  "source_sha256": "116d7197d1a118c6567ab1c76a8729d7c1e7aeaae98c94db8140112723df9088",
+  "original_dut_logical_sha256": "68929e6b4f41f47dcd86e30330aa7dc91570f98bf64eabae296ff3177f483194",
+  "canonical_dut_logical_sha256": "68929e6b4f41f47dcd86e30330aa7dc91570f98bf64eabae296ff3177f483194",
+  "classification_sha256": "aa70b90652700a1d8083f839d5fbbbfa4a4ca1f38a7b0aca6dac31385e46e898",
+  "metadata_sha256": "4b0f00440d90dd3bec7687a63f7be8d9ced0d027f76fcc62ba970fa0e2e56ed1",
+  "canonical_dut_sha256": "afa4c04eccb4db162f8ebc9b9aab59c71f1fff617ab9a388a040db6394a9238f"
+}

@@ -1,0 +1,15 @@
+* Canonical DUT generated from benchmark/analogcoder_pro/p05_amplifier.cir
+* Embedded analyses and output directives were externalized into metadata.
+* AnalogCoder-Pro p5: A single-stage cascode amplifier with two NMOS transistors provides a single-ended output through a resistive load R
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p5\p5.py
+* AnalogCoder-Pro type: Amplifier
+* Inputs: Vin, Vbias
+* Outputs: Vout
+.MODEL nmos NMOS (LEVEL=1 KP=0.0001 VTO=0.5)
+Vdd Vdd 0 5
+Vbias Vbias 0 3
+* original signal source: Vin Vin 0 DC 1.5 AC 1n
+Vin Vin 0 0
+Rload Vout Vdd 10k
+M1 Drain_M1 Vin 0 0 nmos W=5e-05 L=1e-06
+M2 Vout Vbias Drain_M1 Drain_M1 nmos W=5e-05 L=1e-06

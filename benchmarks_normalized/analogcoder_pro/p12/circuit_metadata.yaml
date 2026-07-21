@@ -1,0 +1,43 @@
+case_id: p12_bandpass
+declared_type: BandPass
+declared_topology: a passive band-pass filter
+description: a passive band-pass filter
+inferred_topology: passive band-pass filter
+topology_match_status: MATCH
+signal_inputs:
+- Vin
+bias_inputs: []
+supplies: []
+outputs:
+- Vout
+internal_nodes:
+- N1
+sources:
+- name: Vin
+  positive_node: Vin
+  negative_node: '0'
+  role: SIGNAL_SOURCE
+  replaceable_by_testbench: true
+  original_definition: Vin Vin 0 1
+  original_dc_value: 1.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+replaceable_sources:
+- Vin
+nonreplaceable_sources: []
+embedded_analyses:
+- .AC DEC 100 1 1G
+embedded_measurements: []
+compatible_metrics:
+- metric_name: cutoff_frequency_hz
+  status: IMPLEMENTED_AND_COMPATIBLE
+  topology: passive band-pass filter
+anomalies:
+- case_id: p12_bandpass
+  code: AC_INPUT_MAGNITUDE_NOT_UNITY
+  details: Vin uses AC magnitude None
+manual_review_required: false
+audit_status: READY

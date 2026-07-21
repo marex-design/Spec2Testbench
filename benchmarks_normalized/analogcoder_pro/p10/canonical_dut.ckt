@@ -1,0 +1,11 @@
+* Canonical DUT generated from benchmark/analogcoder_pro/p10_lowpass.cir
+* Embedded analyses and output directives were externalized into metadata.
+* AnalogCoder-Pro p10: a passive low-pass filter
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p10\p10.py
+* AnalogCoder-Pro type: LowPass
+* Inputs: Vin
+* Outputs: Vout
+* original signal source: Vin Vin 0 1
+Vin Vin 0 0
+R1 Vin Vout 10k
+C1 Vout 0 10n

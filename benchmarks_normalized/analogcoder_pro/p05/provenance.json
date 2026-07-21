@@ -1,0 +1,10 @@
+{
+  "case_id": "p05_amplifier",
+  "source_path": "benchmark/analogcoder_pro/p05_amplifier.cir",
+  "source_sha256": "47d0f1321538a22d9464d4b55379f1c34bc2755075e86d39ee9327c2c12a48d4",
+  "original_dut_logical_sha256": "fa39e642a9499d30554410c864a87b3a27be61ae0e8770093770f921278f7339",
+  "canonical_dut_logical_sha256": "fa39e642a9499d30554410c864a87b3a27be61ae0e8770093770f921278f7339",
+  "classification_sha256": "e8cbeeb70fbee04bd3f1b3817ab2af2bf0a6c4c3eac55d112369262621025ef1",
+  "metadata_sha256": "c33163827fd969a0ec4ea395c9be0b0e9e36ede6c6c366beffd45f00dbc56840",
+  "canonical_dut_sha256": "1fba27685072e333f996badd7e6bbb83557f58d951e733a206a36a18bcdbbf2d"
+}

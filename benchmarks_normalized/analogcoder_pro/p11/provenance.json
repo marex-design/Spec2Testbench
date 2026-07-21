@@ -1,0 +1,10 @@
+{
+  "case_id": "p11_highpass",
+  "source_path": "benchmark/analogcoder_pro/p11_highpass.cir",
+  "source_sha256": "3cb43d6f040585cb8992478bc513dbfe8f1fad98bec4aebdcca8acc58cac8b2c",
+  "original_dut_logical_sha256": "63a3849daddaacbeb00e85c9378896a5d37bf6e2592a6ba8f552a420a1c3bb89",
+  "canonical_dut_logical_sha256": "63a3849daddaacbeb00e85c9378896a5d37bf6e2592a6ba8f552a420a1c3bb89",
+  "classification_sha256": "e4ef8e16a2d9742134e2a4a481889d1cdc3ea585be5f1efbdae1916038563567",
+  "metadata_sha256": "9db9956099409cd590cf5bfd397e20988457d4037d64a043724ee863263d3cf8",
+  "canonical_dut_sha256": "a6d7c7e129dbc849774129160bc6952fa22d6b2848bfba794b02eaedf5aaa9ed"
+}

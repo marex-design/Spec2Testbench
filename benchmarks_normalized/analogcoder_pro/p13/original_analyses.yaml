@@ -1,0 +1,4 @@
+- line_number: 13
+  directive: .AC
+  raw_line: .AC DEC 100 1 1G
+  inside_subcircuit: false

@@ -1,0 +1,10 @@
+{
+  "case_id": "p10_lowpass",
+  "source_path": "benchmark/analogcoder_pro/p10_lowpass.cir",
+  "source_sha256": "6051b20abdae27ed489e01671145745fc4b1a3d2d77cb7da7a3929cf5355651c",
+  "original_dut_logical_sha256": "adcc6387b3e2c64f40b62d9492825655d118fe32881914089bc5a5d1d1ce728c",
+  "canonical_dut_logical_sha256": "adcc6387b3e2c64f40b62d9492825655d118fe32881914089bc5a5d1d1ce728c",
+  "classification_sha256": "cecd267ec841a7b5b13d5d258f40b4c385bd685b481087bffa5a30ac8aabe21c",
+  "metadata_sha256": "fe4b757985c43945317fd7d456ded0ec2bc4b307b6c617365d817aa9a657074d",
+  "canonical_dut_sha256": "24758a21d357fd468ee77017960e774b5a6058ae62c820eb17f8635655110396"
+}

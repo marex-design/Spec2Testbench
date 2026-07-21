@@ -1,0 +1,27 @@
+case_id,line_number,raw_line,candidate_categories,selected_category,confidence,selection_reason,manual_review_required
+p25_differentiator,1,* AnalogCoder-Pro p25: An Opamp differentiator with resistor Rf and capacitor C1,COMMENT,COMMENT,1.0,Comment line,False
+p25_differentiator,2,* Source: analogcoder\AnalogCoderPro-master\sample_design\p25\p25.py,COMMENT,COMMENT,1.0,Comment line,False
+p25_differentiator,3,* AnalogCoder-Pro type: Differentiator,COMMENT,COMMENT,1.0,Comment line,False
+p25_differentiator,4,* Inputs: Vin,COMMENT,COMMENT,1.0,Comment line,False
+p25_differentiator,5,* Outputs: Vout,COMMENT,COMMENT,1.0,Comment line,False
+p25_differentiator,7,* Opamp subcircuit imported from AnalogCoder-Pro opamp.py,COMMENT,COMMENT,1.0,Comment line,False
+p25_differentiator,8,.SUBCKT Opamp Vinp Vinn Vout,SUBCIRCUIT_DEFINITION,SUBCIRCUIT_DEFINITION,1.0,Subcircuit definition,False
+p25_differentiator,9,.MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5),MODEL_DEFINITION,MODEL_DEFINITION,1.0,Model definition,False
+p25_differentiator,10,.MODEL pmos_model PMOS (LEVEL=1 KP=5e-05 VTO=-0.5),MODEL_DEFINITION,MODEL_DEFINITION,1.0,Model definition,False
+p25_differentiator,11,Vdd Vdd 0 5,SUPPLY_SOURCE,SUPPLY_SOURCE,0.95,Source name or rail node matches supply naming,False
+p25_differentiator,12,Vbias Vbias 0 1.5,BIAS_SOURCE,BIAS_SOURCE,0.95,Ground-referenced bias or reference source,False
+p25_differentiator,13,M1 Voutp Vinp Source3 Source3 nmos_model W=5e-05 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p25_differentiator,14,M2 Vout Vinn Source3 Source3 nmos_model W=5e-05 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p25_differentiator,15,M3 Source3 Vbias 0 0 nmos_model W=0.0001 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p25_differentiator,16,M4 Voutp Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p25_differentiator,17,M5 Vout Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p25_differentiator,18,.ENDS Opamp,SUBCIRCUIT_END,SUBCIRCUIT_END,1.0,Subcircuit end,False
+p25_differentiator,20,Vdd Vdd 0 5,SUPPLY_SOURCE,SUPPLY_SOURCE,0.95,Source name or rail node matches supply naming,False
+p25_differentiator,21,Vref Vref 0 2.5,BIAS_SOURCE,BIAS_SOURCE,0.95,Ground-referenced bias or reference source,False
+p25_differentiator,22,Vin Vin 0 3,SIGNAL_SOURCE,SIGNAL_SOURCE,0.95,Source matches declared signal input or carries AC/transient stimulus,False
+p25_differentiator,23,C1 Vin Ninv 10n,DUT_LOAD,DUT_LOAD,1.0,Passive DUT element,False
+p25_differentiator,24,Rf Vout Ninv 10k,DUT_LOAD,DUT_LOAD,1.0,Passive DUT element,False
+p25_differentiator,25,Rb Ninv Vref 1Meg,DUT_LOAD,DUT_LOAD,1.0,Passive DUT element,False
+p25_differentiator,26,Xop Vref Ninv Vout Opamp,SUBCIRCUIT_INSTANCE,SUBCIRCUIT_INSTANCE,1.0,Subcircuit instance,False
+p25_differentiator,28,.TRAN 10U 20M,EMBEDDED_ANALYSIS_DIRECTIVE,EMBEDDED_ANALYSIS_DIRECTIVE,1.0,Embedded analysis directive,False
+p25_differentiator,29,.END,END_DIRECTIVE,END_DIRECTIVE,1.0,Deck end directive,False

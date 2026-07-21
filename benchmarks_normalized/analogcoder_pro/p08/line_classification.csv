@@ -1,0 +1,14 @@
+case_id,line_number,raw_line,candidate_categories,selected_category,confidence,selection_reason,manual_review_required
+p08_currentmirror,1,* AnalogCoder-Pro p8: A simple NMOS constant current source with resistive load R,COMMENT,COMMENT,1.0,Comment line,False
+p08_currentmirror,2,* Source: analogcoder\AnalogCoderPro-master\sample_design\p8\p8.py,COMMENT,COMMENT,1.0,Comment line,False
+p08_currentmirror,3,* AnalogCoder-Pro type: CurrentMirror,COMMENT,COMMENT,1.0,Comment line,False
+p08_currentmirror,4,* Inputs: Vbias,COMMENT,COMMENT,1.0,Comment line,False
+p08_currentmirror,5,* Outputs: Vout,COMMENT,COMMENT,1.0,Comment line,False
+p08_currentmirror,7,.MODEL nmos NMOS (LEVEL=1 VTO=0.5 KP=0.0002),MODEL_DEFINITION,MODEL_DEFINITION,1.0,Model definition,False
+p08_currentmirror,9,Vdd Vdd 0 5,SUPPLY_SOURCE,SUPPLY_SOURCE,0.95,Source name or rail node matches supply naming,False
+p08_currentmirror,10,Vbias Vbias 0 1,BIAS_SOURCE,BIAS_SOURCE,0.95,Ground-referenced bias or reference source,False
+p08_currentmirror,11,M1 Vout Vbias 0 0 nmos W=1e-05 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p08_currentmirror,12,Rload Vout Vdd 10000,DUT_LOAD,DUT_LOAD,1.0,Passive DUT element,False
+p08_currentmirror,14,.OP,EMBEDDED_ANALYSIS_DIRECTIVE,EMBEDDED_ANALYSIS_DIRECTIVE,1.0,Embedded analysis directive,False
+p08_currentmirror,15,.DC Vdd 0 5 0.1,EMBEDDED_ANALYSIS_DIRECTIVE,EMBEDDED_ANALYSIS_DIRECTIVE,1.0,Embedded analysis directive,False
+p08_currentmirror,16,.END,END_DIRECTIVE,END_DIRECTIVE,1.0,Deck end directive,False

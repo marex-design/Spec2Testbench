@@ -1,0 +1,24 @@
+case_id,line_number,raw_line,candidate_categories,selected_category,confidence,selection_reason,manual_review_required
+p09_comparator,1,* AnalogCoder-Pro p9: an op-amp comparator to make the output high when Vin > Vref and low when Vin < Vref,COMMENT,COMMENT,1.0,Comment line,False
+p09_comparator,2,* Source: analogcoder\AnalogCoderPro-master\sample_design\p9\p9.py,COMMENT,COMMENT,1.0,Comment line,False
+p09_comparator,3,* AnalogCoder-Pro type: Comparator,COMMENT,COMMENT,1.0,Comment line,False
+p09_comparator,4,* Inputs: Vin,COMMENT,COMMENT,1.0,Comment line,False
+p09_comparator,5,* Outputs: Vout,COMMENT,COMMENT,1.0,Comment line,False
+p09_comparator,7,* Opamp subcircuit imported from AnalogCoder-Pro opamp.py,COMMENT,COMMENT,1.0,Comment line,False
+p09_comparator,8,.SUBCKT Opamp Vinp Vinn Vout,SUBCIRCUIT_DEFINITION,SUBCIRCUIT_DEFINITION,1.0,Subcircuit definition,False
+p09_comparator,9,.MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5),MODEL_DEFINITION,MODEL_DEFINITION,1.0,Model definition,False
+p09_comparator,10,.MODEL pmos_model PMOS (LEVEL=1 KP=5e-05 VTO=-0.5),MODEL_DEFINITION,MODEL_DEFINITION,1.0,Model definition,False
+p09_comparator,11,Vdd Vdd 0 5,SUPPLY_SOURCE,SUPPLY_SOURCE,0.95,Source name or rail node matches supply naming,False
+p09_comparator,12,Vbias Vbias 0 1.5,BIAS_SOURCE,BIAS_SOURCE,0.95,Ground-referenced bias or reference source,False
+p09_comparator,13,M1 Voutp Vinp Source3 Source3 nmos_model W=5e-05 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p09_comparator,14,M2 Vout Vinn Source3 Source3 nmos_model W=5e-05 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p09_comparator,15,M3 Source3 Vbias 0 0 nmos_model W=0.0001 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p09_comparator,16,M4 Voutp Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p09_comparator,17,M5 Vout Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p09_comparator,18,.ENDS Opamp,SUBCIRCUIT_END,SUBCIRCUIT_END,1.0,Subcircuit end,False
+p09_comparator,20,Vdd Vdd 0 5,SUPPLY_SOURCE,SUPPLY_SOURCE,0.95,Source name or rail node matches supply naming,False
+p09_comparator,21,Vref Vref 0 2.5,BIAS_SOURCE,BIAS_SOURCE,0.95,Ground-referenced bias or reference source,False
+p09_comparator,22,Vin Vin 0 3,SIGNAL_SOURCE,SIGNAL_SOURCE,0.95,Source matches declared signal input or carries AC/transient stimulus,False
+p09_comparator,23,Xcmp Vin Vref Vout Opamp,SUBCIRCUIT_INSTANCE,SUBCIRCUIT_INSTANCE,1.0,Subcircuit instance,False
+p09_comparator,25,.TRAN 1U 10M,EMBEDDED_ANALYSIS_DIRECTIVE,EMBEDDED_ANALYSIS_DIRECTIVE,1.0,Embedded analysis directive,False
+p09_comparator,26,.END,END_DIRECTIVE,END_DIRECTIVE,1.0,Deck end directive,False

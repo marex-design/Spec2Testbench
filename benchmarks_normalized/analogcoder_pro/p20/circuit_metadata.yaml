@@ -1,0 +1,128 @@
+case_id: p20_opamp
+declared_type: Opamp
+declared_topology: 'A two-stage differential opamp (first stage: common-source with
+  an active load and a tail current, second stage: common-source with an active load)'
+description: 'A two-stage differential opamp (first stage: common-source with an active
+  load and a tail current, second stage: common-source with an active load)'
+inferred_topology: two-stage differential opamp
+topology_match_status: MATCH
+signal_inputs:
+- Vinn
+- Vinp
+bias_inputs:
+- Vbias1
+- Vbias2
+- Vbias3
+supplies:
+- Vdd
+outputs:
+- Outn
+- Vout
+- Voutp
+internal_nodes:
+- Nbias
+- Stail
+sources:
+- name: Vdd
+  positive_node: Vdd
+  negative_node: '0'
+  role: SUPPLY_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vdd Vdd 0 5
+  original_dc_value: 5.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vinp
+  positive_node: Vinp
+  negative_node: '0'
+  role: SIGNAL_SOURCE
+  replaceable_by_testbench: true
+  original_definition: Vinp Vinp 0 DC 2.5 AC 1n
+  original_dc_value: 2.5
+  original_ac_magnitude: 1.0e-09
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vinn
+  positive_node: Vinn
+  negative_node: '0'
+  role: SIGNAL_SOURCE
+  replaceable_by_testbench: true
+  original_definition: Vinn Vinn 0 DC 2.5 AC 1n
+  original_dc_value: 2.5
+  original_ac_magnitude: 1.0e-09
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vb1
+  positive_node: Vbias1
+  negative_node: '0'
+  role: BIAS_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vb1 Vbias1 0 1
+  original_dc_value: 1.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vb2
+  positive_node: Vbias2
+  negative_node: '0'
+  role: BIAS_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vb2 Vbias2 0 4
+  original_dc_value: 4.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vb3
+  positive_node: Vbias3
+  negative_node: '0'
+  role: BIAS_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vb3 Vbias3 0 4
+  original_dc_value: 4.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+replaceable_sources:
+- Vinp
+- Vinn
+nonreplaceable_sources:
+- Vdd
+- Vb1
+- Vb2
+- Vb3
+embedded_analyses:
+- .OP
+- .AC DEC 100 1 1G
+embedded_measurements: []
+compatible_metrics:
+- metric_name: dc_gain_db
+  status: IMPLEMENTED_AND_COMPATIBLE
+  topology: two-stage differential opamp
+- metric_name: phase_margin
+  status: IMPLEMENTED_AND_COMPATIBLE
+  topology: two-stage differential opamp
+- metric_name: quiescent_current
+  status: IMPLEMENTED_AND_COMPATIBLE
+  topology: two-stage differential opamp
+anomalies:
+- case_id: p20_opamp
+  code: AC_INPUT_MAGNITUDE_NOT_UNITY
+  details: Vinp uses AC magnitude 1e-09
+- case_id: p20_opamp
+  code: AC_INPUT_MAGNITUDE_NOT_UNITY
+  details: Vinn uses AC magnitude 1e-09
+manual_review_required: false
+audit_status: READY

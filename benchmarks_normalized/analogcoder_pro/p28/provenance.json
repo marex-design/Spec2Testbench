@@ -1,0 +1,10 @@
+{
+  "case_id": "p28_schmitt",
+  "source_path": "benchmark/analogcoder_pro/p28_schmitt.cir",
+  "source_sha256": "dd5a9bdc610783a493b34668ac937a9751207d452dc80939f0242f597d88e51e",
+  "original_dut_logical_sha256": "37df929054fd66603a9ce7e37de9672f956c987ce126a34cfc906f7fd580fe84",
+  "canonical_dut_logical_sha256": "37df929054fd66603a9ce7e37de9672f956c987ce126a34cfc906f7fd580fe84",
+  "classification_sha256": "701a547bec9512d5146cb38d555d80f49e19abaaa8d77fc16d7cfb68d66762dd",
+  "metadata_sha256": "c5df5a84c2f2c5c4aa718c742f3a08d0cc5ea5d747d84080a12f339b4c00ed29",
+  "canonical_dut_sha256": "a894471d6b46fde6b4d03b9356d509d0639c4a1b72075d575dd396196b0021a9"
+}

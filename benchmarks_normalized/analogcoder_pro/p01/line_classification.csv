@@ -1,0 +1,14 @@
+case_id,line_number,raw_line,candidate_categories,selected_category,confidence,selection_reason,manual_review_required
+p01_amplifier,1,* AnalogCoder-Pro p1: a single-stage common-source amplifier with resistive load R,COMMENT,COMMENT,1.0,Comment line,False
+p01_amplifier,2,* Source: analogcoder\AnalogCoderPro-master\sample_design\p1\p1.py,COMMENT,COMMENT,1.0,Comment line,False
+p01_amplifier,3,* AnalogCoder-Pro type: Amplifier,COMMENT,COMMENT,1.0,Comment line,False
+p01_amplifier,4,* Inputs: Vin,COMMENT,COMMENT,1.0,Comment line,False
+p01_amplifier,5,* Outputs: Vout,COMMENT,COMMENT,1.0,Comment line,False
+p01_amplifier,7,.MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5),MODEL_DEFINITION,MODEL_DEFINITION,1.0,Model definition,False
+p01_amplifier,9,Vdd Vdd 0 5,SUPPLY_SOURCE,SUPPLY_SOURCE,0.95,Source name or rail node matches supply naming,False
+p01_amplifier,10,Vin Vin 0 DC 1.0 AC 1n,SIGNAL_SOURCE,SIGNAL_SOURCE,0.95,Source matches declared signal input or carries AC/transient stimulus,False
+p01_amplifier,11,Rload Vout Vdd 10k,DUT_LOAD,DUT_LOAD,1.0,Passive DUT element,False
+p01_amplifier,12,M1 Vout Vin 0 0 nmos_model W=5e-05 L=1e-06,DUT_DEVICE,DUT_DEVICE,0.95,Active DUT device,False
+p01_amplifier,14,.OP,EMBEDDED_ANALYSIS_DIRECTIVE,EMBEDDED_ANALYSIS_DIRECTIVE,1.0,Embedded analysis directive,False
+p01_amplifier,15,.AC DEC 100 1 1G,EMBEDDED_ANALYSIS_DIRECTIVE,EMBEDDED_ANALYSIS_DIRECTIVE,1.0,Embedded analysis directive,False
+p01_amplifier,16,.END,END_DIRECTIVE,END_DIRECTIVE,1.0,Deck end directive,False

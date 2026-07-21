@@ -1,0 +1,98 @@
+case_id: p16_opamp
+declared_type: Opamp
+declared_topology: A differential opamp with an active PMOS current mirror load, a
+  tail current source, and two outputs
+description: A differential opamp with an active PMOS current mirror load, a tail
+  current source, and two outputs
+inferred_topology: differential opamp with active mirror load
+topology_match_status: MATCH
+signal_inputs:
+- Vinn
+- Vinp
+bias_inputs:
+- Vbias
+supplies:
+- Vdd
+outputs:
+- Vout
+- Voutp
+internal_nodes:
+- Stail
+sources:
+- name: Vdd
+  positive_node: Vdd
+  negative_node: '0'
+  role: SUPPLY_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vdd Vdd 0 5
+  original_dc_value: 5.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vinp
+  positive_node: Vinp
+  negative_node: '0'
+  role: SIGNAL_SOURCE
+  replaceable_by_testbench: true
+  original_definition: Vinp Vinp 0 DC 1.0 AC 1n
+  original_dc_value: 1.0
+  original_ac_magnitude: 1.0e-09
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vinn
+  positive_node: Vinn
+  negative_node: '0'
+  role: SIGNAL_SOURCE
+  replaceable_by_testbench: true
+  original_definition: Vinn Vinn 0 DC 1.0 AC 1n
+  original_dc_value: 1.0
+  original_ac_magnitude: 1.0e-09
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vbias
+  positive_node: Vbias
+  negative_node: '0'
+  role: BIAS_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vbias Vbias 0 1
+  original_dc_value: 1.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+replaceable_sources:
+- Vinp
+- Vinn
+nonreplaceable_sources:
+- Vdd
+- Vbias
+embedded_analyses:
+- .OP
+- .AC DEC 100 1 1G
+embedded_measurements: []
+compatible_metrics:
+- metric_name: dc_gain_db
+  status: IMPLEMENTED_AND_COMPATIBLE
+  topology: differential opamp with active mirror load
+- metric_name: phase_margin
+  status: IMPLEMENTED_AND_COMPATIBLE
+  topology: differential opamp with active mirror load
+- metric_name: quiescent_current
+  status: IMPLEMENTED_AND_COMPATIBLE
+  topology: differential opamp with active mirror load
+anomalies:
+- case_id: p16_opamp
+  code: AC_INPUT_MAGNITUDE_NOT_UNITY
+  details: Vinp uses AC magnitude 1e-09
+- case_id: p16_opamp
+  code: AC_INPUT_MAGNITUDE_NOT_UNITY
+  details: Vinn uses AC magnitude 1e-09
+manual_review_required: false
+audit_status: READY

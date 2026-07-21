@@ -1,0 +1,10 @@
+{
+  "case_id": "p19_mixer",
+  "source_path": "benchmark/analogcoder_pro/p19_mixer.cir",
+  "source_sha256": "481b17bfcecf5525e57a024d76e2d201f7c233498f7ee416de2e7b400a18acea",
+  "original_dut_logical_sha256": "125c7208070351514f2aef9b344d1d8739d71071c406035ba3ae378a2d703d52",
+  "canonical_dut_logical_sha256": "125c7208070351514f2aef9b344d1d8739d71071c406035ba3ae378a2d703d52",
+  "classification_sha256": "c469d9c0d5dc412f0176e08e9d79417c0019fbd65ae8efede62cfd10b2862116",
+  "metadata_sha256": "c85621f1a460a8c30eb3d9ade276e64ec3a3e31e62773f5296caa2759a45a02c",
+  "canonical_dut_sha256": "0151954ab3375bfcd52f6a3289b06c14058da2cbe73842ec549bc9d76e3b3433"
+}

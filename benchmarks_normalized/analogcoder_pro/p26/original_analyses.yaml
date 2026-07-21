@@ -1,0 +1,8 @@
+- line_number: 29
+  directive: .OP
+  raw_line: .OP
+  inside_subcircuit: false
+- line_number: 30
+  directive: .TRAN
+  raw_line: .TRAN 10U 20M
+  inside_subcircuit: false

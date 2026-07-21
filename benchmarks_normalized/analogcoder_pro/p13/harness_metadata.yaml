@@ -1,0 +1,29 @@
+sources:
+- name: Vin
+  positive_node: Vin
+  negative_node: '0'
+  role: SIGNAL_SOURCE
+  replaceable_by_testbench: true
+  original_definition: Vin Vin 0 1
+  original_dc_value: 1.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+ground_node: '0'
+all_nodes:
+- '0'
+- N1
+- Vin
+- Vout
+signal_input_nodes:
+- Vin
+bias_nodes: []
+supply_nodes: []
+output_nodes:
+- Vout
+internal_nodes:
+- N1
+bulk_nodes: []
+floating_candidates: []

@@ -123,3 +123,51 @@ def test_gain_and_cutoff():
     parsed = {"data": np.column_stack([freq, ratio, np.zeros_like(ratio), np.ones_like(ratio), np.zeros_like(ratio)])}
     assert round(compute_dc_gain_db(parsed, {}), 6) == 20.0
     assert round(compute_cutoff_frequency(parsed, {}), 3) == 100.0
+
+
+def test_gain_uses_transfer_ratio_not_absolute_output_for_unity_input():
+    import math
+    import numpy as np
+
+    parsed = {"data": np.array([[1.0, 10.0, 0.0, 1.0, 0.0]])}
+    gain_db = compute_dc_gain_db(parsed, {})
+    vout_dbv = 20.0 * math.log10(10.0)
+    assert round(gain_db, 6) == 20.0
+    assert round(vout_dbv, 6) == 20.0
+
+
+def test_gain_with_ac_nanovolt_input_stays_at_20db_while_output_dbv_is_negative():
+    import math
+    import numpy as np
+
+    parsed = {"data": np.array([[1.0, 1e-8, 0.0, 1e-9, 0.0]])}
+    gain_db = compute_dc_gain_db(parsed, {})
+    vout_dbv = 20.0 * math.log10(1e-8)
+    assert round(gain_db, 6) == 20.0
+    assert round(vout_dbv, 6) == -160.0
+
+
+def test_gain_unit_ratio_with_ac_nanovolt_input_is_zero_db():
+    import math
+    import numpy as np
+
+    parsed = {"data": np.array([[1.0, 1e-9, 0.0, 1e-9, 0.0]])}
+    gain_db = compute_dc_gain_db(parsed, {})
+    vout_dbv = 20.0 * math.log10(1e-9)
+    assert round(gain_db, 6) == 0.0
+    assert round(vout_dbv, 6) == -180.0
+
+
+def test_gain_with_zero_input_is_not_evaluated():
+    import numpy as np
+
+    parsed = {"data": np.array([[1.0, 1.0, 0.0, 0.0, 0.0]])}
+    with pytest.raises(ValueError):
+        compute_dc_gain_db(parsed, {})
+
+
+def test_gain_inversion_preserves_magnitude():
+    import numpy as np
+
+    parsed = {"data": np.array([[1.0, -10.0, 0.0, 1.0, 0.0]])}
+    assert round(compute_dc_gain_db(parsed, {}), 6) == 20.0

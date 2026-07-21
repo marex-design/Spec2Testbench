@@ -1,0 +1,10 @@
+{
+  "case_id": "p09_comparator",
+  "source_path": "benchmark/analogcoder_pro/p09_comparator.cir",
+  "source_sha256": "7c8266dddbe42819163463abfab75752cf3b9e7e145b84413fe453871bb14dec",
+  "original_dut_logical_sha256": "548595bd786899029beaffa0938a77b0f2344a1ae4ae74a5d4a9966f4d487f27",
+  "canonical_dut_logical_sha256": "548595bd786899029beaffa0938a77b0f2344a1ae4ae74a5d4a9966f4d487f27",
+  "classification_sha256": "0d3204ec4ee9f778c7c6be775e6964c659b6b7436bfbffdf7a6fad646bfb5901",
+  "metadata_sha256": "5e1ae56f0acbddeb809da980fbf6589b5501e8bfc3b34bcf439d7a75732c9117",
+  "canonical_dut_sha256": "46134625c017e0bf5446ec087c239cd52dd10d2b9983abf1af5043b9717f60df"
+}

@@ -1,0 +1,12 @@
+case_id,line_number,raw_line,candidate_categories,selected_category,confidence,selection_reason,manual_review_required
+p13_bandstop,1,* AnalogCoder-Pro p13: a passive band-stop filter,COMMENT,COMMENT,1.0,Comment line,False
+p13_bandstop,2,* Source: analogcoder\AnalogCoderPro-master\sample_design\p13\p13.py,COMMENT,COMMENT,1.0,Comment line,False
+p13_bandstop,3,* AnalogCoder-Pro type: BandStop,COMMENT,COMMENT,1.0,Comment line,False
+p13_bandstop,4,* Inputs: Vin,COMMENT,COMMENT,1.0,Comment line,False
+p13_bandstop,5,* Outputs: Vout,COMMENT,COMMENT,1.0,Comment line,False
+p13_bandstop,8,Vin Vin 0 1,SIGNAL_SOURCE,SIGNAL_SOURCE,0.95,Source matches declared signal input or carries AC/transient stimulus,False
+p13_bandstop,9,R1 Vin Vout 1k,DUT_LOAD,DUT_LOAD,1.0,Passive DUT element,False
+p13_bandstop,10,L1 Vout N1 10m,DUT_LOAD,DUT_LOAD,1.0,Passive DUT element,False
+p13_bandstop,11,C1 N1 0 10n,DUT_LOAD,DUT_LOAD,1.0,Passive DUT element,False
+p13_bandstop,13,.AC DEC 100 1 1G,EMBEDDED_ANALYSIS_DIRECTIVE,EMBEDDED_ANALYSIS_DIRECTIVE,1.0,Embedded analysis directive,False
+p13_bandstop,14,.END,END_DIRECTIVE,END_DIRECTIVE,1.0,Deck end directive,False

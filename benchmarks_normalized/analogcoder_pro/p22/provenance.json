@@ -1,0 +1,10 @@
+{
+  "case_id": "p22_oscillator",
+  "source_path": "benchmark/analogcoder_pro/p22_oscillator.cir",
+  "source_sha256": "060c0dc5b6e4b187e05faa579f430ea19b0ad2ce490288d324c174fc2df573cb",
+  "original_dut_logical_sha256": "ae15bab3ed037a3ad9e0b88117463a0cf94a64c111373f36be7bec69971444bb",
+  "canonical_dut_logical_sha256": "ae15bab3ed037a3ad9e0b88117463a0cf94a64c111373f36be7bec69971444bb",
+  "classification_sha256": "79e220c6398b61f4f1ec3c7ad1f7baa6990c24e31c18395f2508659b11481640",
+  "metadata_sha256": "392857114ddc8d7d9a0be3c132e4d200690b6b5e04e113e15b76268dc1218b10",
+  "canonical_dut_sha256": "c7aabb751a3f97ad3d82c1623e4e7659e79866df6952a8d973342722f9d139c9"
+}

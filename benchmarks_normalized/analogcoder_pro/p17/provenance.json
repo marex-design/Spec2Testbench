@@ -1,0 +1,10 @@
+{
+  "case_id": "p17_currentmirror",
+  "source_path": "benchmark/analogcoder_pro/p17_currentmirror.cir",
+  "source_sha256": "1fabf7ca549dc5090b8245e186ed970e6f811965f90ad5b84ae5f5867956ffa2",
+  "original_dut_logical_sha256": "982f95b886738c85c721e253d52e0da650b2323bec3ab841b09041cf29f51906",
+  "canonical_dut_logical_sha256": "982f95b886738c85c721e253d52e0da650b2323bec3ab841b09041cf29f51906",
+  "classification_sha256": "6273c0e9129df96e3f3dafb89df192a1c9230d0eee5cc1f8fab9bfc462128764",
+  "metadata_sha256": "8ee20520d9ab3c92f645541b8a7f84593f21918f4440865d85df8366974bde86",
+  "canonical_dut_sha256": "4e9cb0e801060e27d9d34f87a96aac4af4027af68ae6db3c3eb1c75e7b8c7143"
+}

@@ -1,0 +1,130 @@
+sources:
+- name: Vdd
+  positive_node: Vdd
+  negative_node: '0'
+  role: SUPPLY_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vdd Vdd 0 5
+  original_dc_value: 5.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vinp
+  positive_node: Vinp
+  negative_node: '0'
+  role: SIGNAL_SOURCE
+  replaceable_by_testbench: true
+  original_definition: Vinp Vinp 0 DC 1.0 AC 1n
+  original_dc_value: 1.0
+  original_ac_magnitude: 1.0e-09
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vinn
+  positive_node: Vinn
+  negative_node: '0'
+  role: SIGNAL_SOURCE
+  replaceable_by_testbench: true
+  original_definition: Vinn Vinn 0 DC 1.0 AC 1n
+  original_dc_value: 1.0
+  original_ac_magnitude: 1.0e-09
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vbias1
+  positive_node: Vbias1
+  negative_node: '0'
+  role: BIAS_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vbias1 Vbias1 0 0.7
+  original_dc_value: 0.7
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vbias2
+  positive_node: Vbias2
+  negative_node: '0'
+  role: BIAS_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vbias2 Vbias2 0 1.2
+  original_dc_value: 1.2
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vbias3
+  positive_node: Vbias3
+  negative_node: '0'
+  role: BIAS_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vbias3 Vbias3 0 4
+  original_dc_value: 4.0
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+- name: Vbias4
+  positive_node: Vbias4
+  negative_node: '0'
+  role: BIAS_SOURCE
+  replaceable_by_testbench: false
+  original_definition: Vbias4 Vbias4 0 3.5
+  original_dc_value: 3.5
+  original_ac_magnitude: null
+  original_ac_phase: null
+  original_waveform: null
+  confidence: 0.95
+  manual_review_required: false
+ground_node: '0'
+all_nodes:
+- '0'
+- N1
+- N2
+- S5
+- S6
+- S_tail
+- Vbias1
+- Vbias2
+- Vbias3
+- Vbias4
+- Vdd
+- Vinn
+- Vinp
+- Vout
+- Voutp
+signal_input_nodes:
+- Vinn
+- Vinp
+bias_nodes:
+- Vbias1
+- Vbias2
+- Vbias3
+- Vbias4
+supply_nodes:
+- Vdd
+output_nodes:
+- Vout
+- Voutp
+internal_nodes:
+- N1
+- N2
+- S5
+- S6
+- S_tail
+bulk_nodes:
+- '0'
+- N1
+- N2
+- S5
+- S6
+- S_tail
+- Vdd
+floating_candidates: []
