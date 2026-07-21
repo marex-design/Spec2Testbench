@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from spec2testbench.application.services.llm_capability_builder import LLMCapabilityBuilder
+from spec2testbench.application.services.llm_cache import LLMCacheKey
 from spec2testbench.application.services.llm_generation_service import LLMGenerationService
 from spec2testbench.application.services.llm_testbench_plan_validator import LLMTestbenchPlanValidator
 from spec2testbench.application.services.testbench_plan_compiler import TestbenchPlanCompiler
@@ -33,6 +34,50 @@ GROUND_TRUTH_MANIFEST = ROOT / "experiments/ground_truth/ground_truth_manifest.y
 RESULTS_DIR = ROOT / "results/llm_deepseek"
 REPORTS_DIR = ROOT / "reports/llm_deepseek"
 ARTIFACTS_DIR = ROOT / "artifacts/llm_deepseek"
+FROZEN_V3_RESULTS = ROOT / "results/frozen_pilot_results_v3.csv"
+
+
+def json_sha256(payload: Any) -> str:
+    return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
+
+
+def classification_from_ground_truth(ground_truth_label: str, compliance_status: str) -> str:
+    if compliance_status == "NOT_EVALUATED":
+        return "UNEVALUATED"
+    if ground_truth_label == "GROUND_TRUTH_COMPLIANT" and compliance_status == "PASS":
+        return "TRUE_ACCEPT"
+    if ground_truth_label == "GROUND_TRUTH_NONCOMPLIANT" and compliance_status == "FAIL":
+        return "TRUE_DETECTION"
+    if ground_truth_label == "GROUND_TRUTH_COMPLIANT" and compliance_status == "FAIL":
+        return "FALSE_REJECT"
+    if ground_truth_label == "GROUND_TRUTH_NONCOMPLIANT" and compliance_status == "PASS":
+        return "FALSE_ACCEPT"
+    return "UNEVALUATED"
+
+
+def provider_mode_for_run(provider: str, provider_metadata: dict[str, Any] | None = None) -> str:
+    if provider == "stub":
+        return "STUB"
+    metadata_provider = str((provider_metadata or {}).get("provider", "")).lower()
+    if "stub" in metadata_provider:
+        return "STUB"
+    if provider == "deepseek":
+        return "LIVE"
+    return ""
+
+
+def scientific_llm_evidence(provider_mode: str) -> bool:
+    return provider_mode == "LIVE"
+
+
+def performance_evidence_scope(generation_mode: str, provider_mode: str) -> str:
+    if generation_mode == GenerationMode.DETERMINISTIC.value:
+        return "DETERMINISTIC_BASELINE"
+    if provider_mode == "STUB":
+        return "SOFTWARE_INTEGRATION_ONLY"
+    if provider_mode == "LIVE":
+        return "SCIENTIFIC_LLM_EVIDENCE"
+    return ""
 
 
 @dataclass(frozen=True)
@@ -44,6 +89,20 @@ class CampaignCase:
     specification_file: Path
     netlist_file: Path
     targeted_metric: str
+
+
+def read_csv(path: Path) -> list[dict[str, str]]:
+    if not path.exists() or not path.read_text(encoding="utf-8").strip():
+        return []
+    with path.open("r", encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def load_frozen_v3_reference_rows() -> dict[str, dict[str, str]]:
+    return {
+        row["case_id"]: row
+        for row in read_csv(FROZEN_V3_RESULTS)
+    }
 
 
 def sha256_file(path: Path) -> str:
@@ -196,11 +255,35 @@ def load_case_specification(case: CampaignCase) -> Specification:
     return specification
 
 
-def run_deterministic_case(case: CampaignCase, *, timeout: int) -> tuple[Specification, dict[str, Any]]:
+def resolve_deterministic_source(
+    requested_source: str,
+    *,
+    manifest_path: Path,
+    cases: list[CampaignCase],
+) -> str:
+    if requested_source != "auto":
+        return requested_source
+    reference_rows = load_frozen_v3_reference_rows()
+    if cases and all(case.case_id in reference_rows for case in cases):
+        return "frozen_v3_reference"
+    return "pipeline_replay"
+
+
+def run_deterministic_case(
+    case: CampaignCase,
+    *,
+    timeout: int,
+    deterministic_source: str,
+) -> tuple[Specification, dict[str, Any]]:
     specification = load_case_specification(case)
+    if deterministic_source == "frozen_v3_reference":
+        reference_rows = load_frozen_v3_reference_rows()
+        if case.case_id not in reference_rows:
+            raise KeyError(f"No frozen V3 reference row found for {case.case_id}")
+        return specification, {"reference_row": reference_rows[case.case_id], "deterministic_source": deterministic_source}
     pipeline = VerificationPipeline(use_llm=False, allow_mock=False, timeout_seconds=timeout)
     report = pipeline.verify(specification, netlist_path=case.netlist_file, spec_path=case.specification_file)
-    return specification, {"report": report}
+    return specification, {"report": report, "deterministic_source": deterministic_source}
 
 
 def run_llm_case(
@@ -375,6 +458,155 @@ def write_llm_artifacts(
     return output_dir
 
 
+def build_trial_cache_digest(
+    *,
+    case: CampaignCase,
+    mode: str,
+    trial_id: str,
+    model: str,
+    temperature: float,
+    max_tokens: int,
+    planning_outcome,
+    specification: Specification,
+) -> str:
+    request_payload = planning_outcome.request_payload
+    capability_registry_sha = json_sha256(request_payload.get("supported_capabilities", {}))
+    specification_sha = hashlib.sha256(
+        json.dumps(specification.to_dict(), sort_keys=True).encode("utf-8")
+    ).hexdigest()
+    cache_key = LLMCacheKey(
+        case_id=case.case_id,
+        mode=mode,
+        trial_id=trial_id,
+        provider=str((planning_outcome.provider_metadata or {}).get("provider", "")) or "unknown",
+        model=model,
+        prompt_sha256=planning_outcome.prompt_sha256,
+        specification_sha256=specification_sha,
+        netlist_sha256=sha256_file(case.netlist_file),
+        capability_registry_sha256=capability_registry_sha,
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
+    return cache_key.digest()
+
+
+def build_deterministic_use_case_row(
+    *,
+    run_id: str,
+    case: CampaignCase,
+    specification: Specification,
+    deterministic: dict[str, Any],
+) -> dict[str, Any]:
+    deterministic_source = deterministic["deterministic_source"]
+    if "reference_row" in deterministic:
+        reference = deterministic["reference_row"]
+        compliance_status = reference.get("compliance_status", "NOT_EVALUATED")
+        evaluation_outcome = reference.get(
+            "evaluation_outcome",
+            classification_from_ground_truth(case.ground_truth_label, compliance_status),
+        )
+        measured_value = reference.get("measured_value", "")
+        metric_status = reference.get("metric_status", "")
+        return {
+            "run_id": run_id,
+            "case_id": case.case_id,
+            "use_case": infer_use_case(case.targeted_metric),
+            "circuit_family": case.circuit_family or case.parent_circuit_id,
+            "ground_truth_label": case.ground_truth_label,
+            "generation_mode": GenerationMode.DETERMINISTIC.value,
+            "trial_id": "deterministic",
+            "provider": "historical_reference",
+            "provider_mode": "",
+            "scientific_llm_evidence": False,
+            "performance_evidence_scope": performance_evidence_scope(GenerationMode.DETERMINISTIC.value, ""),
+            "model": "frozen_v3_reference",
+            "prompt_version": "",
+            "initial_json_valid": True,
+            "final_plan_valid": True,
+            "repair_count": 0,
+            "testbench_validity_status": "VALID" if reference.get("execution_status") == "SUCCESS" else "SIMULATION_FAILURE",
+            "execution_status": reference.get("execution_status", ""),
+            "simulation_mode": reference.get("simulation_mode", ""),
+            "measurement_backend": reference.get("measurement_backend", ""),
+            "requested_metric_count": len(specification.performance_targets),
+            "evaluated_metric_count": 0 if metric_status == "NOT_EVALUATED" else len(specification.performance_targets),
+            "metric_coverage": 0.0 if metric_status == "NOT_EVALUATED" else 1.0,
+            "compliance_status": compliance_status,
+            "scientific_category": "",
+            "evaluation_outcome": evaluation_outcome,
+            "generation_latency_s": 0.0,
+            "simulation_latency_s": 0.0,
+            "prompt_tokens": None,
+            "completion_tokens": None,
+            "total_tokens": None,
+            "manifest_source": deterministic_source,
+            "cache_used": False,
+            "metric_name": reference.get("metric_name", case.targeted_metric),
+            "metric_value": measured_value,
+            "metric_unit": reference.get("unit", ""),
+            "metric_operator": reference.get("operator", ""),
+            "metric_threshold": reference.get("threshold", ""),
+            "metric_status": metric_status,
+            "netlist_sha256": reference.get("netlist_sha256", sha256_file(case.netlist_file)),
+            "specification_sha256": reference.get("specification_sha256", ""),
+            "testbench_sha256": reference.get("testbench_sha256", ""),
+            "artifact_dir": reference.get("artifact_dir", ""),
+            "source_artifact": reference.get("source_artifact", ""),
+        }
+
+    report = deterministic["report"]
+    measured_result = next((result for result in report.spec_results if result.test_name == case.targeted_metric), None)
+    compliance_status = report.compliance_status.value
+    return {
+        "run_id": run_id,
+        "case_id": case.case_id,
+        "use_case": infer_use_case(case.targeted_metric),
+        "circuit_family": case.circuit_family or case.parent_circuit_id,
+        "ground_truth_label": case.ground_truth_label,
+        "generation_mode": GenerationMode.DETERMINISTIC.value,
+        "trial_id": "deterministic",
+        "provider": "pipeline_replay",
+        "provider_mode": "",
+        "scientific_llm_evidence": False,
+        "performance_evidence_scope": performance_evidence_scope(GenerationMode.DETERMINISTIC.value, ""),
+        "model": deterministic_source,
+        "prompt_version": "",
+        "initial_json_valid": True,
+        "final_plan_valid": True,
+        "repair_count": 0,
+        "testbench_validity_status": "VALID" if report.execution_status.value == "SUCCESS" else "SIMULATION_FAILURE",
+        "execution_status": report.execution_status.value,
+        "simulation_mode": report.simulation_mode.value if report.simulation_mode else "",
+        "measurement_backend": report.measurement_backend or "",
+        "requested_metric_count": len(specification.performance_targets),
+        "evaluated_metric_count": sum(1 for result in report.spec_results if result.measured_value is not None),
+        "metric_coverage": (
+            sum(1 for result in report.spec_results if result.measured_value is not None) / len(specification.performance_targets)
+        ) if specification.performance_targets else 0.0,
+        "compliance_status": compliance_status,
+        "scientific_category": report.scientific_category.value,
+        "evaluation_outcome": classification_from_ground_truth(case.ground_truth_label, compliance_status),
+        "generation_latency_s": 0.0,
+        "simulation_latency_s": report.runtime_seconds,
+        "prompt_tokens": None,
+        "completion_tokens": None,
+        "total_tokens": None,
+        "manifest_source": deterministic_source,
+        "cache_used": False,
+        "metric_name": case.targeted_metric,
+        "metric_value": measured_result.measured_value if measured_result else "",
+        "metric_unit": measured_result.unit if measured_result else "",
+        "metric_operator": next((trace.expected_operator for trace in report.metric_traces if trace.metric_name == case.targeted_metric), ""),
+        "metric_threshold": next((trace.expected_threshold for trace in report.metric_traces if trace.metric_name == case.targeted_metric), ""),
+        "metric_status": next((trace.status for trace in report.metric_traces if trace.metric_name == case.targeted_metric), ""),
+        "netlist_sha256": report.expected_netlist_sha256 or sha256_file(case.netlist_file),
+        "specification_sha256": report.specification_sha256 or "",
+        "testbench_sha256": report.provenance.get("testbench_hash", ""),
+        "artifact_dir": "",
+        "source_artifact": report.measurement_source or "",
+    }
+
+
 def build_use_case_row(
     *,
     run_id: str,
@@ -392,11 +624,14 @@ def build_use_case_row(
     execution_status = "ERROR"
     simulation_mode = ""
     measurement_backend = ""
+    scientific_category = ""
     evaluation_outcome = "UNEVALUATED"
     generation_latency = 0.0
     prompt_tokens = None
     completion_tokens = None
     total_tokens = None
+    provider_mode = provider_mode_for_run(provider_name, planning_outcome.provider_metadata)
+    provider_label = model if provider_mode == "STUB" else provider_name
 
     metadata = planning_outcome.provider_metadata or {}
     generation_latency = float(metadata.get("latency_seconds", 0.0) or 0.0)
@@ -410,7 +645,8 @@ def build_use_case_row(
         execution_status = report.execution_status.value
         simulation_mode = report.simulation_mode.value if report.simulation_mode else ""
         measurement_backend = report.measurement_backend or ""
-        evaluation_outcome = report.scientific_category.value
+        scientific_category = report.scientific_category.value
+        evaluation_outcome = classification_from_ground_truth(case.ground_truth_label, compliance_status)
 
     return {
         "run_id": run_id,
@@ -420,7 +656,10 @@ def build_use_case_row(
         "ground_truth_label": case.ground_truth_label,
         "generation_mode": mode,
         "trial_id": trial_id,
-        "provider": provider_name,
+        "provider": provider_label,
+        "provider_mode": provider_mode,
+        "scientific_llm_evidence": scientific_llm_evidence(provider_mode),
+        "performance_evidence_scope": performance_evidence_scope(mode, provider_mode),
         "model": model,
         "prompt_version": "deepseek_testbench_planner_v1",
         "initial_json_valid": planning_outcome.validation.status.value != "INVALID_JSON",
@@ -440,6 +679,7 @@ def build_use_case_row(
         "evaluated_metric_count": evaluated_metric_count,
         "metric_coverage": (evaluated_metric_count / requested_metric_count) if requested_metric_count else 0.0,
         "compliance_status": compliance_status,
+        "scientific_category": scientific_category,
         "evaluation_outcome": evaluation_outcome,
         "generation_latency_s": generation_latency,
         "simulation_latency_s": report.runtime_seconds if report is not None else 0.0,
@@ -506,6 +746,11 @@ def main() -> None:
     parser.add_argument("--output-run-id", required=True)
     parser.add_argument("--disable-pyspice", action="store_true")
     parser.add_argument("--no-mock", action="store_true")
+    parser.add_argument(
+        "--deterministic-source",
+        choices=["auto", "pipeline_replay", "frozen_v3_reference"],
+        default="auto",
+    )
     args = parser.parse_args()
 
     if args.disable_pyspice:
@@ -519,6 +764,11 @@ def main() -> None:
     if args.use_case:
         cases = [case for case in cases if infer_use_case(case.targeted_metric) == args.use_case]
     modes = [GenerationMode(item.strip()) for item in args.modes.split(",") if item.strip()]
+    deterministic_source = resolve_deterministic_source(
+        args.deterministic_source,
+        manifest_path=manifest_path,
+        cases=cases,
+    )
 
     mapping_rows = [
         {
@@ -556,41 +806,19 @@ def main() -> None:
     for case in cases:
         deterministic_report = None
         if GenerationMode.DETERMINISTIC in modes:
-            specification, deterministic = run_deterministic_case(case, timeout=int(args.timeout))
-            deterministic_report = deterministic["report"]
+            specification, deterministic = run_deterministic_case(
+                case,
+                timeout=int(args.timeout),
+                deterministic_source=deterministic_source,
+            )
+            deterministic_report = deterministic.get("report")
             use_case_rows.append(
-                {
-                    "run_id": args.output_run_id,
-                    "case_id": case.case_id,
-                    "use_case": infer_use_case(case.targeted_metric),
-                    "circuit_family": case.circuit_family or case.parent_circuit_id,
-                    "ground_truth_label": case.ground_truth_label,
-                    "generation_mode": GenerationMode.DETERMINISTIC.value,
-                    "trial_id": "deterministic",
-                    "provider": "none",
-                    "model": "template",
-                    "prompt_version": "",
-                    "initial_json_valid": True,
-                    "final_plan_valid": True,
-                    "repair_count": 0,
-                    "testbench_validity_status": "VALID" if deterministic_report.execution_status.value == "SUCCESS" else "SIMULATION_FAILURE",
-                    "execution_status": deterministic_report.execution_status.value,
-                    "simulation_mode": deterministic_report.simulation_mode.value if deterministic_report.simulation_mode else "",
-                    "measurement_backend": deterministic_report.measurement_backend or "",
-                    "requested_metric_count": len(specification.performance_targets),
-                    "evaluated_metric_count": sum(1 for result in deterministic_report.spec_results if result.measured_value is not None),
-                    "metric_coverage": (
-                        sum(1 for result in deterministic_report.spec_results if result.measured_value is not None)
-                        / len(specification.performance_targets)
-                    ) if specification.performance_targets else 0.0,
-                    "compliance_status": deterministic_report.compliance_status.value,
-                    "evaluation_outcome": deterministic_report.scientific_category.value,
-                    "generation_latency_s": 0.0,
-                    "simulation_latency_s": deterministic_report.runtime_seconds,
-                    "prompt_tokens": None,
-                    "completion_tokens": None,
-                    "total_tokens": None,
-                }
+                build_deterministic_use_case_row(
+                    run_id=args.output_run_id,
+                    case=case,
+                    specification=specification,
+                    deterministic=deterministic,
+                )
             )
 
         for mode in modes:
@@ -634,9 +862,35 @@ def main() -> None:
                         "case_id": case.case_id,
                         "generation_mode": mode.value,
                         "trial_id": trial_id,
-                        "provider": args.provider,
+                        "provider": row["provider"],
+                        "provider_mode": row["provider_mode"],
+                        "scientific_llm_evidence": row["scientific_llm_evidence"],
+                        "performance_evidence_scope": row["performance_evidence_scope"],
                         "model": args.model,
                         "prompt_sha256": planning_outcome.prompt_sha256,
+                        "request_hash": json_sha256(planning_outcome.request_payload),
+                        "raw_response_hash": hashlib.sha256(planning_outcome.raw_response.encode("utf-8")).hexdigest(),
+                        "parsed_plan_hash": (
+                            hashlib.sha256(
+                                json.dumps(
+                                    planning_outcome.parsed_plan.model_dump(mode="json"),
+                                    sort_keys=True,
+                                ).encode("utf-8")
+                            ).hexdigest()
+                            if planning_outcome.parsed_plan is not None
+                            else ""
+                        ),
+                        "cache_key": build_trial_cache_digest(
+                            case=case,
+                            mode=mode.value,
+                            trial_id=trial_id,
+                            model=args.model,
+                            temperature=args.temperature,
+                            max_tokens=args.max_tokens,
+                            planning_outcome=planning_outcome,
+                            specification=execution["specification"],
+                        ),
+                        "cache_hit": False,
                         "initial_json_valid": planning_outcome.validation.status.value != "INVALID_JSON",
                         "final_json_valid": planning_outcome.validation.status.value not in {"INVALID_JSON", "SCHEMA_ERROR"},
                         "initial_plan_valid": planning_outcome.validation.is_valid,
@@ -690,6 +944,7 @@ def main() -> None:
                         "trial_id": trial_id,
                         "ground_truth_label": case.ground_truth_label,
                         "compliance_status": row["compliance_status"],
+                        "scientific_category": row["scientific_category"],
                         "evaluation_outcome": row["evaluation_outcome"],
                     }
                 )
@@ -711,9 +966,40 @@ def main() -> None:
                 )
 
     stability_rows = summarize_trial_stability(use_case_rows)
+    grouped_cache_keys: dict[tuple[str, str], set[str]] = {}
+    for row in generation_rows:
+        grouped_cache_keys.setdefault((row["case_id"], row["generation_mode"]), set()).add(row["cache_key"])
+    trial_cache_rows = [
+        {
+            "run_id": row["run_id"],
+            "case_id": row["case_id"],
+            "generation_mode": row["generation_mode"],
+            "trial_id": row["trial_id"],
+            "provider": row["provider"],
+            "provider_mode": row["provider_mode"],
+            "scientific_llm_evidence": row["scientific_llm_evidence"],
+            "performance_evidence_scope": row["performance_evidence_scope"],
+            "request_hash": row["request_hash"],
+            "raw_response_hash": row["raw_response_hash"],
+            "parsed_plan_hash": row["parsed_plan_hash"],
+            "cache_key": row["cache_key"],
+            "cache_hit": row["cache_hit"],
+            "cache_contamination": len(grouped_cache_keys[(row["case_id"], row["generation_mode"])]) != len(
+                [
+                    item
+                    for item in generation_rows
+                    if item["case_id"] == row["case_id"] and item["generation_mode"] == row["generation_mode"]
+                ]
+            ),
+        }
+        for row in generation_rows
+    ]
 
     write_csv(RESULTS_DIR / "use_case_results.csv", use_case_rows)
+    if manifest_path.name == "use_case_smoke_manifest.yaml":
+        write_csv(RESULTS_DIR / "use_case_smoke_results.csv", use_case_rows)
     write_csv(RESULTS_DIR / "llm_generation_attempts.csv", generation_rows)
+    write_csv(RESULTS_DIR / "trial_cache_audit.csv", trial_cache_rows)
     write_csv(RESULTS_DIR / "llm_plan_validation.csv", validation_rows)
     write_csv(RESULTS_DIR / "llm_testbench_execution.csv", execution_rows)
     write_csv(RESULTS_DIR / "llm_metric_coverage.csv", coverage_rows)

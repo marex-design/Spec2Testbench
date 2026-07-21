@@ -65,6 +65,7 @@ class DeterministicStubProvider(LLMProvider):
             input_node=input_node,
             circuit_family=circuit_family,
             supply_information=supply_information,
+            deterministic_summary=deterministic_summary,
         )
         observed_nodes = [output_node] if output_node else []
         if any(metric in {"propagation_delay", "propagation_delay_s", "v_t_plus", "v_t_minus", "hysteresis_width"} for metric in requested_metrics) and input_node:
@@ -90,6 +91,7 @@ class DeterministicStubProvider(LLMProvider):
             analysis_type=analysis_type,
             input_source=(stimuli[0].source_name if stimuli else "vin"),
             circuit_family=circuit_family,
+            deterministic_summary=deterministic_summary,
         )
         return TestbenchPlan.model_validate(
             {
@@ -150,6 +152,10 @@ class DeterministicStubProvider(LLMProvider):
         if metric_candidates:
             common_candidates = set.intersection(*metric_candidates)
             if common_candidates:
+                # Operating-point style metrics should prefer OP over a synthetic
+                # DC sweep when both are semantically valid.
+                if AnalysisType.OP in common_candidates and common_candidates <= {AnalysisType.OP, AnalysisType.DC}:
+                    return AnalysisType.OP
                 for preferred in summary_preferences:
                     if preferred in common_candidates:
                         return preferred
@@ -185,14 +191,29 @@ class DeterministicStubProvider(LLMProvider):
         input_node: str | None,
         circuit_family: str,
         supply_information: dict[str, Any],
+        deterministic_summary: dict[str, Any],
     ) -> list[StimulusPlan]:
+        summary_stimuli = DeterministicStubProvider._summary_stimuli_for_analysis(
+            analysis_type=analysis_type,
+            input_node=input_node,
+            deterministic_summary=deterministic_summary,
+        )
+        if summary_stimuli:
+            return summary_stimuli
         if not input_node:
             return []
         vss = float(supply_information.get("vss", 0.0))
         vdd = float(supply_information.get("vdd", 5.0))
         vcm = float(supply_information.get("common_mode_voltage", (vdd + vss) / 2.0))
         if analysis_type == AnalysisType.OP:
-            return []
+            return [
+                StimulusPlan(
+                    source_name="vin",
+                    target_node=input_node,
+                    stimulus_type=StimulusType.DC,
+                    parameters={"value": vcm},
+                )
+            ]
         if analysis_type == AnalysisType.DC:
             return [
                 StimulusPlan(
@@ -236,7 +257,21 @@ class DeterministicStubProvider(LLMProvider):
         analysis_type: AnalysisType,
         input_source: str,
         circuit_family: str,
+        deterministic_summary: dict[str, Any],
     ) -> SimulationParameters:
+        summary_parameters = DeterministicStubProvider._summary_simulation_parameters(
+            analysis_type=analysis_type,
+            input_source=input_source,
+            deterministic_summary=deterministic_summary,
+        )
+        if summary_parameters is not None:
+            if analysis_type == AnalysisType.TRAN and "oscillator" in circuit_family.lower():
+                return SimulationParameters(
+                    start_time_s=summary_parameters.start_time_s or 0.0,
+                    stop_time_s=max(summary_parameters.stop_time_s or 0.0, 2e-3),
+                    time_step_s=max(summary_parameters.time_step_s or 5e-9, 50e-9),
+                )
+            return summary_parameters
         if analysis_type == AnalysisType.OP:
             return SimulationParameters()
         if analysis_type == AnalysisType.DC:
@@ -248,5 +283,120 @@ class DeterministicStubProvider(LLMProvider):
                 points_per_decade=20,
             )
         if "oscillator" in circuit_family.lower():
-            return SimulationParameters(start_time_s=0.0, stop_time_s=2e-3, time_step_s=1e-6)
+            return SimulationParameters(start_time_s=0.0, stop_time_s=2e-3, time_step_s=50e-9)
         return SimulationParameters(start_time_s=0.0, stop_time_s=2e-3, time_step_s=1e-6)
+
+    @staticmethod
+    def _summary_stimuli_for_analysis(
+        *,
+        analysis_type: AnalysisType,
+        input_node: str | None,
+        deterministic_summary: dict[str, Any],
+    ) -> list[StimulusPlan]:
+        if not input_node:
+            return []
+        allowed_types = {
+            AnalysisType.OP: {"dc"},
+            AnalysisType.DC: {"dc"},
+            AnalysisType.AC: {"ac"},
+            AnalysisType.TRAN: {"pulse", "sin", "pwl", "triangle"},
+        }[analysis_type]
+        plans: list[StimulusPlan] = []
+        for stimulus in deterministic_summary.get("stimuli", []):
+            stimulus_type = str(stimulus.get("type", "")).strip().lower()
+            if stimulus_type not in allowed_types:
+                continue
+            if str(stimulus.get("node_positive", "")).strip().lower() != input_node.lower():
+                continue
+            try:
+                plans.append(
+                    StimulusPlan(
+                        source_name=str(stimulus.get("name", "vin")).strip() or "vin",
+                        target_node=input_node,
+                        stimulus_type=StimulusType(stimulus_type.upper()),
+                        parameters=dict(stimulus.get("parameters", {}) or {}),
+                    )
+                )
+            except Exception:
+                continue
+        return plans
+
+    @staticmethod
+    def _summary_simulation_parameters(
+        *,
+        analysis_type: AnalysisType,
+        input_source: str,
+        deterministic_summary: dict[str, Any],
+    ) -> SimulationParameters | None:
+        candidates = [
+            item
+            for item in deterministic_summary.get("analyses", [])
+            if str(item.get("type", "")).strip().upper() == analysis_type.value
+        ]
+        if not candidates:
+            return None
+        if analysis_type in {AnalysisType.OP, AnalysisType.DC}:
+            params = dict(candidates[0].get("parameters", {}) or {})
+            if analysis_type == AnalysisType.OP:
+                return SimulationParameters()
+            return SimulationParameters(
+                dc_source=str(params.get("source", input_source)).strip() or input_source,
+                dc_start=DeterministicStubProvider._parse_numeric(params.get("start")),
+                dc_stop=DeterministicStubProvider._parse_numeric(params.get("stop")),
+                dc_step=DeterministicStubProvider._parse_numeric(params.get("step")),
+            )
+        if analysis_type == AnalysisType.AC:
+            params = dict(candidates[0].get("parameters", {}) or {})
+            return SimulationParameters(
+                frequency_start_hz=DeterministicStubProvider._parse_numeric(params.get("start_freq")),
+                frequency_stop_hz=DeterministicStubProvider._parse_numeric(params.get("stop_freq")),
+                points_per_decade=int(params.get("points_per_decade", 20)),
+            )
+        params = sorted(
+            (dict(item.get("parameters", {}) or {}) for item in candidates),
+            key=lambda item: (
+                -float(DeterministicStubProvider._parse_numeric(item.get("end_time")) or 0.0),
+                float(DeterministicStubProvider._parse_numeric(item.get("step_time")) or float("inf")),
+            ),
+        )[0]
+        return SimulationParameters(
+            start_time_s=DeterministicStubProvider._parse_numeric(params.get("start_time")) or 0.0,
+            stop_time_s=DeterministicStubProvider._parse_numeric(params.get("end_time")),
+            time_step_s=DeterministicStubProvider._parse_numeric(params.get("step_time")),
+        )
+
+    @staticmethod
+    def _parse_numeric(value: Any) -> float | None:
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        text = str(value).strip().lower()
+        if not text:
+            return None
+        suffixes = {
+            "t": 1e12,
+            "g": 1e9,
+            "meg": 1e6,
+            "k": 1e3,
+            "m": 1e-3,
+            "u": 1e-6,
+            "n": 1e-9,
+            "p": 1e-12,
+            "f": 1e-15,
+        }
+        if text.endswith("meg"):
+            try:
+                return float(text[:-3]) * suffixes["meg"]
+            except ValueError:
+                return None
+        suffix = text[-1]
+        if suffix in suffixes:
+            try:
+                return float(text[:-1]) * suffixes[suffix]
+            except ValueError:
+                return None
+        try:
+            return float(text)
+        except ValueError:
+            return None

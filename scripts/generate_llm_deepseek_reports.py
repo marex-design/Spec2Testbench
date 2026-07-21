@@ -44,6 +44,16 @@ def write_text(path: Path, text: str) -> None:
     path.write_text(text.strip() + "\n", encoding="utf-8")
 
 
+def read_json(path: Path) -> dict[str, object]:
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def parse_bool(value: object) -> bool:
+    return str(value).strip().lower() == "true"
+
+
 def pct(numerator: int, denominator: int) -> str:
     if denominator == 0:
         return "0.0%"
@@ -409,11 +419,11 @@ Headline:
     write_text(
         LLM_REPORTS / "deepseek_trial_stability.md",
         f"""
-# DeepSeek Trial Stability
+# Stub Trial Determinism
 
 Date: {CURRENT_DATE}
 
-The L2 provider used here is deterministic stub logic, so high agreement is expected and desirable as a pipeline sanity check.
+The L2 provider used here is deterministic stub logic, so high agreement is expected and desirable as a pipeline sanity check. These numbers describe stub determinism, not live-LLM stability.
 
 - Stable verdict rows: {stable_cases} of {len(stability_rows)}
 
@@ -465,9 +475,147 @@ Notes:
         )
 
 
+def write_missing_metric_audit() -> None:
+    use_case_rows = read_csv(LLM_RESULTS / "use_case_results.csv")
+    generation_rows = {
+        (row["case_id"], row["generation_mode"], row["trial_id"]): row
+        for row in read_csv(LLM_RESULTS / "llm_generation_attempts.csv")
+    }
+    rows: list[dict[str, object]] = []
+    for row in use_case_rows:
+        if row.get("generation_mode") == "deterministic":
+            continue
+        if float(row.get("metric_coverage", "0") or 0.0) >= 1.0:
+            continue
+        generation = generation_rows.get((row["case_id"], row["generation_mode"], row["trial_id"]), {})
+        artifact_dir = Path(str(generation.get("artifact_dir", "")))
+        parsed_plan = read_json(artifact_dir / "parsed_plan.json") if artifact_dir else {}
+        metrics = read_json(artifact_dir / "metrics.json") if artifact_dir else {}
+        provenance = read_json(artifact_dir / "provenance.json") if artifact_dir else {}
+        ngspice_stderr = (artifact_dir / "ngspice_stderr.txt").read_text(encoding="utf-8", errors="ignore") if artifact_dir and (artifact_dir / "ngspice_stderr.txt").exists() else ""
+        plan_measurements = parsed_plan.get("measurements", []) if isinstance(parsed_plan.get("measurements"), list) else []
+        target_metric = str(row.get("metric_name") or row.get("use_case") or "")
+        requested_backend = ""
+        for measurement in plan_measurements:
+            if measurement.get("metric_name") == target_metric:
+                requested_backend = str(measurement.get("backend_preference", ""))
+                break
+        expected_artifact = "vectors.dat" if requested_backend == "NGSPICE_WRDATA" else "measures.txt"
+        artifact_exists = artifact_dir.joinpath(expected_artifact).exists() if artifact_dir else False
+        raw_measure_present = artifact_dir.joinpath("measures.txt").exists() and target_metric in artifact_dir.joinpath("measures.txt").read_text(encoding="utf-8", errors="ignore") if artifact_dir else False
+        vector_present = artifact_dir.joinpath("vectors.dat").exists() if artifact_dir else False
+        if "Voltage source" in ngspice_stderr:
+            root_cause = "PLAN_WRONG_ANALYSIS"
+            recommended_fix = "Prefer OP for operating-point metrics instead of a DC sweep tied to a source name that may not exist in the netlist."
+            correctable_component = "STUB_PROVIDER"
+        elif "Timestep too small" in ngspice_stderr:
+            root_cause = "PLAN_WRONG_STIMULUS"
+            recommended_fix = "Reuse the deterministic transient stimulus envelope for Schmitt-style plans instead of a generic full-rail pulse."
+            correctable_component = "STUB_PROVIDER"
+        elif target_metric in {"oscillator_frequency", "frequency_hz"} and metrics.get("fundamental_frequency") is not None:
+            root_cause = "NO_REAL_OSCILLATION"
+            recommended_fix = "Keep the oscillation semantic guard and tune the transient window/amplitude threshold to the deterministic benchmark path."
+            correctable_component = "COMPILER"
+        elif target_metric == "hysteresis_width" and vector_present:
+            root_cause = "NO_SWITCHING_TRANSITION"
+            recommended_fix = "Ensure the transient plan produces both rising and falling output transitions before requesting hysteresis extraction."
+            correctable_component = "STUB_PROVIDER"
+        else:
+            root_cause = "UNKNOWN"
+            recommended_fix = "Inspect the artifact directory and provenance to determine whether the plan, compiler, or simulator dropped the metric."
+            correctable_component = "UNKNOWN"
+        rows.append(
+            {
+                "run_id": row["run_id"],
+                "case_id": row["case_id"],
+                "trial_id": row["trial_id"],
+                "use_case": row["use_case"],
+                "metric_name": target_metric,
+                "analysis_type": parsed_plan.get("analysis_type", ""),
+                "requested_backend": requested_backend,
+                "actual_backend": row.get("measurement_backend", ""),
+                "plan_contains_metric": any(measurement.get("metric_name") == target_metric for measurement in plan_measurements),
+                "compiler_contains_measurement": (artifact_dir / "compiled_testbench.cir").exists() if artifact_dir else False,
+                "simulation_success": row.get("execution_status") == "SUCCESS",
+                "expected_artifact": expected_artifact,
+                "artifact_exists": artifact_exists,
+                "raw_measure_present": raw_measure_present,
+                "vector_present": vector_present,
+                "parser_output": metrics.get(target_metric, ""),
+                "semantic_guard_status": (provenance.get("required_metric_validation", {}) or {}).get(target_metric, {}),
+                "final_metric_status": row.get("compliance_status", ""),
+                "root_cause": root_cause,
+                "correctable_component": correctable_component,
+                "recommended_fix": recommended_fix,
+            }
+        )
+
+    write_csv(LLM_RESULTS / "missing_metric_root_causes.csv", rows)
+    if not rows:
+        write_text(
+            LLM_REPORTS / "missing_metric_root_causes.md",
+            f"""
+# Missing Metric Root Causes
+
+Date: {CURRENT_DATE}
+
+Remaining missing stub metrics: 0.
+
+All current stub trials now either evaluate their requested metric or terminate with an explicit, already-corrected diagnostic path. No silent drop remains in the frozen campaign output.
+""",
+        )
+        return
+
+    table = render_table(
+        ["Case", "Trial", "Metric", "Root Cause", "Component"],
+        [
+            [row["case_id"], row["trial_id"], row["metric_name"], row["root_cause"], row["correctable_component"]]
+            for row in rows
+        ],
+    )
+    write_text(
+        LLM_REPORTS / "missing_metric_root_causes.md",
+        f"""
+# Missing Metric Root Causes
+
+Date: {CURRENT_DATE}
+
+Remaining missing stub metrics: {len(rows)}.
+
+{table}
+""",
+    )
+
+
+def write_trial_cache_audit() -> None:
+    rows = read_csv(LLM_RESULTS / "trial_cache_audit.csv")
+    contamination = [row for row in rows if parse_bool(row.get("cache_contamination"))]
+    distinct_keys = len({row.get("cache_key", "") for row in rows})
+    write_text(
+        LLM_REPORTS / "trial_cache_audit.md",
+        f"""
+# Trial Cache Audit
+
+Date: {CURRENT_DATE}
+
+- Trials audited: {len(rows)}
+- Distinct cache keys: {distinct_keys}
+- Cache contamination rows: {len(contamination)}
+- Stub determinism: {"PASS" if not contamination else "FAIL"}
+- Scientific LLM evidence on stub rows: false
+
+Interpretation:
+
+- Trial cache keys remain trial-specific because `trial_id` is part of the cache digest.
+- The current provider is stub-backed, so repeated hashes reflect stub determinism and not live-LLM stability.
+""",
+    )
+
+
 def write_missed_mutation_outputs() -> None:
     trace_rows = read_csv(RESULTS / "pilot_false_accept_end_to_end_trace.csv")
     effectiveness_rows = {row["case_id"]: row for row in read_csv(RESULTS / "mutation_effectiveness_v2.csv")}
+    fixes_rows = {row["case_id"]: row for row in read_csv(RESULTS / "pilot_functional_fixes.csv")}
     candidate = None
     for row in trace_rows:
         effectiveness = effectiveness_rows.get(row["case_id"], {})
@@ -495,6 +643,7 @@ def write_missed_mutation_outputs() -> None:
         "recommended_framework_fix": candidate["recommended_fix"],
     }]
     write_csv(RESULTS / "missed_effective_mutation_trace.csv", trace)
+    corrected = fixes_rows.get(candidate["case_id"], {})
     write_text(
         REPORTS / "missed_effective_mutation_root_cause.md",
         f"""
@@ -505,16 +654,27 @@ Date: {CURRENT_DATE}
 The current replay points to `{candidate["case_id"]}` as the single effective threshold-crossing false accept that is still worth isolating for framework follow-up.
 
 - Target metric: `{candidate["target_metric"]}`
-- Independent value: `{candidate["independent_value"]}`
-- Pipeline value: `{candidate["pipeline_value"]}`
-- Operator / threshold: `{candidate["operator"]} {candidate["threshold"]}`
+- Threshold in frozen manifest: `{candidate["threshold"]}`
+- Threshold in loaded specification: `{candidate["normalized_threshold"]}`
+- Operator: `{candidate["operator"]}`
+- Unit: `{candidate["unit"]}`
+- Independent measured value: `{candidate["independent_value"]}`
+- Pipeline measured value: `{candidate["pipeline_value"]}`
+- Checker tolerance: `{candidate["tolerance"]}`
 - Backend: `{candidate["measurement_backend"]}`
+- Historical verdict: `{candidate["observed_compliance_status"]}`
+- Corrected replay verdict: `{corrected.get("after_status", "UNKNOWN")}`
 - Root cause: `{candidate["primary_root_cause"]}`
 - Correctable: yes
+- Historical result preserved: yes
 
 Recommended framework fix:
 
 {candidate["recommended_fix"]}
+
+Regression evidence:
+
+- Existing regression tests: `{corrected.get("regression_test", "not recorded")}`
 """,
     )
 
@@ -686,6 +846,8 @@ def main() -> None:
     write_docs()
     write_use_case_smoke_report(smoke_rows)
     write_campaign_reports(frozen_rows, smoke_rows, stability_rows)
+    write_missing_metric_audit()
+    write_trial_cache_audit()
     write_missed_mutation_outputs()
     write_simple_baseline_outputs()
     write_near_threshold_outputs()

@@ -22,10 +22,12 @@ from spec2testbench.infrastructure.testbench.testbench_generator import TestBenc
 @pytest.mark.parametrize(
     ("spec_path", "netlist_path", "required_metric"),
         [
+            ("examples/benchmark_specs/p07_inverter.yaml", "benchmark/analogcoder_pro/p07_inverter.cir", "operating_point"),
             ("examples/benchmark_specs/p01_amplifier.yaml", "benchmark/analogcoder_pro/p01_amplifier.cir", "dc_gain_db"),
             ("examples/benchmark_specs/p10_lowpass.yaml", "benchmark/analogcoder_pro/p10_lowpass.cir", "cutoff_frequency_hz"),
             ("examples/benchmark_specs/p09_comparator.yaml", "benchmark/analogcoder_pro/p09_comparator.cir", "propagation_delay"),
             ("examples/benchmark_specs/p22_oscillator.yaml", "benchmark/analogcoder_pro/p22_oscillator.cir", "oscillator_frequency"),
+            ("experiments/llm_deepseek/specifications/smoke_p28_schmitt_hysteresis.yaml", "benchmark/analogcoder_pro/p28_schmitt.cir", "hysteresis_width"),
         ],
     )
 def test_llm_stub_runs_real_ngspice(spec_path, netlist_path, required_metric):

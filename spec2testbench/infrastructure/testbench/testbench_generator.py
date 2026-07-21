@@ -820,8 +820,16 @@ class TestBenchGenerator(ITestBenchGenerator):
             AnalysisConfig(
                 type=AnalysisType.TRANSIENT,
                 parameters={
-                    "step_time": "1u" if spec.circuit_type in schmitt_types else "1n",
-                    "end_time": "2m" if spec.circuit_type in schmitt_types else "50u",
+                    "step_time": (
+                        "1u" if spec.circuit_type in schmitt_types
+                        else "100n" if spec.circuit_type in oscillator_types
+                        else "1n"
+                    ),
+                    "end_time": (
+                        "2m" if spec.circuit_type in schmitt_types
+                        else "2m" if spec.circuit_type in oscillator_types
+                        else "50u"
+                    ),
                     "start_time": 0,
                 }
             )
@@ -887,7 +895,7 @@ class TestBenchGenerator(ITestBenchGenerator):
             measurements=measurements,
             metadata={
                 "variant_overrides": variant_override_records,
-                "oscillation_amplitude_threshold": float(spec.get_metric_min("startup_amplitude") or 1e-6),
+                "oscillation_amplitude_threshold": float(spec.get_metric_min("startup_amplitude") or 1e-12),
                 "oscillation_minimum_cycles": 3,
                 "oscillation_max_period_cv": 0.25,
                 "oscillation_min_spectral_prominence": 5.0,

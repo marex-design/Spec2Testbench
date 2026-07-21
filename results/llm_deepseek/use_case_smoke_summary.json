@@ -1,0 +1,9 @@
+{
+  "run_id": "stub_use_case_smoke_20260721",
+  "provider": "stub",
+  "model": "deepseek-stub-v1",
+  "cases_attempted": 7,
+  "rows": 14,
+  "valid_plan_rate": 1.0,
+  "real_simulation_rate": 1.0
+}

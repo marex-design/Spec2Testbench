@@ -1,0 +1,9 @@
+{
+  "run_id": "stub_frozen_20260721",
+  "provider": "stub",
+  "model": "deepseek-stub-v1",
+  "cases_attempted": 16,
+  "rows": 64,
+  "valid_plan_rate": 1.0,
+  "real_simulation_rate": 1.0
+}

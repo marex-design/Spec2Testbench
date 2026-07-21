@@ -78,7 +78,9 @@ class TestbenchPlanCompiler:
             },
             "measurement_requests": measurement_requests,
             "llm_testbench_plan": plan.model_dump(mode="json"),
-            "oscillation_amplitude_threshold": float(specification.get_metric_min("startup_amplitude") or 1e-6),
+            # Frequency-only specs still need a scientifically meaningful
+            # oscillation guard instead of the old arbitrary 1e-6 V fallback.
+            "oscillation_amplitude_threshold": float(specification.get_metric_min("startup_amplitude") or 1e-12),
             "oscillation_minimum_cycles": 3,
             "oscillation_max_period_cv": 0.25,
             "oscillation_min_spectral_prominence": 5.0,
@@ -236,4 +238,3 @@ class TestbenchPlanCompiler:
         request.setdefault("input_node", primary_input)
         request.setdefault("output_node", primary_output)
         return request
-

@@ -1,0 +1,17 @@
+case_id,metric_name,historical_metric_value,new_metric_value,absolute_delta,relative_delta,operator_match,threshold_match,parity_status
+ref_fp2_p01_amplifier,dc_gain_db,-31.88738224966965,-31.88738224966965,0.0,0.0,True,True,EXACT_MATCH
+ref_fp2_p05_amplifier,quiescent_current,0.0004909874144028382,0.0004909874144028382,0.0,0.0,True,True,EXACT_MATCH
+ref_fp2_p17_currentmirror,quiescent_current,0.0001999999999999999,0.0001999999999999999,0.0,0.0,True,True,EXACT_MATCH
+ref_fp2_p16_opamp,quiescent_current,0.0006250000015100062,0.0006250000015100062,0.0,0.0,True,True,EXACT_MATCH
+ref_fp2_p20_opamp,quiescent_current,0.001724533004994869,0.001724533004994869,0.0,0.0,True,True,EXACT_MATCH
+ref_fp2_p22_oscillator,startup_amplitude,4.11339e-09,4.11339e-09,0.0,0.0,True,True,EXACT_MATCH
+ref_fp2_p07_inverter,operating_point,4.933147126837077,4.933147126837077,0.0,0.0,True,True,EXACT_MATCH
+fp2_cv_006_p01_gain_strong,dc_gain_db,-40.00000000000868,-40.00000000000868,0.0,0.0,True,True,EXACT_MATCH
+fp2_cv_023_p05_current_strong,quiescent_current,0.004883194641745619,0.004883194641745619,0.0,0.0,True,True,EXACT_MATCH
+fp2_cv_011_p17_current_strong,quiescent_current,1.999999910259551e-09,1.999999910259551e-09,0.0,0.0,True,True,EXACT_MATCH
+fp2_cv_012_p16_bias_strong,quiescent_current,4.199999995590001e-13,4.199999995590001e-13,0.0,0.0,True,True,EXACT_MATCH
+fp2_cv_013_p20_bias_strong,quiescent_current,7.39999997522003e-13,7.39999997522003e-13,0.0,0.0,True,True,EXACT_MATCH
+fp2_cv_019_p22_amplitude_strong,startup_amplitude,1.17961e-16,1.17961e-16,0.0,0.0,True,True,EXACT_MATCH
+fp2_cv_026_p07_output_strong,operating_point,9.999999997152325e-12,9.999999997152325e-12,0.0,0.0,True,True,EXACT_MATCH
+wrdata_nominal,startup_amplitude,4.999999969612645e-09,4.999999969612645e-09,0.0,0.0,True,True,EXACT_MATCH
+wrdata_controlled_violation,startup_amplitude,4.999999969612645e-09,4.999999969612645e-09,0.0,0.0,True,True,EXACT_MATCH
