@@ -4,6 +4,7 @@ Command Line Interface for Spec2Testbench.
 
 from pathlib import Path
 from typing import Optional
+import json
 
 import typer
 from rich.console import Console
@@ -69,6 +70,7 @@ def verify(
     format: str = typer.Option("markdown", "--format", "-f", help="Output format: markdown, json, console"),
     provider: Optional[str] = typer.Option(None, "--provider", "-p", help="LLM provider"),
     no_llm: bool = typer.Option(False, "--no-llm", help="Disable LLM (use templates only)"),
+    planner_llm: bool = typer.Option(False, "--planner-llm", help="Use the LLM-guided planner for netlist-aware testbench planning"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output"),
 ):
     """Verify a circuit against specifications."""
@@ -101,6 +103,11 @@ def verify(
         console.print("")
 
     llm_client = None
+    if use_llm or planner_llm:
+        if not settings.llm.is_configured:
+            console.print("[red]Planner LLM requested but no API key is configured.[/red]")
+            console.print("   Configure one provider key first, then rerun with --planner-llm.")
+            raise typer.Exit(1)
     if use_llm:
         try:
             llm_client = _build_llm_client()
@@ -117,7 +124,7 @@ def verify(
             console=console,
         ) as progress:
             task = progress.add_task("Running verification...", total=None)
-            pipeline = VerificationPipeline(use_llm=use_llm, llm_client=llm_client)
+            pipeline = VerificationPipeline(use_llm=use_llm, llm_client=llm_client, use_llm_planner=planner_llm)
             report = pipeline.verify_from_yaml(specs, netlist)
             progress.remove_task(task)
     except Exception as exc:
@@ -142,9 +149,11 @@ def verify(
 @app.command()
 def generate(
     specs: Path = typer.Option(..., "--specs", "-s", help="Path to specifications YAML file"),
+    netlist: Optional[Path] = typer.Option(None, "--netlist", "-n", help="Path to SPICE netlist for netlist-aware planning"),
     output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output testbench path"),
     provider: Optional[str] = typer.Option(None, "--provider", "-p", help="LLM provider"),
     no_llm: bool = typer.Option(False, "--no-llm", help="Disable LLM (use templates only)"),
+    planner_llm: bool = typer.Option(False, "--planner-llm", help="Use the LLM-guided planner for netlist-aware testbench planning"),
 ):
     """Generate testbench from specifications."""
     console.print("\n[bold cyan]Spec2Testbench - TestBench Generation[/bold cyan]\n")
@@ -161,6 +170,11 @@ def generate(
         console.print("   To enable LLM, set the appropriate API key in .env file\n")
 
     llm_client = None
+    if use_llm or planner_llm:
+        if not settings.llm.is_configured:
+            console.print("[red]Planner LLM requested but no API key is configured.[/red]")
+            console.print("   Configure one provider key first, then rerun with --planner-llm.")
+            raise typer.Exit(1)
     if use_llm:
         try:
             llm_client = _build_llm_client()
@@ -178,8 +192,8 @@ def generate(
         from ...domain.entities.specification import Specification
 
         specification = Specification.from_yaml(specs)
-        pipeline = VerificationPipeline(use_llm=use_llm, llm_client=llm_client)
-        testbench = pipeline.testbench_gen.generate(specification)
+        pipeline = VerificationPipeline(use_llm=use_llm, llm_client=llm_client, use_llm_planner=planner_llm)
+        testbench = pipeline.testbench_gen.generate(specification, netlist_path=netlist)
         progress.remove_task(task)
 
     if output:
@@ -194,6 +208,53 @@ def generate(
         console.print(f"   Stimuli: {len(testbench.stimuli)}")
 
     console.print("\n[dim]Tip: Use 'spec2testbench verify' to run simulation and checks[/dim]")
+
+
+@app.command()
+def plan(
+    specs: Path = typer.Option(..., "--specs", "-s", help="Path to specifications YAML file"),
+    netlist: Path = typer.Option(..., "--netlist", "-n", help="Path to SPICE netlist"),
+    output: Optional[Path] = typer.Option(None, "--output", "-o", help="Output JSON plan path"),
+    provider: Optional[str] = typer.Option(None, "--provider", "-p", help="LLM provider"),
+    planner_llm: bool = typer.Option(False, "--planner-llm", help="Use the LLM-guided planner instead of deterministic planning"),
+):
+    """Display or export the intermediate testbench plan JSON."""
+    console.print("\n[bold cyan]Spec2Testbench - Plan[/bold cyan]\n")
+
+    if not specs.exists():
+        console.print(f"[red]Specifications file not found: {specs}[/red]")
+        raise typer.Exit(1)
+    if not netlist.exists():
+        console.print(f"[red]Netlist file not found: {netlist}[/red]")
+        raise typer.Exit(1)
+
+    _set_provider(provider)
+    llm_client = None
+    if planner_llm:
+        if not settings.llm.is_configured:
+            console.print("[red]Planner LLM requested but no API key is configured.[/red]")
+            console.print("   Configure one provider key first, then rerun with --planner-llm.")
+            raise typer.Exit(1)
+        try:
+            llm_client = _build_llm_client()
+            console.print(f"[green]Planner LLM initialized: {settings.llm.default_provider}[/green]")
+        except Exception as exc:
+            console.print(f"[red]Failed to initialize planner LLM: {exc}[/red]")
+            raise typer.Exit(1)
+
+    from ...domain.entities.specification import Specification
+
+    specification = Specification.from_yaml(specs)
+    pipeline = VerificationPipeline(use_llm=False, llm_client=llm_client, use_llm_planner=planner_llm)
+    testbench = pipeline.testbench_gen.generate(specification, netlist_path=netlist)
+    plan_payload = testbench.metadata.get("llm_guided_plan", {})
+    rendered = json.dumps(plan_payload, indent=2)
+
+    if output:
+        output.write_text(rendered, encoding="utf-8")
+        console.print(f"[green]Plan saved to {output}[/green]")
+    else:
+        console.print(rendered)
 
 
 @app.command()
@@ -293,10 +354,13 @@ def diagnose(
 @app.command()
 def draw(
     netlist: Path = typer.Option(..., "--netlist", "-n", help="Path to SPICE netlist file"),
-    output: Path = typer.Option(Path("schematic.png"), "--output", "-o", help="Output PNG path"),
+    output: Path = typer.Option(Path("schematic.svg"), "--output", "-o", help="Output path stem or SVG/PDF/PNG path"),
+    report: Optional[Path] = typer.Option(None, "--report", help="Connectivity evidence JSON path"),
+    diagnostic: bool = typer.Option(False, "--diagnostic", help="Use the legacy annotated component view"),
+    view: str = typer.Option("manuscript", "--view", help="Rendering profile: manuscript or appendix"),
 ):
-    """Draw a schematic figure from a SPICE netlist."""
-    from ...infrastructure.schematic import netlist_to_schematic
+    """Draw a connectivity-validated schematic from a SPICE netlist."""
+    from ...infrastructure.schematic import PublicationSchematicGenerator, netlist_to_schematic
 
     console.print("\n[bold cyan]Spec2Testbench - Schematic Drawing[/bold cyan]\n")
 
@@ -305,13 +369,22 @@ def draw(
         raise typer.Exit(code=1)
 
     try:
-        netlist_text = netlist.read_text()
+        netlist_text = netlist.read_text(encoding="utf-8")
     except Exception as exc:
         console.print(f"[red]Cannot read netlist: {exc}[/red]")
         raise typer.Exit(code=1)
 
     try:
-        result = netlist_to_schematic(netlist_text, str(output))
+        if diagnostic:
+            result = netlist_to_schematic(netlist_text, str(output))
+            console.print(f"[green]Diagnostic component view saved to {result}[/green]")
+            return
+
+        result = PublicationSchematicGenerator(view=view).generate_from_path(
+            netlist,
+            output,
+            report_path=report,
+        )
     except ValueError as exc:
         console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=1)
@@ -319,7 +392,14 @@ def draw(
         console.print(f"[red]Drawing failed: {exc}[/red]")
         raise typer.Exit(code=1)
 
-    console.print(f"[green]Schematic saved to {result}[/green]")
+    verdict_color = "green" if result.validation.status == "VALID" else "red"
+    console.print(f"[{verdict_color}]Structural connectivity: {result.validation.status}[/{verdict_color}]")
+    console.print(f"[green]SVG saved to {result.svg_path}[/green]")
+    console.print(f"[green]PDF saved to {result.pdf_path}[/green]")
+    console.print(f"[green]PNG preview saved to {result.png_path}[/green]")
+    console.print(f"[green]Evidence report saved to {result.report_path}[/green]")
+    if result.validation.status != "VALID":
+        raise typer.Exit(code=2)
 
 
 @app.command()

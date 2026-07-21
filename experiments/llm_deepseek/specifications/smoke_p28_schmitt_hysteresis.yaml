@@ -1,0 +1,26 @@
+name: analogcoder_pro_p28_schmitt_hysteresis_smoke
+circuit_type: schmitt_trigger
+technology: AnalogCoder-Pro/PySpice generic Level-1 models
+description: Smoke-test specification for Schmitt hysteresis extraction through the LLM planning path.
+source:
+  benchmark: AnalogCoder-Pro
+  task_id: 28
+  level: Hard
+  type: Schmitt
+  submodule_name: Unknown
+  netlist: benchmark/analogcoder_pro/p28_schmitt.cir
+performance_targets:
+  hysteresis_width:
+    min: 1.0e-12
+    unit: V
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: Vin
+  output_nodes: Vout
+  testbench_note: The testbench inputs a sine wave at Vin and requires both input and output waveforms.
+  expected_behavior: The output should exhibit Schmitt-trigger switching with measurable hysteresis.
+test_categories:
+  - transient
+  - differential

@@ -17,6 +17,11 @@ from ...domain.entities.testbench import (
 )
 from ...domain.value_objects.circuit_type import CircuitType
 from ...domain.interfaces.itestbench_generator import ITestBenchGenerator
+from .llm_guided_synthesis import (
+    LLMGuidedPlanner,
+    NetlistInspector,
+    TestbenchPlanValidator,
+)
 from .prompts.testbench_prompts import TestBenchPrompts
 
 # Configure logging
@@ -71,7 +76,7 @@ class TestBenchGenerator(ITestBenchGenerator):
         CircuitType.COMPOSITE: ['dc', 'ac', 'transient', 'pvt'],
     }
     
-    def __init__(self, llm_client=None, use_llm: bool = True):
+    def __init__(self, llm_client=None, use_llm: bool = True, use_llm_planner: bool = False):
         """
         Initialize the TestBench generator.
         
@@ -81,7 +86,10 @@ class TestBenchGenerator(ITestBenchGenerator):
         """
         self.llm_client = llm_client
         self.use_llm = use_llm
+        self.use_llm_planner = use_llm_planner
         self.prompts = TestBenchPrompts()
+        self.plan_validator = TestbenchPlanValidator()
+        self.plan_builder = LLMGuidedPlanner(llm_client=llm_client)
 
     @staticmethod
     def _first_metric_name(specification: Specification, candidates: List[str]) -> Optional[str]:
@@ -98,7 +106,7 @@ class TestBenchGenerator(ITestBenchGenerator):
     def _primary_output_node(specification: Specification, default: str = "out") -> str:
         return specification.output_nodes[0] if specification.output_nodes else default
     
-    def generate(self, specification: Specification) -> TestBench:
+    def generate(self, specification: Specification, netlist_path: Optional[Path] = None) -> TestBench:
         """
         Generate a complete testbench from specifications.
         
@@ -129,11 +137,35 @@ class TestBenchGenerator(ITestBenchGenerator):
         # Merge all testbenches
         merged = self._merge_testbenches(testbenches, specification.name)
         
+        if netlist_path:
+            self.attach_execution_plan(merged, specification, netlist_path)
+
         # Generate PySpice code
         merged.generate_pyspice_code()
         
         logger.info(f"Generated testbench with {len(merged.measurements)} measurements")
         return merged
+
+    def attach_execution_plan(
+        self,
+        testbench: TestBench,
+        specification: Specification,
+        netlist_path: Optional[Path],
+    ) -> TestBench:
+        inspection = NetlistInspector.inspect(netlist_path)
+        use_llm_planner = bool(self.use_llm_planner and self.llm_client)
+        plan = self.plan_builder.plan(specification, testbench, inspection, use_llm=use_llm_planner)
+        errors = self.plan_validator.validate(plan, specification, inspection)
+        if errors:
+            raise GenerationError(f"LLM-guided testbench plan invalid: {'; '.join(errors)}")
+        testbench.metadata["llm_guided_plan"] = plan.to_dict()
+        testbench.metadata["netlist_inspection"] = {
+            "path": inspection.path,
+            "analyses": inspection.analyses,
+            "supply_nodes": inspection.supply_nodes,
+            "sources": [source.__dict__ for source in inspection.sources],
+        }
+        return testbench
     
     def generate_for_category(self, 
                               specification: Specification, 
@@ -195,8 +227,9 @@ class TestBenchGenerator(ITestBenchGenerator):
 
         # If user specified categories, use them
         if specification.test_categories:
-            filtered = [category for category in specification.test_categories if category in inferred]
-            return filtered or specification.test_categories
+            valid_categories = set(self.get_supported_categories())
+            explicit = [category for category in specification.test_categories if category in valid_categories]
+            return explicit or specification.test_categories
         
         # Otherwise use defaults based on circuit type
         defaults = self.DEFAULT_CATEGORIES.get(

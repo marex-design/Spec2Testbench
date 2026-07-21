@@ -173,7 +173,7 @@ class NetlistParser:
         # Check for model (for transistors)
         if comp_type in ['Q', 'M', 'J', 'D', 'Z'] and len(nodes) > 1:
             # Last node might be model name
-            if len(nodes) > len(nodes_for_type(comp_type)):
+            if len(nodes) > nodes_for_type(comp_type):
                 model = nodes[-1]
                 nodes = nodes[:-1]
         

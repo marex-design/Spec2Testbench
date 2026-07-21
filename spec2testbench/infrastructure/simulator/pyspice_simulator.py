@@ -378,6 +378,7 @@ class PySpiceSimulator(ICircuitSimulator):
         if netlist_path and netlist_path.exists():
             existing_text = netlist_path.read_text(encoding="utf-8", errors="ignore")
         stimuli = self._collapse_stimuli(testbench.stimuli, testbench.analyses, existing_text)
+        plan = (testbench.metadata or {}).get("llm_guided_plan", {})
         lines = [
             f"* TestBench: {testbench.name}",
             f"* Circuit: {testbench.circuit_name}",
@@ -391,7 +392,10 @@ class PySpiceSimulator(ICircuitSimulator):
             existing_text = re.sub(r"(?is)\.control\b.*?\.endc", "", existing_text)
             existing_text = re.sub(r"^\s*\.end\s*$", "", existing_text, flags=re.IGNORECASE | re.MULTILINE).strip()
             existing_text = self._resolve_relative_includes(existing_text, netlist_path)
-            existing_text = self._apply_stimulus_overrides(existing_text, stimuli)
+            if plan:
+                existing_text = self._apply_guided_source_plan(existing_text, plan)
+            else:
+                existing_text = self._apply_stimulus_overrides(existing_text, stimuli)
             existing_text = self._apply_analysis_overrides(existing_text, testbench.analyses)
             if existing_text:
                 lines.extend(["", existing_text])
@@ -405,13 +409,23 @@ class PySpiceSimulator(ICircuitSimulator):
             lines.extend(["", f".TEMP {testbench.temperature}"])
 
         emitted_sources = set()
-        for stimulus in stimuli:
-            source_name = f"v{stimulus.name}".lower()
-            if source_name in emitted_sources:
-                continue
-            if not re.search(rf"^\s*V{re.escape(stimulus.name)}\b", existing_text, re.IGNORECASE | re.MULTILINE):
-                lines.append(stimulus.to_spice())
-                emitted_sources.add(source_name)
+        if plan:
+            for source_action in plan.get("source_actions", []):
+                rendered = self._render_guided_source(source_action)
+                source_name = str(source_action.get("target_name", "")).lower()
+                if not rendered or source_name in emitted_sources:
+                    continue
+                if not self._source_exists_in_text(existing_text, source_action):
+                    lines.append(rendered)
+                    emitted_sources.add(source_name)
+        else:
+            for stimulus in stimuli:
+                source_name = f"v{stimulus.name}".lower()
+                if source_name in emitted_sources:
+                    continue
+                if not re.search(rf"^\s*V{re.escape(stimulus.name)}\b", existing_text, re.IGNORECASE | re.MULTILINE):
+                    lines.append(stimulus.to_spice())
+                    emitted_sources.add(source_name)
 
         analysis_commands = {
             AnalysisType.DC: r"^\s*\.dc\b",
@@ -437,6 +451,86 @@ class PySpiceSimulator(ICircuitSimulator):
 
         lines.extend(["", ".END"])
         return "\n".join(lines)
+
+    def _apply_guided_source_plan(self, existing_text: str, plan: Dict[str, Any]) -> str:
+        updated_text = existing_text
+        for source_action in plan.get("source_actions", []):
+            replacement = self._render_guided_source(source_action)
+            if not replacement:
+                continue
+            candidate_names = [
+                f"V{source_action.get('target_name', '')}",
+                str(source_action.get("target_name", "")),
+            ]
+            new_source = source_action.get("new_source", {})
+            pos = str(new_source.get("node_positive", "")).strip()
+            if pos:
+                candidate_names.extend([f"V{pos}", pos])
+            count = 0
+            for candidate in dict.fromkeys(name for name in candidate_names if name):
+                pattern = rf"(?im)^\s*{re.escape(candidate)}\b.*$"
+                updated_text, count = re.subn(pattern, replacement, updated_text, count=1)
+                if count:
+                    break
+            if count:
+                continue
+        return updated_text
+
+    def _render_guided_source(self, source_action: Dict[str, Any]) -> str:
+        source = source_action.get("new_source", {})
+        kind = str(source.get("kind", "voltage")).lower()
+        if kind != "voltage":
+            return ""
+        name = source_action.get("target_name") or source.get("node_positive", "in")
+        pos = source.get("node_positive", "in")
+        neg = source.get("node_negative", "0")
+        source_type = str(source.get("type", "dc")).lower()
+
+        if source_type == "multimode":
+            source_type = "ac" if source.get("ac_magnitude") is not None else "dc"
+
+        if source_type == "dc":
+            return f"V{name} {pos} {neg} DC {source.get('dc_value', 0)}"
+        if source_type == "ac":
+            line = f"V{name} {pos} {neg}"
+            dc_value = source.get("dc_value")
+            if dc_value is not None:
+                line += f" DC {dc_value}"
+            line += f" AC {source.get('ac_magnitude', 1.0)}"
+            return line
+
+        transient = source.get("transient", {})
+        dc_value = source.get("dc_value")
+        prefix = f"V{name} {pos} {neg}"
+        if source_type == "pulse":
+            return (
+                f"{prefix} DC {dc_value if dc_value is not None else transient.get('v1', 0)} "
+                f"PULSE({transient.get('v1', 0)} {transient.get('v2', 1)} "
+                f"{transient.get('delay', 0)} {transient.get('rise', '1N')} "
+                f"{transient.get('fall', '1N')} {transient.get('width', '1U')} "
+                f"{transient.get('period', '2U')})"
+            )
+        if source_type == "sin":
+            return (
+                f"{prefix} DC {dc_value if dc_value is not None else transient.get('offset', 0)} "
+                f"SIN({transient.get('offset', 0)} {transient.get('amplitude', 1)} "
+                f"{transient.get('frequency', 1e6)})"
+            )
+        if source_type == "pwl":
+            points = transient.get("points", [])
+            point_text = " ".join(f"{t} {v}" for t, v in points)
+            return f"{prefix} PWL({point_text})"
+        return ""
+
+    def _source_exists_in_text(self, existing_text: str, source_action: Dict[str, Any]) -> bool:
+        target_name = str(source_action.get("target_name", "")).strip()
+        if target_name and re.search(rf"^\s*V{re.escape(target_name)}\b", existing_text, re.IGNORECASE | re.MULTILINE):
+            return True
+        source = source_action.get("new_source", {})
+        pos = str(source.get("node_positive", "")).strip()
+        if pos and re.search(rf"^\s*V{re.escape(pos)}\b", existing_text, re.IGNORECASE | re.MULTILINE):
+            return True
+        return False
 
     def _resolve_relative_includes(self, existing_text: str, netlist_path: Path) -> str:
         """
@@ -951,16 +1045,31 @@ class PySpiceSimulator(ICircuitSimulator):
             "vectors_csv": str(vectors_csv) if vectors_csv.exists() else None,
         }, indent=2), encoding="utf-8")
         measurement_config = (getattr(testbench, "metadata", None) or {}).get("measurement", {})
+        measurement_requests = self._metric_requests(testbench)
         required_backend = measurement_config.get("required_backend")
         has_measures = measures_file.exists() and measures_file.read_text(encoding="utf-8", errors="ignore").strip()
         has_vectors = vectors_file.exists()
+        preferred_backends = {
+            request.get("preferred_backend")
+            for request in measurement_requests
+            if request.get("preferred_backend") in {"NGSPICE_MEASURE", "NGSPICE_WRDATA"}
+        }
         if required_backend == "NGSPICE_WRDATA":
             backend = "NGSPICE_WRDATA" if has_vectors else "UNAVAILABLE"
         elif required_backend == "NGSPICE_MEASURE":
             backend = "NGSPICE_MEASURE" if has_measures else "UNAVAILABLE"
+        elif has_measures and has_vectors and len(preferred_backends) > 1:
+            backend = "MIXED"
         else:
             backend = "NGSPICE_MEASURE" if has_measures else "NGSPICE_WRDATA" if has_vectors else "UNAVAILABLE"
-        source = str(measures_file if backend == "NGSPICE_MEASURE" else vectors_file if backend == "NGSPICE_WRDATA" else "")
+        if backend == "NGSPICE_MEASURE":
+            source = str(measures_file)
+        elif backend == "NGSPICE_WRDATA":
+            source = str(vectors_file)
+        elif backend == "MIXED":
+            source = json.dumps({"measures": str(measures_file), "vectors": str(vectors_file)})
+        else:
+            source = ""
         return {
             "measurement_backend": backend,
             "pyspice_required": False,
@@ -990,44 +1099,83 @@ class PySpiceSimulator(ICircuitSimulator):
     def _native_measure_commands(self, testbench: TestBench) -> List[str]:
         commands: List[str] = []
         required_metrics = set(testbench.metadata.get("required_metrics", [])) if getattr(testbench, "metadata", None) else set()
+        measurement_context = (getattr(testbench, "metadata", None) or {}).get("measurement_context", {})
+        input_node = measurement_context.get("input_node", "vin")
+        output_node = measurement_context.get("output_node", "vout")
+        output_threshold = measurement_context.get("output_threshold", 2.5)
         for measurement in testbench.measurements:
             name = measurement.name
             if required_metrics and name not in required_metrics:
                 continue
             if name in {"operating_point", "vout_dc"}:
-                commands.append(".meas op operating_point FIND v(vout) AT=0")
-                commands.append(".meas op vout_dc FIND v(vout) AT=0")
+                commands.append(f".meas op operating_point FIND v({output_node}) AT=0")
+                commands.append(f".meas op vout_dc FIND v({output_node}) AT=0")
             elif name in {"quiescent_current", "idd"}:
                 commands.append(".meas op quiescent_current FIND i(vdd) AT=0")
                 commands.append(".meas op idd FIND i(vdd) AT=0")
             elif name == "power":
                 commands.append(".meas op power param='abs(v(vdd)*i(vdd))'")
             elif name in {"dc_gain", "dc_gain_db"}:
-                commands.append(".meas ac dc_gain_db FIND vdb(vout) AT=1")
+                commands.append(f".meas ac dc_gain_db FIND vdb({output_node}) AT=1")
             elif name == "startup_amplitude":
-                commands.append(".meas tran vmax MAX v(vout)")
-                commands.append(".meas tran vmin MIN v(vout)")
+                commands.append(f".meas tran vmax MAX v({output_node})")
+                commands.append(f".meas tran vmin MIN v({output_node})")
                 commands.append(".meas tran startup_amplitude param='(vmax-vmin)/2'")
             elif name in {"propagation_delay", "propagation_delay_s"}:
-                commands.append(".meas tran propagation_delay_s TRIG v(vin) VAL=2.5 RISE=1 TARG v(vout) VAL=2.5 RISE=1")
-                commands.append(".meas tran propagation_delay TRIG v(vin) VAL=2.5 RISE=1 TARG v(vout) VAL=2.5 RISE=1")
+                commands.append(
+                    f".meas tran propagation_delay_s TRIG v({input_node}) VAL={output_threshold} RISE=1 "
+                    f"TARG v({output_node}) VAL={output_threshold} RISE=1"
+                )
+                commands.append(
+                    f".meas tran propagation_delay TRIG v({input_node}) VAL={output_threshold} RISE=1 "
+                    f"TARG v({output_node}) VAL={output_threshold} RISE=1"
+                )
         return list(dict.fromkeys(commands))
 
     def _native_control_block(self, testbench: TestBench, vectors_file: Path) -> List[str]:
         analysis_types = {analysis.type for analysis in testbench.analyses}
         required_metrics = set(testbench.metadata.get("required_metrics", [])) if getattr(testbench, "metadata", None) else set()
+        measurement_context = (getattr(testbench, "metadata", None) or {}).get("measurement_context", {})
+        measurement_requests = self._metric_requests(testbench)
+        input_node = measurement_context.get("input_node", "vin")
+        output_node = measurement_context.get("output_node", "vout")
         if AnalysisType.AC in analysis_types:
             return [
                 ".control",
                 "set filetype=ascii",
                 "run",
-                f'wrdata {vectors_file.name} frequency real(v(vout)) imag(v(vout)) real(v(vin)) imag(v(vin))',
+                f'wrdata {vectors_file.name} frequency real(v({output_node})) imag(v({output_node})) '
+                f'real(v({input_node})) imag(v({input_node}))',
                 "quit",
                 ".endc",
             ]
         if AnalysisType.TRANSIENT in analysis_types:
-            needs_input = any(name in required_metrics for name in {"propagation_delay", "propagation_delay_s", "v_t_plus", "v_t_minus", "hysteresis_width", "switching_threshold_rising_v", "switching_threshold_falling_v", "hysteresis_width_v"})
-            vector_args = "time v(vin) v(vout)" if needs_input else "time v(vout)"
+            needs_input = any(
+                request.get("name") in {
+                    "propagation_delay",
+                    "propagation_delay_s",
+                    "v_t_plus",
+                    "v_t_minus",
+                    "hysteresis_width",
+                    "switching_threshold_rising_v",
+                    "switching_threshold_falling_v",
+                    "hysteresis_width_v",
+                }
+                for request in measurement_requests
+            ) or any(
+                name in required_metrics
+                for name in {
+                    "propagation_delay",
+                    "propagation_delay_s",
+                    "v_t_plus",
+                    "v_t_minus",
+                    "hysteresis_width",
+                    "switching_threshold_rising_v",
+                    "switching_threshold_falling_v",
+                    "hysteresis_width_v",
+                }
+            )
+            vector_args = f"time v({input_node}) v({output_node})" if needs_input else f"time v({output_node})"
             return [
                 ".control",
                 "set filetype=ascii",
@@ -1041,7 +1189,7 @@ class PySpiceSimulator(ICircuitSimulator):
                 ".control",
                 "set filetype=ascii",
                 "run",
-                f'wrdata {vectors_file.name} v(vout)',
+                f'wrdata {vectors_file.name} v({output_node})',
                 "quit",
                 ".endc",
             ]
@@ -1055,19 +1203,24 @@ class PySpiceSimulator(ICircuitSimulator):
             writer.writerows(rows)
 
     def _metric_requests(self, testbench: TestBench) -> List[Dict[str, Any]]:
+        metadata = getattr(testbench, "metadata", None) or {}
+        if metadata.get("measurement_requests"):
+            return [dict(item) for item in metadata["measurement_requests"]]
         requests = []
+        measurement_context = metadata.get("measurement_context", {})
+        output_threshold = measurement_context.get("output_threshold", 2.5)
         for measurement in testbench.measurements:
             requests.append({
                 "name": measurement.name,
                 "unit": measurement.unit,
                 "expression": measurement.expression,
-                "output_threshold": 2.5,
+                "output_threshold": output_threshold,
             })
         if any(measurement.name == "hysteresis_width" for measurement in testbench.measurements):
             requests.extend([
-                {"name": "switching_threshold_rising_v", "unit": "V", "output_threshold": 2.5},
-                {"name": "switching_threshold_falling_v", "unit": "V", "output_threshold": 2.5},
-                {"name": "hysteresis_width_v", "unit": "V", "output_threshold": 2.5},
+                {"name": "switching_threshold_rising_v", "unit": "V", "output_threshold": output_threshold},
+                {"name": "switching_threshold_falling_v", "unit": "V", "output_threshold": output_threshold},
+                {"name": "hysteresis_width_v", "unit": "V", "output_threshold": output_threshold},
             ])
         return requests
 
@@ -1083,24 +1236,46 @@ class PySpiceSimulator(ICircuitSimulator):
 
         backends = list(native_backends.values())
         if self.disable_pyspice:
-            merged: Dict[str, MetricExtraction] = {}
-            for backend in backends:
-                backend_results = backend.extract(artifacts, metric_requests)
-                for name, extraction in backend_results.items():
-                    if name not in merged or (merged[name].value is None and extraction.value is not None):
-                        merged[name] = extraction
+            backend_results_by_name = {
+                backend.backend_name: backend.extract(artifacts, metric_requests)
+                for backend in backends
+            }
+            merged = self._merge_backend_results(metric_requests, backend_results_by_name)
             return merged
         try:
             from PySpice.Spice.RawFile import RawFile
             backends.append(PySpiceResultBackend(lambda raw_path: {} if raw_path is None else self.extract_metrics(self._build_structured_results(self._extract_rawfile_plots(RawFile(str(raw_path)))), TestBench(name="raw", category="raw"))))
         except Exception:
             pass
+        backend_results_by_name = {
+            backend.backend_name: backend.extract(artifacts, metric_requests)
+            for backend in backends
+        }
+        return self._merge_backend_results(metric_requests, backend_results_by_name)
+
+    @staticmethod
+    def _merge_backend_results(
+        metric_requests: List[Dict[str, Any]],
+        backend_results_by_name: Dict[str, Dict[str, MetricExtraction]],
+    ) -> Dict[str, MetricExtraction]:
         merged: Dict[str, MetricExtraction] = {}
-        for backend in backends:
-            backend_results = backend.extract(artifacts, metric_requests)
-            for name, extraction in backend_results.items():
+        for request in metric_requests:
+            name = request["name"]
+            preferred = request.get("preferred_backend")
+            ordered_backend_names = [preferred] if preferred in backend_results_by_name else []
+            ordered_backend_names.extend(
+                backend_name
+                for backend_name in backend_results_by_name
+                if backend_name not in ordered_backend_names
+            )
+            for backend_name in ordered_backend_names:
+                extraction = backend_results_by_name[backend_name].get(name)
+                if extraction is None:
+                    continue
                 if name not in merged or (merged[name].value is None and extraction.value is not None):
                     merged[name] = extraction
+                if extraction.value is not None:
+                    break
         return merged
 
     def _run_pvt_variants(

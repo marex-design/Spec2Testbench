@@ -1,0 +1,139 @@
+version: llm_deepseek_frozen_pilot
+creation_timestamp: '2026-07-21T00:00:00+01:00'
+source_manifest: experiments/frozen_pilot_v2/frozen_manifest.yaml
+source_manifest_sha256: 874f79bc90881e6148d45459218da3e5cdfb83b24fa36f5aebc18add84d2307a
+related_extension_manifest: experiments/frozen_pilot_v3/frozen_manifest.yaml
+related_extension_manifest_sha256: d2f70d2d3ef8611e546a9477edeac3a43c4d864d2419390c095f7be0838d2c42
+notes:
+  - This is the LLM campaign working copy of the frozen pilot manifest.
+  - The cases are expanded explicitly to keep targeted metrics and use-case mapping stable.
+  - The final two entries mirror the WRDATA extension cases referenced by frozen_pilot_v3.
+cases:
+  - case_id: ref_fp2_p01_amplifier
+    parent_circuit_id: p01_amplifier
+    ground_truth_label: GROUND_TRUTH_COMPLIANT
+    circuit_family: amplifier
+    specification_file: experiments/frozen_pilot_v2/ref_fp2_p01_amplifier/specification.yaml
+    netlist_file: benchmark/analogcoder_pro/p01_amplifier.cir
+    targeted_metric:
+      name: dc_gain_db
+  - case_id: ref_fp2_p05_amplifier
+    parent_circuit_id: p05_amplifier
+    ground_truth_label: GROUND_TRUTH_COMPLIANT
+    circuit_family: amplifier
+    specification_file: experiments/frozen_pilot_v2/ref_fp2_p05_amplifier/specification.yaml
+    netlist_file: benchmark/analogcoder_pro/p05_amplifier.cir
+    targeted_metric:
+      name: quiescent_current
+  - case_id: ref_fp2_p17_currentmirror
+    parent_circuit_id: p17_currentmirror
+    ground_truth_label: GROUND_TRUTH_COMPLIANT
+    circuit_family: current_mirror
+    specification_file: experiments/frozen_pilot_v2/ref_fp2_p17_currentmirror/specification.yaml
+    netlist_file: benchmark/analogcoder_pro/p17_currentmirror.cir
+    targeted_metric:
+      name: quiescent_current
+  - case_id: ref_fp2_p16_opamp
+    parent_circuit_id: p16_opamp
+    ground_truth_label: GROUND_TRUTH_COMPLIANT
+    circuit_family: opamp
+    specification_file: experiments/frozen_pilot_v2/ref_fp2_p16_opamp/specification.yaml
+    netlist_file: benchmark/analogcoder_pro/p16_opamp.cir
+    targeted_metric:
+      name: quiescent_current
+  - case_id: ref_fp2_p20_opamp
+    parent_circuit_id: p20_opamp
+    ground_truth_label: GROUND_TRUTH_COMPLIANT
+    circuit_family: opamp
+    specification_file: experiments/frozen_pilot_v2/ref_fp2_p20_opamp/specification.yaml
+    netlist_file: benchmark/analogcoder_pro/p20_opamp.cir
+    targeted_metric:
+      name: quiescent_current
+  - case_id: ref_fp2_p22_oscillator
+    parent_circuit_id: p22_oscillator
+    ground_truth_label: GROUND_TRUTH_COMPLIANT
+    circuit_family: oscillator
+    specification_file: experiments/frozen_pilot_v2/ref_fp2_p22_oscillator/specification.yaml
+    netlist_file: benchmark/analogcoder_pro/p22_oscillator.cir
+    targeted_metric:
+      name: startup_amplitude
+  - case_id: ref_fp2_p07_inverter
+    parent_circuit_id: p07_inverter
+    ground_truth_label: GROUND_TRUTH_COMPLIANT
+    circuit_family: inverter
+    specification_file: experiments/frozen_pilot_v2/ref_fp2_p07_inverter/specification.yaml
+    netlist_file: benchmark/analogcoder_pro/p07_inverter.cir
+    targeted_metric:
+      name: operating_point
+  - case_id: fp2_cv_006_p01_gain_strong
+    parent_circuit_id: p01_amplifier
+    ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+    circuit_family: amplifier
+    specification_file: experiments/frozen_pilot_v2/fp2_cv_006_p01_gain/strong/specification.yaml
+    netlist_file: experiments/frozen_pilot_v2/fp2_cv_006_p01_gain/strong/netlist.cir
+    targeted_metric:
+      name: dc_gain_db
+  - case_id: fp2_cv_023_p05_current_strong
+    parent_circuit_id: p05_amplifier
+    ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+    circuit_family: amplifier
+    specification_file: experiments/frozen_pilot_v2/fp2_cv_023_p05_current/strong/specification.yaml
+    netlist_file: experiments/frozen_pilot_v2/fp2_cv_023_p05_current/strong/netlist.cir
+    targeted_metric:
+      name: quiescent_current
+  - case_id: fp2_cv_011_p17_current_strong
+    parent_circuit_id: p17_currentmirror
+    ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+    circuit_family: current_mirror
+    specification_file: experiments/frozen_pilot_v2/fp2_cv_011_p17_current/strong/specification.yaml
+    netlist_file: experiments/frozen_pilot_v2/fp2_cv_011_p17_current/strong/netlist.cir
+    targeted_metric:
+      name: quiescent_current
+  - case_id: fp2_cv_012_p16_bias_strong
+    parent_circuit_id: p16_opamp
+    ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+    circuit_family: opamp
+    specification_file: experiments/frozen_pilot_v2/fp2_cv_012_p16_bias/strong/specification.yaml
+    netlist_file: experiments/frozen_pilot_v2/fp2_cv_012_p16_bias/strong/netlist.cir
+    targeted_metric:
+      name: quiescent_current
+  - case_id: fp2_cv_013_p20_bias_strong
+    parent_circuit_id: p20_opamp
+    ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+    circuit_family: opamp
+    specification_file: experiments/frozen_pilot_v2/fp2_cv_013_p20_bias/strong/specification.yaml
+    netlist_file: experiments/frozen_pilot_v2/fp2_cv_013_p20_bias/strong/netlist.cir
+    targeted_metric:
+      name: quiescent_current
+  - case_id: fp2_cv_019_p22_amplitude_strong
+    parent_circuit_id: p22_oscillator
+    ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+    circuit_family: oscillator
+    specification_file: experiments/frozen_pilot_v2/fp2_cv_019_p22_amplitude/strong/specification.yaml
+    netlist_file: experiments/frozen_pilot_v2/fp2_cv_019_p22_amplitude/strong/netlist.cir
+    targeted_metric:
+      name: startup_amplitude
+  - case_id: fp2_cv_026_p07_output_strong
+    parent_circuit_id: p07_inverter
+    ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+    circuit_family: inverter
+    specification_file: experiments/frozen_pilot_v2/fp2_cv_026_p07_output/strong/specification.yaml
+    netlist_file: experiments/frozen_pilot_v2/fp2_cv_026_p07_output/strong/netlist.cir
+    targeted_metric:
+      name: operating_point
+  - case_id: wrdata_nominal
+    parent_circuit_id: p22_oscillator
+    ground_truth_label: GROUND_TRUTH_COMPLIANT
+    circuit_family: oscillator
+    specification_file: experiments/frozen_pilot_v2/ref_fp2_p22_oscillator/specification.yaml
+    netlist_file: benchmark/analogcoder_pro/p22_oscillator.cir
+    targeted_metric:
+      name: startup_amplitude
+  - case_id: wrdata_controlled_violation
+    parent_circuit_id: p22_oscillator
+    ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+    circuit_family: oscillator
+    specification_file: experiments/frozen_pilot_v2/fp2_cv_019_p22_amplitude/strong/specification.yaml
+    netlist_file: experiments/frozen_pilot_v2/fp2_cv_019_p22_amplitude/strong/netlist.cir
+    targeted_metric:
+      name: startup_amplitude

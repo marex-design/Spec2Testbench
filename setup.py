@@ -16,6 +16,7 @@ setup(
         "matplotlib>=3.7",
         "pyyaml>=6.0",
         "python-dotenv>=1.0",
+        "pydantic>=2.10",
         "typer>=0.9",
         "rich>=13.0",
         "schemdraw>=0.19",

@@ -7,7 +7,12 @@ class LLMSettings:
     openai_api_key: str = field(default_factory=lambda: os.getenv("OPENAI_API_KEY", ""))
     openai_model: str = field(default_factory=lambda: os.getenv("OPENAI_MODEL", "gpt-4-turbo-preview"))
     deepseek_api_key: str = field(default_factory=lambda: os.getenv("DEEPSEEK_API_KEY", ""))
+    deepseek_base_url: str = field(default_factory=lambda: os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com"))
     deepseek_model: str = field(default_factory=lambda: os.getenv("DEEPSEEK_MODEL", "deepseek-chat"))
+    deepseek_temperature: float = field(default_factory=lambda: float(os.getenv("DEEPSEEK_TEMPERATURE", "0.1")))
+    deepseek_max_tokens: int = field(default_factory=lambda: int(os.getenv("DEEPSEEK_MAX_TOKENS", "4096")))
+    deepseek_timeout_seconds: float = field(default_factory=lambda: float(os.getenv("DEEPSEEK_TIMEOUT_SECONDS", "90")))
+    deepseek_max_retries: int = field(default_factory=lambda: int(os.getenv("DEEPSEEK_MAX_RETRIES", "3")))
     groq_api_key: str = field(default_factory=lambda: os.getenv("GROQ_API_KEY", ""))
     groq_model: str = field(default_factory=lambda: os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile"))
     google_api_key: str = field(default_factory=lambda: os.getenv("GOOGLE_API_KEY", ""))
@@ -37,6 +42,13 @@ class LLMSettings:
             "anthropic": self.anthropic_model,
         }
         return models.get(p, "gpt-4-turbo-preview")
+
+    def get_base_url(self, provider: str = None) -> str:
+        p = provider or self.default_provider
+        base_urls = {
+            "deepseek": self.deepseek_base_url,
+        }
+        return base_urls.get(p, "")
     
     @property
     def is_configured(self) -> bool:

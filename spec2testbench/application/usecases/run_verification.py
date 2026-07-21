@@ -308,18 +308,21 @@ class VerificationPipeline:
         self,
         use_llm: bool = True,
         llm_client=None,
+        use_llm_planner: bool = False,
         allow_mock: Optional[bool] = None,
         allow_recovery: Optional[bool] = None,
         timeout_seconds: Optional[int] = None,
     ):
         self.use_llm = use_llm
         self.llm_client = llm_client
+        self.use_llm_planner = use_llm_planner
         self.allow_mock = settings.simulator.allow_mock if allow_mock is None else allow_mock
         self.allow_recovery = settings.simulator.allow_recovery if allow_recovery is None else allow_recovery
         self.timeout_seconds = timeout_seconds or settings.simulator.timeout_seconds
         self.testbench_gen = TestBenchGenerator(
             llm_client=llm_client if use_llm else None,
-            use_llm=use_llm
+            use_llm=use_llm,
+            use_llm_planner=use_llm_planner,
         )
         self.spec_checker = SpecChecker(warning_margin=settings.warning_margin)
         self.waveform_checker = WaveformChecker(
@@ -343,7 +346,7 @@ class VerificationPipeline:
         
         try:
             logger.info("Step 1/4: Generating testbench...")
-            testbench = self.testbench_gen.generate(specification)
+            testbench = self.testbench_gen.generate(specification, netlist_path=netlist_path)
             testbench.case_id = report.case_id
             testbench.metadata["required_metrics"] = list(specification.performance_targets.keys())
             testbench.metadata["measurement"] = dict(getattr(specification, "measurement", {}) or {})
