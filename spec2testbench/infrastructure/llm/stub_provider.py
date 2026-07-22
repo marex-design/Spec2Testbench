@@ -35,7 +35,12 @@ class DeterministicStubProvider(LLMProvider):
             completion_tokens=None,
             total_tokens=None,
             latency_seconds=time.perf_counter() - started,
-            raw_metadata={"attempts": [{"attempt_number": 1, "http_status": 200, "error_type": None, "retryable": False, "delay_before_retry": 0.0, "final_status": "SUCCESS"}]},
+            raw_metadata={
+                "attempts": [{"attempt_number": 1, "http_status": 200, "error_type": None, "retryable": False, "delay_before_retry": 0.0, "final_status": "SUCCESS"}],
+                "provider_mode": "STUB",
+                "scientific_llm_evidence": False,
+                "network_calls": 0,
+            },
         )
 
     def _build_plan(self, payload: dict[str, Any]) -> TestbenchPlan:
@@ -49,6 +54,7 @@ class DeterministicStubProvider(LLMProvider):
             item["metric_name"]: item
             for item in supported_capabilities.get("supported_metric_definitions", [])
         }
+        knowledge_bundle = payload.get("knowledge_bundle", {}) or {}
         deterministic_summary = payload.get("deterministic_plan_summary", {})
 
         input_node = self._choose_input_node(available_nodes, deterministic_summary)
@@ -97,6 +103,10 @@ class DeterministicStubProvider(LLMProvider):
             {
                 "case_id": case_id,
                 "analysis_type": analysis_type.value,
+                "provider_mode": str(payload.get("provider_mode", "STUB") or "STUB"),
+                "scientific_llm_evidence": bool(payload.get("scientific_llm_evidence", False)),
+                "knowledge_version": payload.get("knowledge_version") or knowledge_bundle.get("knowledge_version"),
+                "knowledge_bundle_sha256": payload.get("knowledge_bundle_sha256") or knowledge_bundle.get("knowledge_bundle_sha256"),
                 "stimuli": [item.model_dump(mode="json") for item in stimuli],
                 "observed_nodes": list(dict.fromkeys(node for node in observed_nodes if node)),
                 "measurements": measurements,

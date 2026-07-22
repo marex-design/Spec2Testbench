@@ -61,3 +61,7 @@ Thumbs.db
 
 # Local runtime
 local_settings.py
+
+
+# Local copyrighted references
+references/local/*.pdf

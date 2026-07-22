@@ -1,0 +1,121 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: OPERATING_POINT_PREFERS_OP_WHEN_NO_SWEEP_SOURCE
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: dc_analysis
+  title: Operating-point plans prefer .OP when no valid sweep source exists
+  description: If no stimulus source is eligible for a DC sweep, the canonical and stub path must keep a nominal .OP instead of inventing a .DC source name.
+  applies_to:
+    analyses:
+    - OP
+    metrics:
+    - operating_point
+    - quiescent_current
+    - power
+    circuit_families:
+    - current_mirror
+    - opamp
+    - amplifier
+    backends:
+    - NGSPICE_MEASURE
+    - NGSPICE_WRDATA
+  requires:
+    evidence:
+    - SOURCE_ROLE_POLICY
+  forbids:
+  - FAKE_DC_SWEEP_SOURCE
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/application/services/canonical_harness.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  - NGSPICE_INSTALLED
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_current_mirror_op_harness_uses_nominal_op_without_fake_dc_source
+    - test_stub_plan_uses_canonical_harness_policy
+    negative_test_ids: []
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_OPERATING_POINT_COMPUTES_DC_BIAS
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Chapter 4
+    section: 4.2 Operating (Bias) Point
+    page: 129
+    classification: EXTENDS_EXISTING_RULE
+    implementation_scope: SPEC2TESTBENCH_POLICY
+  book_chapter: Chapter 4
+  book_section: 4.2 Operating (Bias) Point
+  book_page: 129
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: DC_SWEEP_REQUIRES_EXISTING_SOURCE
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: dc_analysis
+  title: A DC sweep must reference an existing source
+  description: A .DC analysis is only valid when the named source exists in the effective deck.
+  applies_to:
+    analyses:
+    - DC
+    metrics:
+    - operating_point
+    circuit_families: []
+    backends:
+    - NGSPICE_MEASURE
+    - NGSPICE_WRDATA
+  requires:
+    evidence:
+    - SWEEP_SOURCE_EXISTS
+  forbids:
+  - NONEXISTENT_DC_SOURCE
+  source:
+    source_type: NGSPICE_INSTALLED_MICROTEST
+    document_path: results/knowledge_stub_v1/ngspice_microtest_results.csv
+    section: null
+    page: null
+  dialect_scope:
+  - NGSPICE_INSTALLED
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: false
+    compiler_enforced: false
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_NGSPICE_INSTALLED
+    positive_test_ids:
+    - MT_NONEXISTENT_DC_SOURCE_FAILS
+    negative_test_ids: []
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_DC_SWEEP_TARGET_MUST_EXIST
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Chapter 4
+    section: 4.3 DC Transfer Curves
+    page: 133
+    classification: DUPLICATE_EQUIVALENT
+    implementation_scope: NGSPICE_CONFIRMED
+  book_chapter: Chapter 4
+  book_section: 4.3 DC Transfer Curves
+  book_page: 133
+  ngspice_confirmed: true
+  project_enforced: true

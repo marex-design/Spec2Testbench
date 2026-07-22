@@ -1,0 +1,4 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries: []

@@ -540,6 +540,15 @@ class VerificationPipeline:
             'measurement_source': result.get('measurement_source'),
             'measurement_command': result.get('measurement_command'),
             'measurement_status': result.get('measurement_status'),
+            'compiled_plan_sha256': result.get('compiled_plan_sha256'),
+            'serialized_deck_sha256': result.get('serialized_deck_sha256'),
+            'executed_file_sha256': result.get('executed_file_sha256'),
+            'post_execution_file_sha256': result.get('post_execution_file_sha256'),
+            'ngspice_input_file_path': result.get('ngspice_input_file_path'),
+            'generated_testbench_path': result.get('generated_testbench_path'),
+            'generated_testbench_sha256': result.get('generated_testbench_sha256'),
+            'generated_testbench_alias_byte_identical': result.get('generated_testbench_alias_byte_identical'),
+            'post_serialization_deck_mutation': result.get('post_serialization_deck_mutation'),
             'measurement_requests': (testbench.metadata or {}).get('measurement_requests', []),
         }
 

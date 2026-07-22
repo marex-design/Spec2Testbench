@@ -195,13 +195,17 @@ class TestbenchPlan(BaseModel):
 
     case_id: str
     analysis_type: AnalysisType
+    provider_mode: str = "UNKNOWN"
+    scientific_llm_evidence: bool = False
+    knowledge_version: str | None = None
+    knowledge_bundle_sha256: str | None = None
     stimuli: list[StimulusPlan] = Field(default_factory=list)
     observed_nodes: list[str] = Field(default_factory=list)
     measurements: list[MeasurementPlan]
     simulation_parameters: SimulationParameters
     concise_rationale: str
 
-    @field_validator("case_id", "concise_rationale")
+    @field_validator("case_id", "concise_rationale", "provider_mode")
     @classmethod
     def _validate_non_empty_text(cls, value: str) -> str:
         text = value.strip()
@@ -246,4 +250,3 @@ class TestbenchPlan(BaseModel):
             if self.simulation_parameters.time_step_s is None:
                 raise ValueError("TRAN plans require time_step_s")
         return self
-

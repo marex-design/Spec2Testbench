@@ -1,0 +1,18 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: policies
+entries:
+- policy_id: CANONICAL_HARNESS_REUSES_VALIDATED_ANALYSIS_DECKS
+  title: Canonical harness uses analysis-specific validated decks
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_analysis_specific_decks_are_separate
+  implementation_ref: spec2testbench/application/services/canonical_harness.py
+- policy_id: CANONICAL_HARNESS_PRESERVES_SOURCE_ROLES
+  title: Canonical harness preserves supply, bias, and signal-source roles
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_supply_source_is_not_replaceable
+  - test_bias_source_is_not_replaceable
+  - test_internal_bias_source_is_not_replaceable
+  implementation_ref: spec2testbench/application/services/canonical_harness.py

@@ -1,0 +1,178 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: TRAN_PROPAGATION_DELAY_REQUIRES_INPUT_AND_OUTPUT
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: transient_analysis
+  title: Propagation delay requires input and output waveforms
+  description: Delay extraction needs both input and output threshold crossings and must not be synthesized from output-only data.
+  applies_to:
+    analyses:
+    - TRAN
+    metrics:
+    - propagation_delay
+    - propagation_delay_s
+    circuit_families:
+    - comparator
+    - inverter
+    backends:
+    - NGSPICE_MEASURE
+    - NGSPICE_WRDATA
+  requires:
+    node_roles:
+    - SIGNAL_INPUT
+    - OUTPUT
+    evidence:
+    - INPUT_WAVEFORM
+    - OUTPUT_WAVEFORM
+  forbids:
+  - PROPAGATION_DELAY_FROM_OUTPUT_ONLY
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/infrastructure/simulator/pyspice_simulator.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  - NGSPICE_INSTALLED
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: false
+    compiler_enforced: false
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_missing_measure_does_not_fall_back_to_synthetic_zero
+    - test_stub_missing_metric_is_not_zero
+    negative_test_ids: []
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_DELAY_NEEDS_INPUT_AND_OUTPUT
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Chapter 6
+    section: 6.2 Transient Analysis
+    page: 169
+    classification: EXTENDS_EXISTING_RULE
+    implementation_scope: SPEC2TESTBENCH_POLICY
+  book_chapter: Chapter 6
+  book_section: 6.2 Transient Analysis
+  book_page: 169
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: VALID_OSCILLATION_REQUIRED_FOR_FREQUENCY
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: transient_analysis
+  title: Oscillator frequency requires validated oscillation
+  description: Frequency extraction is gated by oscillation validation and remains NOT_EVALUATED when the waveform lacks validated oscillation.
+  applies_to:
+    analyses:
+    - TRAN
+    metrics:
+    - oscillator_frequency
+    - frequency_hz
+    circuit_families:
+    - oscillator
+    backends:
+    - NGSPICE_WRDATA
+  requires:
+    evidence:
+    - OUTPUT_WAVEFORM
+  forbids:
+  - OSCILLATOR_FREQUENCY_WITHOUT_OSCILLATION
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/infrastructure/simulator/pyspice_simulator.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: false
+    compiler_enforced: false
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_invalid_oscillation_blocks_frequency_metric
+    - test_stub_physical_absence_is_explicit
+    negative_test_ids: []
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_OSCILLATION_NEEDS_VALID_WAVEFORM
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Chapter 6
+    section: 6.2 Transient Analysis
+    page: 169
+    classification: EXTENDS_EXISTING_RULE
+    implementation_scope: SPEC2TESTBENCH_POLICY
+  book_chapter: Chapter 6
+  book_section: 6.2 Transient Analysis
+  book_page: 169
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: HYSTERESIS_REQUIRES_INPUT_AND_OUTPUT_WAVEFORMS
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: transient_analysis
+  title: Hysteresis width requires both input and output waveforms
+  description: Schmitt-trigger thresholds and hysteresis width are derived from paired input and output waveforms.
+  applies_to:
+    analyses:
+    - TRAN
+    metrics:
+    - v_t_plus
+    - v_t_minus
+    - hysteresis_width
+    circuit_families:
+    - schmitt_trigger
+    backends:
+    - NGSPICE_WRDATA
+  requires:
+    node_roles:
+    - SIGNAL_INPUT
+    - OUTPUT
+    evidence:
+    - INPUT_WAVEFORM
+    - OUTPUT_WAVEFORM
+  forbids:
+  - HYSTERESIS_FROM_OUTPUT_ONLY
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/infrastructure/simulator/result_backends.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: false
+    compiler_enforced: false
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_interpolation_and_switching_thresholds
+    - test_stub_use_case_smoke_contains_7_use_cases
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true

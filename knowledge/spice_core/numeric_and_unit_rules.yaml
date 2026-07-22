@@ -1,0 +1,237 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: FINITE_NUMERIC_VALUES_ONLY
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: numeric
+  title: Finite numeric values only
+  description: Plans, recipes, and compiled requests reject NaN and infinite numeric values.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    evidence:
+    - FINITE_NUMERIC_PLAN_VALUES
+  forbids:
+  - NaN
+  - INF
+  - -INF
+  source:
+    source_type: CODE_AND_TESTS
+    document_path: spec2testbench/domain/entities/testbench_plan.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  - PORTABLE_SPICE
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: false
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_parse_measure_not_found_nan_and_inf
+    negative_test_ids: []
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_NUMERIC_VALUES_MUST_BE_FINITE
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Chapter 9
+    section: 9.2.2 Accuracy and SPICE Options
+    page: 291
+    classification: EXTENDS_EXISTING_RULE
+    implementation_scope: SPEC2TESTBENCH_POLICY
+  book_chapter: Chapter 9
+  book_section: 9.2.2 Accuracy and SPICE Options
+  book_page: 291
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: POSITIVE_AC_STOP_FREQUENCY
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: numeric
+  title: AC stop frequency must exceed start frequency
+  description: AC sweep parameters are rejected when the stop frequency does not exceed the start frequency.
+  applies_to:
+    analyses:
+    - AC
+    metrics:
+    - dc_gain_db
+    - cutoff_frequency_hz
+    - bandwidth
+    circuit_families:
+    - amplifier
+    - filter
+    - opamp
+    backends:
+    - NGSPICE_WRDATA
+  requires:
+    evidence:
+    - AC_SWEEP_PARAMETERS
+  forbids:
+  - NEGATIVE_FREQUENCIES
+  - NON_INCREASING_AC_RANGE
+  source:
+    source_type: CODE_AND_TESTS
+    document_path: spec2testbench/domain/entities/testbench_plan.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: false
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_llm_validator_accepts_valid_json_plan
+    negative_test_ids:
+    - test_llm_validator_rejects_invalid_simulation_range
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: POSITIVE_TRANSIENT_STEP_TIME
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: numeric
+  title: Transient step time must be positive and smaller than stop time
+  description: Transient simulation parameters are bounded to positive step sizes and finite stop times.
+  applies_to:
+    analyses:
+    - TRAN
+    metrics:
+    - propagation_delay
+    - oscillator_frequency
+    - hysteresis_width
+    circuit_families:
+    - comparator
+    - oscillator
+    - schmitt_trigger
+    backends:
+    - NGSPICE_MEASURE
+    - NGSPICE_WRDATA
+  requires:
+    evidence:
+    - TRAN_SIMULATION_PARAMETERS
+  forbids:
+  - ZERO_TRANSIENT_STOP_TIME
+  - NON_POSITIVE_STEP_TIME
+  source:
+    source_type: CODE_AND_TESTS
+    document_path: spec2testbench/domain/entities/testbench_plan.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: false
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_stub_use_case_smoke_contains_7_use_cases
+    negative_test_ids: []
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_TRANSIENT_STEP_MUST_BE_POSITIVE
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Chapter 6
+    section: 6.2 Transient Analysis
+    page: 169
+    classification: DUPLICATE_EQUIVALENT
+    implementation_scope: SPEC2TESTBENCH_POLICY
+  book_chapter: Chapter 6
+  book_section: 6.2 Transient Analysis
+  book_page: 169
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: ZERO_AC_INPUT_IS_NOT_EVALUATED
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: numeric
+  title: Zero AC input is not a valid transfer-gain denominator
+  description: Transfer-gain extraction must never substitute a numeric floor when the AC input vector is zero.
+  applies_to:
+    analyses:
+    - AC
+    metrics:
+    - dc_gain
+    - dc_gain_db
+    - transfer_magnitude_linear
+    - transfer_phase_deg
+    circuit_families:
+    - amplifier
+    - filter
+    - opamp
+    backends:
+    - NGSPICE_WRDATA
+  requires:
+    evidence:
+    - VIN_COMPLEX_VECTOR
+  forbids:
+  - ZERO_INPUT_DIVISION
+  - SYNTHETIC_NUMERIC_FLOOR_AS_METRIC
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: tests/test_ngspice_result_backends.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  - NGSPICE_INSTALLED
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: false
+    compiler_enforced: false
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_gain_with_zero_input_is_not_evaluated
+    negative_test_ids: []
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_AC_REQUIRES_NONZERO_EXCITATION
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Chapter 5
+    section: 5.2 AC Frequency Sweep
+    page: 149
+    classification: EXTENDS_EXISTING_RULE
+    implementation_scope: SPEC2TESTBENCH_POLICY
+  book_chapter: Chapter 5
+  book_section: 5.2 AC Frequency Sweep
+  book_page: 149
+  ngspice_confirmed: false
+  project_enforced: true

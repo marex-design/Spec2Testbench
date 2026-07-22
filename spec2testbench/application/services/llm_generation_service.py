@@ -67,6 +67,10 @@ class LLMGenerationService:
         timeout_seconds: float,
         include_deterministic_summary: bool,
         max_repairs: int = 2,
+        knowledge_bundle: dict[str, Any] | None = None,
+        knowledge_version: str | None = None,
+        provider_mode: str = "UNKNOWN",
+        scientific_llm_evidence: bool = True,
     ) -> LLMPlanningOutcome:
         capability_payload = self._capability_builder.build(
             specification,
@@ -85,6 +89,11 @@ class LLMGenerationService:
             "normalized_specification": self._normalized_specification(specification),
             "deterministic_plan_summary": capability_payload.deterministic_plan_summary,
             "response_schema": TestbenchPlan.model_json_schema(),
+            "provider_mode": provider_mode,
+            "scientific_llm_evidence": scientific_llm_evidence,
+            "knowledge_version": knowledge_version,
+            "knowledge_bundle": knowledge_bundle or {},
+            "knowledge_bundle_sha256": (knowledge_bundle or {}).get("knowledge_bundle_sha256", ""),
         }
         prompt_sha = hashlib.sha256(system_prompt.encode("utf-8")).hexdigest()
 

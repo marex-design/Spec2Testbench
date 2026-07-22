@@ -1,0 +1,210 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: SPICE_DECK_HAS_TITLE
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: deck_structure
+  title: A generated deck carries one title line
+  description: Generated SPICE decks begin with a single title line controlled by the compiler.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    evidence:
+    - GENERATED_DECK_TEXT
+  forbids:
+  - EMPTY_TITLE_LINE
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/infrastructure/simulator/pyspice_simulator.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  - PORTABLE_SPICE
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: false
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_executed_deck_matches_saved_deck
+    negative_test_ids: []
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_TITLE_LINE_CANONICAL
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Chapter 1
+    section: 1.3.1 Electric Circuit Specification-The SPICE Input
+    page: 18
+    classification: DUPLICATE_EQUIVALENT
+    implementation_scope: SPEC2TESTBENCH_POLICY
+  book_chapter: Chapter 1
+  book_section: 1.3.1 Electric Circuit Specification-The SPICE Input
+  book_page: 18
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: SPICE_DECK_HAS_SINGLE_END
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: deck_structure
+  title: Generated decks terminate with a single .END
+  description: The compiler owns the final .END statement and emits it exactly once.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    evidence:
+    - GENERATED_DECK_TEXT
+  forbids:
+  - MULTIPLE_END_STATEMENTS
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/infrastructure/simulator/pyspice_simulator.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  - PORTABLE_SPICE
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: false
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_executed_deck_matches_saved_deck
+    negative_test_ids: []
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_DECK_ENDS_ONCE
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Appendix E
+    section: SPICE Input Deck
+    page: 405
+    classification: DUPLICATE_EQUIVALENT
+    implementation_scope: SPEC2TESTBENCH_POLICY
+  book_chapter: Appendix E
+  book_section: SPICE Input Deck
+  book_page: 405
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: EXECUTED_DECK_IS_SAVED_BEFORE_EXECUTION
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: deck_structure
+  title: Executed deck is saved before ngspice execution
+  description: Spec2Testbench persists the exact executed .ckt before invoking ngspice and records its hash.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    evidence:
+    - EXECUTED_DECK_SHA256
+  forbids:
+  - UNSAVED_EXECUTED_DECK
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: reports/canonical_harness_v1/executed_deck_integrity.md
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_executed_deck_matches_saved_deck
+    - test_stub_compiler_preserves_exact_executed_deck
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: PLANNER_DOES_NOT_EMIT_RAW_SPICE_LINES
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: deck_structure
+  title: Planner emits structured plans instead of raw SPICE
+  description: The planner returns JSON TestbenchPlan objects and the deterministic compiler renders SPICE text later.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    evidence:
+    - TESTBENCH_PLAN_SCHEMA
+  forbids:
+  - FREE_FORM_SPICE_OUTPUT
+  source:
+    source_type: CODE_AND_TESTS
+    document_path: docs/llm_testbench_plan_schema.md
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_llm_validator_accepts_valid_json_plan
+    negative_test_ids:
+    - test_llm_validator_rejects_invalid_json
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true

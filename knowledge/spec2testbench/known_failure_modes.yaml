@@ -1,0 +1,18 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: failures
+entries:
+- failure_id: INVALID_NODE_SELECTION
+  repairable: true
+- failure_id: INVALID_SOURCE_SELECTION
+  repairable: true
+- failure_id: INVALID_ANALYSIS_PARAMETER
+  repairable: true
+- failure_id: WINDOW_TOO_SHORT
+  repairable: true
+- failure_id: UNSUPPORTED_RECIPE_SELECTION
+  repairable: true
+- failure_id: GROUND_TRUTH_DISAGREEMENT
+  repairable: false
+- failure_id: LOW_GAIN
+  repairable: false

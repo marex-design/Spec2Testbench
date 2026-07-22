@@ -78,6 +78,10 @@ class TestbenchPlanCompiler:
             },
             "measurement_requests": measurement_requests,
             "llm_testbench_plan": plan.model_dump(mode="json"),
+            "provider_mode": plan.provider_mode,
+            "scientific_llm_evidence": plan.scientific_llm_evidence,
+            "knowledge_version": plan.knowledge_version,
+            "knowledge_bundle_sha256": plan.knowledge_bundle_sha256,
             # Frequency-only specs still need a scientifically meaningful
             # oscillation guard instead of the old arbitrary 1e-6 V fallback.
             "oscillation_amplitude_threshold": float(specification.get_metric_min("startup_amplitude") or 1e-12),

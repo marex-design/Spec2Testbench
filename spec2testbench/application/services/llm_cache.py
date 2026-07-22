@@ -20,6 +20,12 @@ class LLMCacheKey:
     capability_registry_sha256: str
     temperature: float
     max_tokens: int
+    knowledge_version: str = ""
+    knowledge_bundle_sha256: str = ""
+    canonical_dut_sha256: str = ""
+    harness_metadata_sha256: str = ""
+    requested_metrics_sha256: str = ""
+    compiler_version: str = ""
 
     def digest(self) -> str:
         payload = json.dumps(asdict(self), sort_keys=True, separators=(",", ":"))
@@ -45,4 +51,3 @@ class FileLLMCache:
 
     def _cache_path(self, key: LLMCacheKey) -> Path:
         return self._root / key.case_id / key.mode / key.trial_id / f"{key.digest()}.json"
-

@@ -1,0 +1,24 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: environment
+environment:
+  ngspice_executable: C:\ProgramData\chocolatey\lib\ngspice\tools\Spice64\bin\ngspice_con.exe
+  ngspice_version: 'ngspice-41 : Circuit level simulation program'
+  raw_version_output: '******
+
+    ** ngspice-41 : Circuit level simulation program
+
+    ** The U. C. Berkeley CAD Group
+
+    ** Copyright 1985-1994, Regents of the University of California.
+
+    ** Copyright 2001-2023, The ngspice team.
+
+    ** Please get your ngspice manual from https://ngspice.sourceforge.io/docs.html
+
+    ** Please file your bug-reports at https://ngspice.sourceforge.io/bugrep.html
+
+    ** Creation Date: Aug 15 2023   23:22:03
+
+    ******'
+  operating_system: Windows-10-10.0.19045-SP0

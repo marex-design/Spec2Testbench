@@ -1,0 +1,101 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: NGSPICE_TOP_LEVEL_MEASURE_SUPPORTED
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: measure
+  title: Top-level ngspice .measure statements are supported
+  description: Top-level .measure statements execute with the active analysis and are the preferred path for native measure output.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics:
+    - operating_point
+    - quiescent_current
+    - dc_gain_db
+    - propagation_delay
+    circuit_families: []
+    backends:
+    - NGSPICE_MEASURE
+  requires:
+    evidence:
+    - MEASURES_TXT_OR_STDOUT
+  forbids:
+  - ASSUME_TOP_LEVEL_MEASURE_UNSUPPORTED
+  source:
+    source_type: NGSPICE_INSTALLED_MICROTEST
+    document_path: results/knowledge_stub_v1/ngspice_microtest_results.csv
+    section: null
+    page: null
+  dialect_scope:
+  - NGSPICE_INSTALLED
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: false
+    compiler_enforced: false
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_NGSPICE_INSTALLED
+    positive_test_ids:
+    - MT_TOP_LEVEL_MEASURE_AC_PARAM_WORKS
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: true
+  project_enforced: true
+- rule_id: NGSPICE_OP_FIND_AT_ZERO_IS_OUT_OF_INTERVAL
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: measure
+  title: OP-style .meas dc FIND ... AT=0 can fail under pure .OP
+  description: The installed ngspice reports an out-of-interval error when a pure .OP deck uses .meas dc FIND ... AT=0.
+  applies_to:
+    analyses:
+    - OP
+    metrics:
+    - operating_point
+    - quiescent_current
+    circuit_families: []
+    backends:
+    - NGSPICE_MEASURE
+  requires:
+    evidence:
+    - NGSPICE_STDERR
+  forbids:
+  - ASSUME_OP_FIND_AT_ZERO_ALWAYS_WORKS
+  source:
+    source_type: NGSPICE_INSTALLED_MICROTEST
+    document_path: results/knowledge_stub_v1/ngspice_microtest_results.csv
+    section: null
+    page: null
+  dialect_scope:
+  - NGSPICE_INSTALLED
+  enforcement:
+    llm_visible: false
+    retriever_visible: false
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_NGSPICE_INSTALLED
+    positive_test_ids:
+    - MT_OP_MEASURE_AT_ZERO_OUT_OF_INTERVAL
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: true
+  project_enforced: true

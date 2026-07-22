@@ -1,0 +1,29 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: examples
+entries:
+- example_id: EXAMPLE_FILTER_CUTOFF_GENERIC
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  use_case: UC_FILTER_CUTOFF_BANDWIDTH
+  title: Generic filter cutoff example
+  summary: Use an AC sweep with complex Vin and Vout exports and derive cutoff from the AC transfer curve.
+  plan_shape:
+    analysis_type: AC
+    measurements:
+    - cutoff_frequency_hz
+  safe_circuit_families:
+  - low_pass_filter
+  - high_pass_filter
+  safe_metrics:
+  - cutoff_frequency_hz
+  positive_tests:
+  - test_stub_use_case_smoke_contains_7_use_cases
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  retriever_visible: true
+  leakage_audit:
+    contains_ground_truth: false
+    contains_threshold: false
+    contains_historical_value: false
+    contains_mutation_identifier: false
+    contains_full_benchmark_netlist: false
