@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import os
+from datetime import datetime, timezone
 
 from deepseek_live_lib import (
     STAGE_ORDER,
@@ -24,6 +25,11 @@ FLAG_TO_STAGE = {
     "frozen_three_trials": "frozen_trials_2_3",
     "post_live_deterministic_parity": "post_live_deterministic",
 }
+
+
+def _build_run_id() -> str:
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return f"deepseek_live_{timestamp}_{os.getpid()}"
 
 
 def _selected_stages(args: argparse.Namespace) -> list[str]:
@@ -65,6 +71,14 @@ def main() -> None:
     parser.add_argument("--disable-pyspice", action="store_true")
     parser.add_argument("--no-mock", action="store_true")
     args = parser.parse_args()
+    selected_stages = _selected_stages(args)
+    run_id = _build_run_id()
+    execution_mode = "DRY_RUN" if args.dry_run or args.verify_only else "LIVE"
+    requested_stage = selected_stages[-1] if selected_stages else "final_summary"
+
+    os.environ["DEEPSEEK_LIVE_RUN_ID"] = run_id
+    os.environ["DEEPSEEK_LIVE_EXECUTION_MODE"] = execution_mode
+    os.environ["DEEPSEEK_LIVE_REQUESTED_STAGE"] = requested_stage
 
     if args.disable_pyspice:
         os.environ["SPEC2TESTBENCH_DISABLE_PYSPICE"] = "1"
@@ -74,20 +88,19 @@ def main() -> None:
     build_pre_commit_inventory()
     build_clean_commit_plan()
 
-    if args.dry_run or args.verify_only:
-        build_deepseek_live_summary()
-        print("results/deepseek_live_v1/pre_live_manifest.json")
-        print("results/deepseek_live_v1/secret_audit.json")
-        print("results/deepseek_live_v1/deepseek_live_campaign_summary.json")
-        return
-
-    for stage in _selected_stages(args):
-        result = run_stage(stage)
+    for stage in selected_stages:
+        result = run_stage(stage, dry_run=args.dry_run or args.verify_only)
         go_values = [value for key, value in result.items() if key.startswith("GO_")]
-        if go_values and any(value not in {"PASS", "NOT_EXECUTED"} for value in go_values):
+        if (not args.dry_run and not args.verify_only) and go_values and any(
+            value not in {"PASS", "NOT_EXECUTED"} for value in go_values
+        ):
             break
 
-    build_deepseek_live_summary()
+    build_deepseek_live_summary(
+        requested_stage=requested_stage,
+        execution_mode=execution_mode,
+        run_id=run_id,
+    )
     print("results/deepseek_live_v1/deepseek_live_campaign_summary.json")
     print("reports/deepseek_live_v1/final_status.md")
 

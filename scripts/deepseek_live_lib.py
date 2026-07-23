@@ -11,10 +11,10 @@ import shutil
 import statistics
 import subprocess
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import yaml
 
@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from spec2testbench.application.ports.llm_provider import LLMProviderError
+from spec2testbench.application.ports.llm_provider import LLMProviderError, LLMRequest
 from spec2testbench.application.services.llm_generation_service import LLMGenerationService
 from spec2testbench.application.services.spice_knowledge import retrieve_knowledge_bundle
 from spec2testbench.application.services.testbench_plan_compiler import TestbenchPlanCompiler
@@ -151,6 +151,205 @@ REVIEWABLE_PRELIVE_ARTIFACT_NAMES = {
     "secret_audit.json",
     "secret_audit.md",
 }
+PROMPT_AUDIT_SENSITIVE_KEYS = {
+    "benchmark_case_id",
+    "deterministic_result",
+    "expected_outcome",
+    "expected_verdict",
+    "ground_truth",
+    "ground_truth_label",
+    "historical_metric",
+    "historical_outcome",
+    "historical_verdict",
+    "internal_case_id",
+    "local_path",
+    "mutation_id",
+    "mutation_label",
+    "original_case_id",
+    "reference_metric",
+    "reference_outcome",
+    "reference_testbench",
+    "reference_verdict",
+    "scientific_category_expected",
+    "source_file_path",
+    "stub_result",
+}
+PROMPT_AUDIT_GROUND_TRUTH_KEYS = {"ground_truth", "ground_truth_label"}
+PROMPT_AUDIT_HISTORICAL_VERDICT_KEYS = {
+    "deterministic_result",
+    "expected_outcome",
+    "expected_verdict",
+    "historical_outcome",
+    "historical_verdict",
+    "reference_outcome",
+    "reference_verdict",
+    "scientific_category_expected",
+    "stub_result",
+}
+PROMPT_AUDIT_HISTORICAL_METRIC_KEYS = {"historical_metric", "reference_metric"}
+PROMPT_AUDIT_MUTATION_KEYS = {"mutation_id", "mutation_label"}
+PROMPT_AUDIT_BENCHMARK_KEYS = {"benchmark_case_id", "internal_case_id", "original_case_id", "reference_testbench"}
+PROMPT_AUDIT_LOCAL_PATH_KEYS = {"local_path", "source_file_path"}
+PROMPT_AUDIT_SENSITIVE_VALUE_TOKENS = {
+    "COMPLIANT_REFERENCE",
+    "CONTROLLED_VIOLATION",
+    "FALSE_ACCEPT",
+    "FALSE_REJECT",
+    "SIMULABLE_COMPLIANT",
+    "SIMULABLE_NONCOMPLIANT",
+    "TRUE_ACCEPT",
+    "TRUE_DETECTION",
+}
+PROMPT_AUDIT_HISTORY_METRIC_TOKENS = {"HISTORICAL_METRIC", "MEASURED_VALUE"}
+PROMPT_AUDIT_GENERIC_POLICY_TERMS = {
+    "benchmark",
+    "compliance",
+    "expected outcome",
+    "ground truth",
+    "historical",
+    "mutation",
+    "outcome",
+    "verdict",
+}
+PROMPT_AUDIT_NEGATIVE_PREFIX_RE = re.compile(r"\b(do not|don't|must never|must not|never|without)\b", re.IGNORECASE)
+PROMPT_AUDIT_SENSITIVE_ASSIGNMENT_RE = re.compile(
+    r"\b(?P<key>"
+    + "|".join(sorted(re.escape(key) for key in PROMPT_AUDIT_SENSITIVE_KEYS))
+    + r")\b\s*[:=]\s*[^\s\]}]+",
+    re.IGNORECASE,
+)
+PROMPT_AUDIT_ABSOLUTE_PATH_RE = re.compile(
+    r"(?i)(?:\b[A-Z]:[\\/]|file://|/home/|/users/|/mnt/)"
+)
+PROMPT_AUDIT_MUTATION_VALUE_RE = re.compile(r"\b(?:FP\d+_CV_\d+|CV[_-]?\d+|WRDATA_[A-Z0-9_]+)\b", re.IGNORECASE)
+PROMPT_AUDIT_BENCHMARK_VALUE_RE = re.compile(
+    r"\b(?:analogcoder[-_ ]?pro|frozen(?:[_ -]?pilot)?(?:[_ -]?v?3)?|p(?:0[1-9]|1\d|2[0-8])(?:_[a-z0-9_]+)?|smoke_p\d{2}_[a-z0-9_]+)\b",
+    re.IGNORECASE,
+)
+PROMPT_AUDIT_DRIVE_PATH_RE = re.compile(r"(?i)\b[A-Z]:[\\/]")
+PROMPT_AUDIT_SAFE_RELATIVE_PATH_PREFIXES = ("analysis/", "knowledge/", "rule/")
+PROVIDER_SMOKE_BLOCKER_ANALYSIS_JSON = RESULTS_DIR / "provider_smoke_blocker_analysis.json"
+PROVIDER_SMOKE_BLOCKER_ANALYSIS_MD = REPORTS_DIR / "provider_smoke_blocker_analysis.md"
+PROVIDER_SMOKE_SANITIZED_PAYLOAD_JSON = RESULTS_DIR / "provider_smoke_sanitized_payload.json"
+PROVIDER_SMOKE_FIX_COMMIT_MANIFEST_CSV = RESULTS_DIR / "provider_smoke_fix_commit_manifest.csv"
+PROVIDER_SMOKE_FIX_COMMIT_PLAN_MD = REPORTS_DIR / "provider_smoke_fix_commit_plan.md"
+
+
+@dataclass(frozen=True)
+class PromptAuditInput:
+    system_policy: str
+    retrieved_knowledge: Any
+    sanitized_dynamic_payload: dict[str, Any]
+    output_schema_instruction: str
+    stage: str
+    opaque_case_id: str
+    trial_id: str
+
+    def prompt_sha256(self) -> str:
+        return json_sha256(
+            {
+                "system_policy": self.system_policy,
+                "retrieved_knowledge": _normalize_prompt_audit_value(self.retrieved_knowledge),
+                "sanitized_dynamic_payload": _normalize_prompt_audit_value(self.sanitized_dynamic_payload),
+                "output_schema_instruction": self.output_schema_instruction,
+            }
+        )
+
+
+@dataclass
+class ZoneAudit:
+    section: str
+    safe: bool = True
+    ground_truth_found: bool = False
+    historical_verdict_found: bool = False
+    historical_metric_found: bool = False
+    mutation_id_found: bool = False
+    benchmark_name_found: bool = False
+    local_path_found: bool = False
+    actual_sensitive_value_present: bool = False
+    negative_policy_instruction_only: bool = False
+    matched_rules: list[str] = field(default_factory=list)
+    rejection_reasons: list[str] = field(default_factory=list)
+
+    def observe(self, code: str) -> None:
+        if code not in self.matched_rules:
+            self.matched_rules.append(code)
+
+    def reject(
+        self,
+        code: str,
+        *,
+        ground_truth: bool = False,
+        historical_verdict: bool = False,
+        historical_metric: bool = False,
+        mutation_id: bool = False,
+        benchmark_name: bool = False,
+        local_path: bool = False,
+        actual_sensitive_value: bool = True,
+    ) -> None:
+        self.safe = False
+        self.observe(code)
+        if code not in self.rejection_reasons:
+            self.rejection_reasons.append(code)
+        self.ground_truth_found = self.ground_truth_found or ground_truth
+        self.historical_verdict_found = self.historical_verdict_found or historical_verdict
+        self.historical_metric_found = self.historical_metric_found or historical_metric
+        self.mutation_id_found = self.mutation_id_found or mutation_id
+        self.benchmark_name_found = self.benchmark_name_found or benchmark_name
+        self.local_path_found = self.local_path_found or local_path
+        self.actual_sensitive_value_present = self.actual_sensitive_value_present or actual_sensitive_value
+
+
+@dataclass
+class PromptLeakageAuditResult:
+    stage: str
+    opaque_case_id: str
+    trial_id: str
+    system_policy_safe: bool
+    retrieved_knowledge_safe: bool
+    dynamic_payload_safe: bool
+    schema_instruction_safe: bool
+    ground_truth_found: bool
+    historical_verdict_found: bool
+    historical_metric_found: bool
+    mutation_id_found: bool
+    benchmark_name_found: bool
+    local_path_found: bool
+    actual_sensitive_value_present: bool
+    negative_policy_instruction_only: bool
+    matched_sections: list[str]
+    matched_rules: list[str]
+    finding_count: int
+    rejection_reasons: list[str]
+    prompt_safe: bool
+    prompt_sha256: str
+    run_id: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "stage": self.stage,
+            "opaque_case_id": self.opaque_case_id,
+            "trial_id": self.trial_id,
+            "run_id": self.run_id,
+            "system_policy_safe": self.system_policy_safe,
+            "retrieved_knowledge_safe": self.retrieved_knowledge_safe,
+            "dynamic_payload_safe": self.dynamic_payload_safe,
+            "schema_instruction_safe": self.schema_instruction_safe,
+            "ground_truth_found": self.ground_truth_found,
+            "historical_verdict_found": self.historical_verdict_found,
+            "historical_metric_found": self.historical_metric_found,
+            "mutation_id_found": self.mutation_id_found,
+            "benchmark_name_found": self.benchmark_name_found,
+            "local_path_found": self.local_path_found,
+            "actual_sensitive_value_present": self.actual_sensitive_value_present,
+            "negative_policy_instruction_only": self.negative_policy_instruction_only,
+            "matched_sections": json.dumps(self.matched_sections, ensure_ascii=True),
+            "matched_rules": json.dumps(self.matched_rules, ensure_ascii=True),
+            "finding_count": self.finding_count,
+            "rejection_reasons": json.dumps(self.rejection_reasons, ensure_ascii=True),
+            "prompt_safe": self.prompt_safe,
+            "prompt_sha256": self.prompt_sha256,
+        }
 
 
 @dataclass(frozen=True)
@@ -228,12 +427,234 @@ def read_json(path: Path, default: Any) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def current_run_id() -> str:
+    return os.getenv("DEEPSEEK_LIVE_RUN_ID", "").strip()
+
+
+def current_execution_mode() -> str:
+    return os.getenv("DEEPSEEK_LIVE_EXECUTION_MODE", "LIVE").strip().upper() or "LIVE"
+
+
 def append_csv_rows(path: Path, rows: list[dict[str, Any]]) -> None:
     if not rows:
         return
     existing = read_csv(path)
     combined = existing + [{key: value for key, value in row.items()} for row in rows]
     write_csv(path, combined)
+
+
+def _normalize_prompt_audit_value(value: Any) -> Any:
+    if hasattr(value, "model_dump"):
+        return _normalize_prompt_audit_value(value.model_dump(mode="json"))
+    if hasattr(value, "dict") and callable(value.dict):
+        return _normalize_prompt_audit_value(value.dict())
+    if isinstance(value, dict):
+        return {str(key): _normalize_prompt_audit_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple, set)):
+        return [_normalize_prompt_audit_value(item) for item in value]
+    return value
+
+
+def _iter_prompt_audit_nodes(value: Any, *, path: str) -> list[tuple[str, Any]]:
+    normalized = _normalize_prompt_audit_value(value)
+    if isinstance(normalized, dict):
+        nodes: list[tuple[str, Any]] = []
+        for key, item in normalized.items():
+            child_path = f"{path}.{key}" if path else str(key)
+            nodes.extend(_iter_prompt_audit_nodes(item, path=child_path))
+        return nodes
+    if isinstance(normalized, list):
+        nodes = []
+        for index, item in enumerate(normalized):
+            child_path = f"{path}[{index}]"
+            nodes.extend(_iter_prompt_audit_nodes(item, path=child_path))
+        return nodes
+    return [(path, normalized)]
+
+
+def _safe_prompt_audit_path(path: str) -> str:
+    return path.replace("\\", "/")
+
+
+def _is_safe_relative_prompt_path(text: str) -> bool:
+    lowered = text.strip().replace("\\", "/").lower()
+    return any(lowered.startswith(prefix) for prefix in PROMPT_AUDIT_SAFE_RELATIVE_PATH_PREFIXES)
+
+
+def _string_contains_prompt_audit_value(text: str, tokens: set[str]) -> bool:
+    upper = text.upper()
+    return any(token in upper for token in tokens)
+
+
+def _key_flag_kwargs(normalized_key: str) -> dict[str, bool]:
+    return {
+        "ground_truth": normalized_key in PROMPT_AUDIT_GROUND_TRUTH_KEYS,
+        "historical_verdict": normalized_key in PROMPT_AUDIT_HISTORICAL_VERDICT_KEYS,
+        "historical_metric": normalized_key in PROMPT_AUDIT_HISTORICAL_METRIC_KEYS,
+        "mutation_id": normalized_key in PROMPT_AUDIT_MUTATION_KEYS,
+        "benchmark_name": normalized_key in PROMPT_AUDIT_BENCHMARK_KEYS,
+        "local_path": normalized_key in PROMPT_AUDIT_LOCAL_PATH_KEYS,
+    }
+
+
+def _value_flag_kwargs(text: str) -> dict[str, bool]:
+    upper = text.upper()
+    return {
+        "ground_truth": any(token in upper for token in GROUND_TRUTH_TOKENS if token.startswith("GROUND_TRUTH")),
+        "historical_verdict": _string_contains_prompt_audit_value(text, PROMPT_AUDIT_SENSITIVE_VALUE_TOKENS),
+        "historical_metric": _string_contains_prompt_audit_value(text, PROMPT_AUDIT_HISTORY_METRIC_TOKENS),
+        "mutation_id": bool(PROMPT_AUDIT_MUTATION_VALUE_RE.search(text)),
+        "benchmark_name": bool(PROMPT_AUDIT_BENCHMARK_VALUE_RE.search(text)),
+        "local_path": bool(PROMPT_AUDIT_ABSOLUTE_PATH_RE.search(text)) and not _is_safe_relative_prompt_path(text),
+    }
+
+
+def _line_is_negative_instruction(line: str, *, in_negative_block: bool) -> bool:
+    lowered = line.strip().lower()
+    if not lowered:
+        return False
+    if PROMPT_AUDIT_NEGATIVE_PREFIX_RE.search(lowered):
+        return True
+    if in_negative_block and lowered.startswith("-"):
+        return True
+    return False
+
+
+def _audit_text_zone(section: str, text: str) -> ZoneAudit:
+    audit = ZoneAudit(section=section)
+    negative_lines: list[str] = []
+    generic_term_lines: list[str] = []
+    in_negative_block = False
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        lowered = line.lower()
+        if not line:
+            in_negative_block = False
+            continue
+        if "must never" in lowered or "must not" in lowered or lowered.endswith("never:"):
+            in_negative_block = True
+        if any(term in lowered for term in PROMPT_AUDIT_GENERIC_POLICY_TERMS):
+            generic_term_lines.append(line)
+            if _line_is_negative_instruction(line, in_negative_block=in_negative_block):
+                negative_lines.append(line)
+                audit.observe(f"{section.upper()}_NEGATIVE_POLICY_INSTRUCTION")
+        assignment_match = PROMPT_AUDIT_SENSITIVE_ASSIGNMENT_RE.search(line)
+        if assignment_match:
+            normalized_key = assignment_match.group("key").lower()
+            audit.reject(
+                f"{section.upper()}_SENSITIVE_ASSIGNMENT@{normalized_key}",
+                **_key_flag_kwargs(normalized_key),
+            )
+        if PROMPT_AUDIT_ABSOLUTE_PATH_RE.search(line) and not _is_safe_relative_prompt_path(line):
+            audit.reject(f"{section.upper()}_ABSOLUTE_LOCAL_PATH", local_path=True)
+        if _string_contains_prompt_audit_value(line, PROMPT_AUDIT_SENSITIVE_VALUE_TOKENS):
+            audit.reject(f"{section.upper()}_SENSITIVE_HISTORY_VALUE", historical_verdict=True)
+        if _string_contains_prompt_audit_value(line, PROMPT_AUDIT_HISTORY_METRIC_TOKENS):
+            audit.reject(f"{section.upper()}_SENSITIVE_HISTORY_METRIC", historical_metric=True)
+        if any(token in line.upper() for token in GROUND_TRUTH_TOKENS if token.startswith("GROUND_TRUTH")):
+            audit.reject(f"{section.upper()}_GROUND_TRUTH_LABEL", ground_truth=True)
+        if PROMPT_AUDIT_MUTATION_VALUE_RE.search(line):
+            audit.reject(f"{section.upper()}_MUTATION_IDENTIFIER", mutation_id=True)
+        if PROMPT_AUDIT_BENCHMARK_VALUE_RE.search(line):
+            audit.reject(f"{section.upper()}_BENCHMARK_IDENTIFIER", benchmark_name=True)
+    audit.negative_policy_instruction_only = bool(generic_term_lines) and len(generic_term_lines) == len(negative_lines) and audit.safe
+    return audit
+
+
+def _audit_dynamic_zone(section: str, payload: Any) -> ZoneAudit:
+    audit = ZoneAudit(section=section)
+    normalized = _normalize_prompt_audit_value(payload)
+    if isinstance(normalized, dict):
+        for key, value in normalized.items():
+            normalized_key = str(key).lower()
+            safe_path = _safe_prompt_audit_path(f"{section}.{key}")
+            if normalized_key in PROMPT_AUDIT_SENSITIVE_KEYS:
+                audit.reject(
+                    f"{section.upper()}_FORBIDDEN_KEY@{safe_path}",
+                    **_key_flag_kwargs(normalized_key),
+                )
+            child_audit = _audit_dynamic_zone(safe_path, value)
+            audit.safe = audit.safe and child_audit.safe
+            audit.ground_truth_found = audit.ground_truth_found or child_audit.ground_truth_found
+            audit.historical_verdict_found = audit.historical_verdict_found or child_audit.historical_verdict_found
+            audit.historical_metric_found = audit.historical_metric_found or child_audit.historical_metric_found
+            audit.mutation_id_found = audit.mutation_id_found or child_audit.mutation_id_found
+            audit.benchmark_name_found = audit.benchmark_name_found or child_audit.benchmark_name_found
+            audit.local_path_found = audit.local_path_found or child_audit.local_path_found
+            audit.actual_sensitive_value_present = (
+                audit.actual_sensitive_value_present or child_audit.actual_sensitive_value_present
+            )
+            for code in child_audit.matched_rules:
+                audit.observe(code)
+            for code in child_audit.rejection_reasons:
+                if code not in audit.rejection_reasons:
+                    audit.rejection_reasons.append(code)
+        return audit
+    if isinstance(normalized, list):
+        for index, item in enumerate(normalized):
+            child_audit = _audit_dynamic_zone(f"{section}[{index}]", item)
+            audit.safe = audit.safe and child_audit.safe
+            audit.ground_truth_found = audit.ground_truth_found or child_audit.ground_truth_found
+            audit.historical_verdict_found = audit.historical_verdict_found or child_audit.historical_verdict_found
+            audit.historical_metric_found = audit.historical_metric_found or child_audit.historical_metric_found
+            audit.mutation_id_found = audit.mutation_id_found or child_audit.mutation_id_found
+            audit.benchmark_name_found = audit.benchmark_name_found or child_audit.benchmark_name_found
+            audit.local_path_found = audit.local_path_found or child_audit.local_path_found
+            audit.actual_sensitive_value_present = (
+                audit.actual_sensitive_value_present or child_audit.actual_sensitive_value_present
+            )
+            for code in child_audit.matched_rules:
+                audit.observe(code)
+            for code in child_audit.rejection_reasons:
+                if code not in audit.rejection_reasons:
+                    audit.rejection_reasons.append(code)
+        return audit
+    if isinstance(normalized, str):
+        if PROMPT_AUDIT_ABSOLUTE_PATH_RE.search(normalized) and not _is_safe_relative_prompt_path(normalized):
+            audit.reject(f"{section.upper()}_ABSOLUTE_LOCAL_PATH@{_safe_prompt_audit_path(section)}", local_path=True)
+        value_flags = _value_flag_kwargs(normalized)
+        if value_flags["historical_verdict"]:
+            audit.reject(f"{section.upper()}_SENSITIVE_HISTORY_VALUE@{_safe_prompt_audit_path(section)}", historical_verdict=True)
+        if value_flags["historical_metric"]:
+            audit.reject(f"{section.upper()}_SENSITIVE_HISTORY_METRIC@{_safe_prompt_audit_path(section)}", historical_metric=True)
+        if value_flags["ground_truth"]:
+            audit.reject(f"{section.upper()}_GROUND_TRUTH_LABEL@{_safe_prompt_audit_path(section)}", ground_truth=True)
+        if value_flags["mutation_id"]:
+            audit.reject(f"{section.upper()}_MUTATION_IDENTIFIER@{_safe_prompt_audit_path(section)}", mutation_id=True)
+        if value_flags["benchmark_name"]:
+            audit.reject(f"{section.upper()}_BENCHMARK_IDENTIFIER@{_safe_prompt_audit_path(section)}", benchmark_name=True)
+    return audit
+
+
+def build_prompt_audit_input(
+    *,
+    stage: str,
+    opaque_case_id: str,
+    trial_id: str,
+    system_prompt: str,
+    request_payload: dict[str, Any],
+) -> PromptAuditInput:
+    normalized_payload = _normalize_prompt_audit_value(request_payload)
+    retrieved_knowledge = normalized_payload.get("knowledge_bundle", {})
+    output_schema_instruction = json.dumps(
+        normalized_payload.get("response_schema", {}),
+        sort_keys=True,
+        ensure_ascii=True,
+    )
+    sanitized_dynamic_payload = {
+        key: value
+        for key, value in normalized_payload.items()
+        if key not in {"knowledge_bundle", "response_schema"}
+    }
+    return PromptAuditInput(
+        system_policy=system_prompt,
+        retrieved_knowledge=retrieved_knowledge,
+        sanitized_dynamic_payload=sanitized_dynamic_payload,
+        output_schema_instruction=output_schema_instruction,
+        stage=stage,
+        opaque_case_id=opaque_case_id,
+        trial_id=trial_id,
+    )
 
 
 def _is_text_file(path: Path) -> bool:
@@ -694,6 +1115,7 @@ def collect_git_state() -> dict[str, Any]:
     modified_paths = [path for _, path in (parse_status_line(line) for line in modified_lines) if path]
     paper_modified = bool(paper_diff.strip()) or any(path.startswith("paper_final/") for path in modified_paths)
     benchmark_modified = any(path.startswith("benchmark/analogcoder_pro/") for path in modified_paths)
+    knowledge_modified = any(path.startswith("knowledge/") for path in modified_paths)
     frozen_v3_modified = any(
         path.startswith("experiments/frozen_pilot_v3/")
         or path == "results/frozen_pilot_results_v3.csv"
@@ -718,6 +1140,7 @@ def collect_git_state() -> dict[str, Any]:
         and scientific_worktree_clean
         and not paper_modified
         and not benchmark_modified
+        and not knowledge_modified
         and not frozen_v3_modified
         and spice_book_pdf_ignored
     )
@@ -731,6 +1154,7 @@ def collect_git_state() -> dict[str, Any]:
         "paper_diff": paper_diff.strip(),
         "paper_files_modified": paper_modified,
         "original_benchmark_files_modified": benchmark_modified,
+        "knowledge_files_modified": knowledge_modified,
         "frozen_v3_files_modified": frozen_v3_modified,
         "scientific_worktree_clean": scientific_worktree_clean,
         "scientific_dirty_paths": scientific_dirty_paths,
@@ -1341,7 +1765,23 @@ def live_guard_state(*, require_full_campaign: bool) -> dict[str, Any]:
     }
 
 
-def run_model_discovery() -> dict[str, Any]:
+def run_model_discovery(*, dry_run: bool = False) -> dict[str, Any]:
+    if dry_run:
+        validation = load_model_discovery_reuse_state()
+        return {
+            "stage": "model_discovery",
+            "timestamp": utc_now_iso(),
+            "run_id": current_run_id(),
+            "execution_mode": "DRY_RUN",
+            "configured_model": validation["configured_model"],
+            "configured_model_available": validation["configured_model_available"],
+            "artifact_reused": validation["reused_from_artifact"],
+            "artifact_live_confirmed": validation["live_confirmed"],
+            "artifact_timestamp": validation["artifact_timestamp"],
+            "artifact_response_sha256": validation["artifact_response_sha256"],
+            "validation_errors": validation["errors"],
+            "GO_MODEL_DISCOVERY": "PASS" if validation["valid"] else "NO_GO",
+        }
     context = load_stage_context()
     guard = live_guard_state(require_full_campaign=False)
     config = DeepSeekProviderConfig.from_env()
@@ -1397,6 +1837,29 @@ def run_model_discovery() -> dict[str, Any]:
             result["campaign_model_status"] = "READY"
             result["suitable_for_canonical_reporting"] = True
             result["go_model_discovery"] = "PASS"
+            append_csv_rows(
+                LIVE_CALL_AUDIT_CSV,
+                [
+                    {
+                        "stage": "model_discovery",
+                        "run_id": current_run_id(),
+                        "case_id": "model_discovery",
+                        "opaque_case_id": "model_discovery",
+                        "trial_id": "trial_01",
+                        "provider_call_performed": True,
+                        "provider_boundary_reached": True,
+                        "provider_status": "SUCCESS",
+                        "latency_seconds": 0.0,
+                        "prompt_tokens": 0,
+                        "completion_tokens": 0,
+                        "total_tokens": 0,
+                        "retries": 0,
+                        "cache_key": "",
+                        "prompt_sha256": "",
+                        "knowledge_bundle_sha256": "",
+                    }
+                ],
+            )
     write_json(RESULTS_DIR / "model_discovery.json", result)
     write_markdown(
         REPORTS_DIR / "model_discovery.md",
@@ -1478,47 +1941,367 @@ def sanitized_specification(source: Specification, opaque_case_id: str) -> Speci
 
 def audit_prompt_payload(
     *,
-    stage: str,
-    internal_case_id: str,
-    opaque_case_id: str,
-    trial_id: str,
-    system_prompt: str,
-    request_payload: dict[str, Any],
+    stage: str | None = None,
+    internal_case_id: str | None = None,
+    opaque_case_id: str | None = None,
+    trial_id: str | None = None,
+    system_prompt: str | None = None,
+    request_payload: dict[str, Any] | None = None,
+    audit_input: PromptAuditInput | None = None,
 ) -> dict[str, Any]:
-    combined = f"{system_prompt}\n{json.dumps(request_payload, sort_keys=True, ensure_ascii=True)}"
-    combined_upper = combined.upper()
-    ground_truth_found = any(token in combined_upper for token in GROUND_TRUTH_TOKENS)
-    historical_verdict_found = any(token in combined_upper for token in {"PASS", "FAIL", "TRUE_ACCEPT", "TRUE_DETECTION", "FALSE_ACCEPT", "FALSE_REJECT"})
-    historical_metric_found = "MEASURED_VALUE" in combined_upper or "HISTORICAL_METRIC" in combined_upper
-    mutation_id_found = bool(re.search(r"\b(FP\d+_CV_\d+|MUTATION_ID|WRDATA_)", combined_upper))
-    benchmark_name_found = "ANALOGCODER-PRO" in combined_upper or "FROZEN PILOT" in combined_upper or internal_case_id.upper() in combined_upper
-    local_path_found = bool(re.search(r"[A-Za-z]:\\\\|[A-Za-z]:/|benchmark/analogcoder_pro/|paper_final/", combined))
-    unsafe_comment_found = bool(re.search(r"IGNORE PREVIOUS|EXPECTED_VERDICT|GROUND_TRUTH|NONCOMPLIANT", combined_upper))
-    prompt_safe = not any(
+    if audit_input is None:
+        if stage is None or opaque_case_id is None or trial_id is None or system_prompt is None or request_payload is None:
+            raise ValueError("audit_prompt_payload requires either audit_input or explicit prompt components.")
+        audit_input = build_prompt_audit_input(
+            stage=stage,
+            opaque_case_id=opaque_case_id,
+            trial_id=trial_id,
+            system_prompt=system_prompt,
+            request_payload=request_payload,
+        )
+    system_audit = _audit_text_zone("system_policy", audit_input.system_policy)
+    knowledge_audit = _audit_dynamic_zone("retrieved_knowledge", audit_input.retrieved_knowledge)
+    payload_audit = _audit_dynamic_zone("sanitized_dynamic_payload", audit_input.sanitized_dynamic_payload)
+    schema_audit = _audit_text_zone("output_schema_instruction", audit_input.output_schema_instruction)
+
+    zone_audits = [system_audit, knowledge_audit, payload_audit, schema_audit]
+    matched_sections = [zone.section for zone in zone_audits if zone.matched_rules]
+    matched_rules = list(dict.fromkeys(code for zone in zone_audits for code in zone.matched_rules))
+    rejection_reasons = list(dict.fromkeys(code for zone in zone_audits for code in zone.rejection_reasons))
+    prompt_safe = all(zone.safe for zone in zone_audits)
+    result = PromptLeakageAuditResult(
+        stage=audit_input.stage,
+        opaque_case_id=audit_input.opaque_case_id,
+        trial_id=audit_input.trial_id,
+        run_id=current_run_id(),
+        system_policy_safe=system_audit.safe,
+        retrieved_knowledge_safe=knowledge_audit.safe,
+        dynamic_payload_safe=payload_audit.safe,
+        schema_instruction_safe=schema_audit.safe,
+        ground_truth_found=any(zone.ground_truth_found for zone in zone_audits),
+        historical_verdict_found=any(zone.historical_verdict_found for zone in zone_audits),
+        historical_metric_found=any(zone.historical_metric_found for zone in zone_audits),
+        mutation_id_found=any(zone.mutation_id_found for zone in zone_audits),
+        benchmark_name_found=any(zone.benchmark_name_found for zone in zone_audits),
+        local_path_found=any(zone.local_path_found for zone in zone_audits),
+        actual_sensitive_value_present=any(zone.actual_sensitive_value_present for zone in zone_audits),
+        negative_policy_instruction_only=prompt_safe
+        and any(code.endswith("NEGATIVE_POLICY_INSTRUCTION") for code in matched_rules)
+        and not rejection_reasons,
+        matched_sections=matched_sections,
+        matched_rules=matched_rules,
+        finding_count=len(matched_rules),
+        rejection_reasons=rejection_reasons,
+        prompt_safe=prompt_safe,
+        prompt_sha256=audit_input.prompt_sha256(),
+    )
+    return result.to_dict()
+
+
+def validate_model_discovery_artifact(payload: dict[str, Any]) -> dict[str, Any]:
+    errors: list[str] = []
+    configured_model = str(payload.get("configured_model", "") or "")
+    model_ids = payload.get("model_ids", [])
+    base_url = str(payload.get("base_url", "") or "").rstrip("/")
+    if not payload:
+        errors.append("artifact_missing")
+    if not payload.get("api_key_configured"):
+        errors.append("api_key_not_configured")
+    if base_url != "https://api.deepseek.com":
+        errors.append("unexpected_base_url")
+    if payload.get("http_status") != 200:
+        errors.append("http_status_not_200")
+    if not configured_model:
+        errors.append("configured_model_missing")
+    if payload.get("configured_model_available") is not True:
+        errors.append("configured_model_not_available")
+    if payload.get("go_model_discovery") != "PASS":
+        errors.append("go_model_discovery_not_pass")
+    if not str(payload.get("response_sha256", "") or "").strip():
+        errors.append("response_sha256_missing")
+    if not str(payload.get("timestamp", "") or "").strip():
+        errors.append("timestamp_missing")
+    if configured_model and configured_model not in model_ids:
+        errors.append("configured_model_not_in_model_ids")
+    live_confirmed = payload.get("http_status") == 200 and bool(str(payload.get("response_sha256", "") or "").strip())
+    return {
+        "valid": not errors,
+        "errors": errors,
+        "artifact_exists": bool(payload),
+        "configured_model": configured_model,
+        "configured_model_available": payload.get("configured_model_available") is True,
+        "artifact_timestamp": str(payload.get("timestamp", "") or ""),
+        "artifact_response_sha256": str(payload.get("response_sha256", "") or ""),
+        "models_returned": int(payload.get("models_returned", 0) or 0),
+        "http_status": payload.get("http_status"),
+        "base_url": base_url,
+        "model_ids": list(model_ids) if isinstance(model_ids, list) else [],
+        "live_confirmed": live_confirmed,
+        "reused_from_artifact": not errors,
+        "performed_current_run": False,
+    }
+
+
+def load_model_discovery_reuse_state() -> dict[str, Any]:
+    validation = validate_model_discovery_artifact(read_json(RESULTS_DIR / "model_discovery.json", {}))
+    return {
+        "GO_MODEL_DISCOVERY": "PASS" if validation["valid"] else "NO_GO",
+        **validation,
+    }
+
+
+def build_provider_smoke_prompt_audit_input() -> PromptAuditInput:
+    system_prompt = PROMPT_PATH.read_text(encoding="utf-8")
+    retrieved_knowledge = {
+        "rule_ids": [
+            "CHECKER_DOES_NOT_INFER_PASS_FROM_MISSING_EVIDENCE",
+            "MISSING_METRIC_RETURNS_NOT_EVALUATED",
+        ],
+        "recipe_ids": [],
+        "tool_ids": [],
+        "semantic_guard_ids": [],
+        "notes": "Use only the provided schema and capabilities. Do not include a verdict.",
+    }
+    sanitized_dynamic_payload = {
+        "task": "Return one minimal JSON object conforming to TestbenchPlanV2.",
+        "opaque_case_id": "provider_smoke",
+        "requested_metrics": [],
+        "available_analysis_types": ["op"],
+        "available_harness_policies": ["op"],
+        "available_recipe_ids": [],
+        "available_tool_ids": [],
+        "available_semantic_guard_ids": [],
+        "circuit_context": {
+            "kind": "generic_provider_boundary_probe",
+            "description": "No real DUT, benchmark answer, local path, mutation, or historical result is included.",
+            "nodes": [],
+            "components": [],
+        },
+        "provider_mode": "LIVE",
+        "scientific_llm_evidence": False,
+        "prompt_version": PROMPT_VERSION,
+        "schema_version": RESPONSE_SCHEMA_VERSION,
+    }
+    output_schema_instruction = "\n".join(
         [
-            ground_truth_found,
-            historical_verdict_found,
-            historical_metric_found,
-            mutation_id_found,
-            benchmark_name_found,
-            local_path_found,
-            unsafe_comment_found,
+            "Return exactly one JSON object that conforms to the supplied schema.",
+            "Do not include a verdict.",
+            json.dumps(TestbenchPlan.model_json_schema(), sort_keys=True, ensure_ascii=True),
         ]
     )
+    return PromptAuditInput(
+        system_policy=system_prompt,
+        retrieved_knowledge=retrieved_knowledge,
+        sanitized_dynamic_payload=sanitized_dynamic_payload,
+        output_schema_instruction=output_schema_instruction,
+        stage="provider_smoke",
+        opaque_case_id="provider_smoke",
+        trial_id="trial_01",
+    )
+
+
+def _provider_smoke_payload_analysis(audit_result: dict[str, Any], audit_input: PromptAuditInput) -> dict[str, Any]:
+    dynamic_payload = audit_input.sanitized_dynamic_payload
+    serialized_payload = json.dumps(dynamic_payload, sort_keys=True, ensure_ascii=True)
+    sensitive_paths = []
+    benchmark_identifiers = 0
+    frozen_identifiers = 0
+    historical_values = 0
+    local_paths = 0
+    for path, value in _iter_prompt_audit_nodes(dynamic_payload, path="sanitized_dynamic_payload"):
+        path_normalized = _safe_prompt_audit_path(path)
+        key_name = path_normalized.split(".")[-1].split("[", 1)[0].lower()
+        if key_name in PROMPT_AUDIT_SENSITIVE_KEYS:
+            sensitive_paths.append(path_normalized)
+        if isinstance(value, str):
+            if PROMPT_AUDIT_BENCHMARK_VALUE_RE.search(value):
+                benchmark_identifiers += 1
+            if "frozen" in value.lower():
+                frozen_identifiers += 1
+            if _string_contains_prompt_audit_value(value, PROMPT_AUDIT_SENSITIVE_VALUE_TOKENS) or _string_contains_prompt_audit_value(
+                value,
+                PROMPT_AUDIT_HISTORY_METRIC_TOKENS,
+            ):
+                historical_values += 1
+            if PROMPT_AUDIT_ABSOLUTE_PATH_RE.search(value) and not _is_safe_relative_prompt_path(value):
+                local_paths += 1
     return {
-        "stage": stage,
-        "opaque_case_id": opaque_case_id,
-        "trial_id": trial_id,
-        "ground_truth_found": ground_truth_found,
-        "historical_verdict_found": historical_verdict_found,
-        "historical_metric_found": historical_metric_found,
-        "mutation_id_found": mutation_id_found,
-        "benchmark_name_found": benchmark_name_found,
-        "local_path_found": local_path_found,
-        "unsafe_comment_found": unsafe_comment_found,
-        "prompt_safe": prompt_safe,
-        "prompt_sha256": hashlib.sha256(system_prompt.encode("utf-8")).hexdigest(),
+        "opaque_case_id": audit_input.opaque_case_id,
+        "trial_id": audit_input.trial_id,
+        "task": dynamic_payload.get("task", ""),
+        "requested_metrics": dynamic_payload.get("requested_metrics", []),
+        "available_analysis_types": dynamic_payload.get("available_analysis_types", []),
+        "available_harness_policies": dynamic_payload.get("available_harness_policies", []),
+        "available_recipe_ids": dynamic_payload.get("available_recipe_ids", []),
+        "available_tool_ids": dynamic_payload.get("available_tool_ids", []),
+        "available_semantic_guard_ids": dynamic_payload.get("available_semantic_guard_ids", []),
+        "circuit_context": dynamic_payload.get("circuit_context", {}),
+        "dynamic_sensitive_fields": len(sensitive_paths),
+        "benchmark_identifiers": benchmark_identifiers,
+        "frozen_identifiers": frozen_identifiers,
+        "historical_values": historical_values,
+        "local_paths": local_paths,
+        "payload_safe": bool(audit_result["dynamic_payload_safe"]),
+        "prompt_sha256": audit_result["prompt_sha256"],
+        "serialized_payload_sha256": hashlib.sha256(serialized_payload.encode("utf-8")).hexdigest(),
     }
+
+
+def execute_provider_smoke_probe(
+    *,
+    dry_run: bool,
+    provider_boundary_probe: Callable[[dict[str, Any]], None] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
+    model_state = load_model_discovery_reuse_state()
+    audit_input = build_provider_smoke_prompt_audit_input()
+    prompt_audit = audit_prompt_payload(audit_input=audit_input)
+    payload_analysis = _provider_smoke_payload_analysis(prompt_audit, audit_input)
+    write_json(PROVIDER_SMOKE_SANITIZED_PAYLOAD_JSON, payload_analysis)
+
+    provider_boundary_reached = False
+    real_call_attempted = False
+    real_call_completed = False
+    json_valid = None
+    schema_valid = None
+    http_status = None
+    provider_failure = ""
+    prompt_tokens = 0
+    completion_tokens = 0
+    total_tokens = 0
+    latency_seconds = 0.0
+    provider_status = "PROMPT_LEAKAGE_BLOCKED"
+    terminal_status = "PROMPT_LEAKAGE_BLOCKED"
+
+    if prompt_audit["prompt_safe"]:
+        provider_boundary_reached = True
+        if provider_boundary_probe is not None:
+            provider_boundary_probe(
+                {
+                    "stage": "provider_smoke",
+                    "opaque_case_id": audit_input.opaque_case_id,
+                    "trial_id": audit_input.trial_id,
+                    "execution_mode": "DRY_RUN" if dry_run else "LIVE",
+                }
+            )
+        if dry_run:
+            provider_status = "PROVIDER_BOUNDARY_REACHED_DRY_RUN"
+            terminal_status = provider_status
+        else:
+            real_call_attempted = True
+            try:
+                provider_config = DeepSeekProviderConfig.from_env()
+                provider_config.validate_model_selection(allow_empty=False)
+                provider = DeepSeekProvider(provider_config)
+                response = provider.generate(
+                    LLMRequest(
+                        system_prompt=audit_input.system_policy,
+                        user_payload={
+                            "retrieved_knowledge": audit_input.retrieved_knowledge,
+                            "sanitized_dynamic_payload": audit_input.sanitized_dynamic_payload,
+                            "output_schema_instruction": audit_input.output_schema_instruction,
+                        },
+                        response_format={"type": "json_object"},
+                        model=provider_config.model,
+                        temperature=provider_config.temperature,
+                        max_tokens=provider_config.max_tokens,
+                        timeout_seconds=provider_config.timeout_seconds,
+                        metadata={"stage": "provider_smoke"},
+                    )
+                )
+                latency_seconds = float(response.latency_seconds or 0.0)
+                prompt_tokens = int(response.prompt_tokens or 0)
+                completion_tokens = int(response.completion_tokens or 0)
+                total_tokens = int(response.total_tokens or 0)
+                parsed_response = json.loads(response.content)
+                json_valid = isinstance(parsed_response, dict)
+                if json_valid:
+                    TestbenchPlan.model_validate(parsed_response)
+                    schema_valid = True
+                    real_call_completed = True
+                    provider_status = "SUCCESS"
+                    terminal_status = "PROVIDER_SMOKE_COMPLETED"
+                    http_status = 200
+            except Exception as exc:  # noqa: BLE001
+                provider_failure = type(exc).__name__
+                provider_status = type(exc).__name__
+                terminal_status = "PROVIDER_SMOKE_FAILED"
+
+    go_provider_smoke = "NOT_EXECUTED" if dry_run and prompt_audit["prompt_safe"] else "PASS" if schema_valid else "NO_GO"
+    row = {
+        "stage": "provider_smoke",
+        "run_id": current_run_id(),
+        "case_id": "provider_smoke",
+        "opaque_case_id": audit_input.opaque_case_id,
+        "trial_id": audit_input.trial_id,
+        "provider": "deepseek",
+        "provider_mode": "LIVE",
+        "execution_mode": "DRY_RUN" if dry_run else "LIVE",
+        "model": model_state.get("configured_model", ""),
+        "prompt_sha256": prompt_audit["prompt_sha256"],
+        "prompt_safe": prompt_audit["prompt_safe"],
+        "provider_boundary_reached": provider_boundary_reached,
+        "real_call_attempted": real_call_attempted,
+        "real_call_completed": real_call_completed,
+        "json_valid": json_valid,
+        "schema_valid": schema_valid,
+        "http_status": http_status,
+        "provider_failure": provider_failure,
+        "terminal_status": terminal_status,
+        "chat_completion_calls_current_run": 0 if dry_run else int(real_call_attempted),
+        "go_stage": "PASS" if go_provider_smoke == "PASS" else "NOT_EXECUTED" if go_provider_smoke == "NOT_EXECUTED" else "NO_GO",
+    }
+    call_audit = {
+        "stage": "provider_smoke",
+        "run_id": current_run_id(),
+        "case_id": "provider_smoke",
+        "opaque_case_id": audit_input.opaque_case_id,
+        "trial_id": audit_input.trial_id,
+        "provider_call_performed": real_call_attempted,
+        "provider_boundary_reached": provider_boundary_reached,
+        "provider_status": provider_status,
+        "latency_seconds": latency_seconds,
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "total_tokens": total_tokens,
+        "retries": 0,
+        "cache_key": "",
+        "prompt_sha256": prompt_audit["prompt_sha256"],
+        "knowledge_bundle_sha256": "",
+    }
+    budget_row = {
+        "stage": "provider_smoke",
+        "run_id": current_run_id(),
+        "case_id": "provider_smoke",
+        "trial_id": audit_input.trial_id,
+        "latency_seconds": latency_seconds,
+        "prompt_tokens": prompt_tokens,
+        "completion_tokens": completion_tokens,
+        "total_tokens": total_tokens,
+    }
+    result = {
+        "stage": "provider_smoke",
+        "timestamp": utc_now_iso(),
+        "run_id": current_run_id(),
+        "execution_mode": "DRY_RUN" if dry_run else "LIVE",
+        "provider_smoke_prompt_safe": prompt_audit["prompt_safe"],
+        "provider_boundary_reached": provider_boundary_reached,
+        "real_call_attempted": real_call_attempted,
+        "real_call_completed": real_call_completed,
+        "chat_completion_calls_current_run": 0 if dry_run else int(real_call_attempted),
+        "http_status": http_status,
+        "json_valid": json_valid,
+        "schema_valid": schema_valid,
+        "provider_failure": provider_failure,
+        "terminal_status": terminal_status,
+        "payload_safe": payload_analysis["payload_safe"],
+        "dynamic_sensitive_fields": payload_analysis["dynamic_sensitive_fields"],
+        "benchmark_identifiers": payload_analysis["benchmark_identifiers"],
+        "frozen_identifiers": payload_analysis["frozen_identifiers"],
+        "historical_values": payload_analysis["historical_values"],
+        "local_paths": payload_analysis["local_paths"],
+        "GO_PROVIDER_SMOKE": go_provider_smoke,
+    }
+    return result, prompt_audit, call_audit, budget_row
 
 
 def _artifact_dir_for_stage(stage: str, case: CampaignCase, trial_id: str) -> Path:
@@ -1617,6 +2400,7 @@ def execute_live_case(
     if not prompt_audit["prompt_safe"]:
         row = {
             "stage": stage,
+            "run_id": current_run_id(),
             "case_id": case.case_id,
             "opaque_case_id": opaque_case_id,
             "trial_id": trial_id,
@@ -1630,7 +2414,7 @@ def execute_live_case(
             "prompt_version": PROMPT_VERSION,
             "knowledge_version": KNOWLEDGE_VERSION,
             "knowledge_bundle_sha256": bundle.bundle_sha256,
-            "prompt_sha256": prompt_sha,
+            "prompt_sha256": prompt_audit["prompt_sha256"],
             "prompt_safe": False,
             "initial_json_valid": False,
             "final_plan_valid": False,
@@ -1665,6 +2449,7 @@ def execute_live_case(
         }
         call_audit = {
             "stage": stage,
+            "run_id": current_run_id(),
             "case_id": case.case_id,
             "opaque_case_id": opaque_case_id,
             "trial_id": trial_id,
@@ -1681,6 +2466,7 @@ def execute_live_case(
         }
         budget_row = {
             "stage": stage,
+            "run_id": current_run_id(),
             "case_id": case.case_id,
             "trial_id": trial_id,
             "latency_seconds": 0.0,
@@ -1809,6 +2595,7 @@ def execute_live_case(
     )
     row = {
         "stage": stage,
+        "run_id": current_run_id(),
         "case_id": case.case_id,
         "opaque_case_id": opaque_case_id,
         "trial_id": trial_id,
@@ -1822,7 +2609,7 @@ def execute_live_case(
         "prompt_version": PROMPT_VERSION,
         "knowledge_version": KNOWLEDGE_VERSION,
         "knowledge_bundle_sha256": bundle.bundle_sha256,
-        "prompt_sha256": prompt_sha,
+        "prompt_sha256": prompt_audit["prompt_sha256"],
         "prompt_safe": True,
         "initial_json_valid": bool(outcome and outcome.validation.status.value != "INVALID_JSON"),
         "final_plan_valid": bool(outcome and outcome.validation.is_valid),
@@ -1856,6 +2643,7 @@ def execute_live_case(
     attempts = list(metadata.get("attempts", [])) if isinstance(metadata, dict) else []
     call_audit = {
         "stage": stage,
+        "run_id": current_run_id(),
         "case_id": case.case_id,
         "opaque_case_id": opaque_case_id,
         "trial_id": trial_id,
@@ -1867,11 +2655,12 @@ def execute_live_case(
         "total_tokens": total_tokens,
         "retries": sum(1 for attempt in attempts if attempt.get("final_status") == "RETRY"),
         "cache_key": cache_key,
-        "prompt_sha256": prompt_sha,
+        "prompt_sha256": prompt_audit["prompt_sha256"],
         "knowledge_bundle_sha256": bundle.bundle_sha256,
     }
     budget_row = {
         "stage": stage,
+        "run_id": current_run_id(),
         "case_id": case.case_id,
         "trial_id": trial_id,
         "latency_seconds": row["generation_latency_s"],
@@ -2026,17 +2815,62 @@ def run_case_batch(
 
 
 def run_provider_smoke() -> dict[str, Any]:
-    return run_case_batch(
-        stage="provider_smoke",
-        cases=[default_use_case_cases()[3] if len(default_use_case_cases()) > 3 else default_use_case_cases()[0]],
-        trials=1,
-        output_csv=RESULTS_DIR / "provider_smoke_calls.csv",
-        output_json=RESULTS_DIR / "provider_smoke.json",
-        output_md=REPORTS_DIR / "provider_smoke.md",
-        go_field="GO_PROVIDER_SMOKE",
-        require_full_campaign=False,
-        max_repairs=int(os.getenv("DEEPSEEK_MAX_REPAIRS_SINGLE_CASE", "2")),
+    dry_run = current_execution_mode() == "DRY_RUN"
+    context = load_stage_context()
+    model_state = load_model_discovery_reuse_state()
+    if context["secret_audit"]["go_secret_safety"] != "PASS":
+        return blocked_stage_result(
+            stage="provider_smoke",
+            output_json=RESULTS_DIR / "provider_smoke.json",
+            output_md=REPORTS_DIR / "provider_smoke.md",
+            go_field="GO_PROVIDER_SMOKE",
+            reason="BLOCKED_BY_SECRET_AUDIT",
+        )
+    if model_state["GO_MODEL_DISCOVERY"] != "PASS":
+        return blocked_stage_result(
+            stage="provider_smoke",
+            output_json=RESULTS_DIR / "provider_smoke.json",
+            output_md=REPORTS_DIR / "provider_smoke.md",
+            go_field="GO_PROVIDER_SMOKE",
+            reason="BLOCKED_BY_MODEL_DISCOVERY",
+        )
+    if not dry_run and context["pre_live_manifest"]["go_code_freeze"] != "PASS":
+        return blocked_stage_result(
+            stage="provider_smoke",
+            output_json=RESULTS_DIR / "provider_smoke.json",
+            output_md=REPORTS_DIR / "provider_smoke.md",
+            go_field="GO_PROVIDER_SMOKE",
+            reason="BLOCKED_BY_CODE_FREEZE",
+        )
+    if not dry_run and live_guard_state(require_full_campaign=False)["status"] != "READY":
+        return blocked_stage_result(
+            stage="provider_smoke",
+            output_json=RESULTS_DIR / "provider_smoke.json",
+            output_md=REPORTS_DIR / "provider_smoke.md",
+            go_field="GO_PROVIDER_SMOKE",
+            reason=live_guard_state(require_full_campaign=False)["status"],
+        )
+    result, prompt_audit, call_audit, budget_row = execute_provider_smoke_probe(dry_run=dry_run)
+    write_csv(RESULTS_DIR / "provider_smoke_calls.csv", [result])
+    write_json(RESULTS_DIR / "provider_smoke.json", result)
+    append_csv_rows(PROMPT_AUDIT_CSV, [prompt_audit])
+    append_csv_rows(LIVE_CALL_AUDIT_CSV, [call_audit])
+    append_csv_rows(LIVE_BUDGET_CSV, [budget_row])
+    write_markdown(
+        REPORTS_DIR / "provider_smoke.md",
+        [
+            "# DeepSeek Provider Smoke",
+            "",
+            f"- Timestamp: {result['timestamp']}",
+            f"- Execution mode: {result['execution_mode']}",
+            f"- Prompt safe: {str(result['provider_smoke_prompt_safe']).lower()}",
+            f"- Provider boundary reached: {str(result['provider_boundary_reached']).lower()}",
+            f"- Real call attempted: {str(result['real_call_attempted']).lower()}",
+            f"- Chat completion calls current run: {result['chat_completion_calls_current_run']}",
+            f"- GO_PROVIDER_SMOKE: {result['GO_PROVIDER_SMOKE']}",
+        ],
     )
+    return result
 
 
 def run_single_case(stage: str) -> dict[str, Any]:
@@ -2319,11 +3153,211 @@ def compare_deterministic_stub_deepseek() -> dict[str, Any]:
     return comparison
 
 
-def build_deepseek_live_summary() -> dict[str, Any]:
+def _csv_truthy(value: Any) -> bool:
+    return str(value).strip().lower() == "true"
+
+
+def build_provider_smoke_blocker_analysis() -> dict[str, Any]:
+    prompt_text = PROMPT_PATH.read_text(encoding="utf-8")
+    triggering_line = next(
+        (line.strip() for line in prompt_text.splitlines() if "compliance verdict or expected outcome" in line),
+        "- return a compliance verdict or expected outcome;",
+    )
+    call_rows = read_csv(LIVE_CALL_AUDIT_CSV)
+    provider_called = any(
+        row.get("stage") == "provider_smoke" and _csv_truthy(row.get("provider_call_performed"))
+        for row in call_rows
+    )
+    analysis = {
+        "root_cause": "Naive monolithic full-prompt substring scanning treated generic security-policy wording as leaked historical verdict data.",
+        "triggering_line": triggering_line,
+        "triggering_pattern": "generic verdict/outcome wording inside the system policy scanned without zone awareness",
+        "matched_section": "system_policy",
+        "actual_sensitive_value_present": False,
+        "negative_security_instruction": True,
+        "false_positive": True,
+        "provider_called": provider_called,
+        "chat_completion_called": provider_called,
+        "recommended_code_changes": [
+            "split_prompt_into_zones",
+            "audit_dynamic_payload_recursively",
+            "treat_negative_policy_instructions_as_safe",
+            "reuse_model_discovery_artifact_in_dry_run",
+            "stop_provider_smoke_at_boundary_in_dry_run",
+            "use_stage_specific_reporting_templates",
+        ],
+    }
+    write_json(PROVIDER_SMOKE_BLOCKER_ANALYSIS_JSON, analysis)
+    write_markdown(
+        PROVIDER_SMOKE_BLOCKER_ANALYSIS_MD,
+        [
+            "# Provider Smoke Blocker Analysis",
+            "",
+            f"- Root cause: {analysis['root_cause']}",
+            f"- Triggering line: {analysis['triggering_line']}",
+            f"- Triggering pattern: {analysis['triggering_pattern']}",
+            f"- Matched section: {analysis['matched_section']}",
+            f"- Actual sensitive value present: {str(analysis['actual_sensitive_value_present']).lower()}",
+            f"- Negative security instruction: {str(analysis['negative_security_instruction']).lower()}",
+            f"- False positive: {str(analysis['false_positive']).lower()}",
+            f"- Provider called: {str(analysis['provider_called']).lower()}",
+            f"- Chat completion called: {str(analysis['chat_completion_called']).lower()}",
+            "",
+            "## Recommended Code Changes",
+            *(f"- {item}" for item in analysis["recommended_code_changes"]),
+        ],
+    )
+    return analysis
+
+
+def _comparison_for_stage(requested_stage: str) -> dict[str, Any]:
+    if requested_stage in {"frozen_trial_1", "frozen_trials_2_3", "post_live_deterministic", "final_summary"}:
+        return compare_deterministic_stub_deepseek()
+    return {"status": "NOT_APPLICABLE"}
+
+
+def _provider_smoke_report_lines(summary: dict[str, Any]) -> list[str]:
+    worktree = summary["worktree"]
+    network = summary["network_accounting"]
+    model = summary["model_discovery"]
+    prompt = summary["prompt_audits"]
+    provider_smoke = summary["provider_smoke"]
+    ready = summary["ready"]
+    tests = summary["tests"]
+    pytest_counts = tests.get("pytest", {})
+    return [
+        "DEEPSEEK PROVIDER SMOKE — FINAL STATUS",
+        "",
+        "SAFETY",
+        f"Branch: {worktree['branch']}",
+        f"Commit: {worktree['git_commit']}",
+        f"Scientific worktree clean: {str(worktree['scientific_worktree_clean']).lower()}",
+        f"Paper modified: {str(worktree['paper_modified']).lower()}",
+        f"Original benchmarks modified: {str(worktree['original_benchmarks_modified']).lower()}",
+        f"Frozen V3 modified: {str(worktree['frozen_v3_modified']).lower()}",
+        f"Knowledge modified: {str(worktree['knowledge_modified']).lower()}",
+        f"Live chat calls current run: {network['chat_completion_calls_current_run']}",
+        f"Network calls current run: {network['current_run_network_calls']}",
+        f"Campaign known network calls: {network['campaign_known_network_calls']}",
+        f"API key configured: {str(model['api_key_configured']).lower()}",
+        f"API key logged: {str(summary['secret_audit']['api_key_logged']).lower()}",
+        f"Authorization logged: {str(summary['secret_audit']['authorization_logged']).lower()}",
+        "Mock executions: 0",
+        "",
+        "MODEL DISCOVERY",
+        f"Configured model: {model['configured_model'] or '<unset>'}",
+        f"Configured model available: {str(model['configured_model_available']).lower()}",
+        f"Artifact reused: {str(model['reused_from_artifact']).lower()}",
+        f"Artifact live confirmed: {str(model['live_confirmed']).lower()}",
+        f"Performed current run: {str(model['performed_current_run']).lower()}",
+        f"HTTP status from artifact: {model['http_status'] if model['http_status'] is not None else 'NOT_AVAILABLE'}",
+        f"Models returned: {model['models_returned']}",
+        f"Response SHA-256: {model['artifact_response_sha256'] or 'NOT_AVAILABLE'}",
+        f"GO_MODEL_DISCOVERY: {summary['go_model_discovery']}",
+        "",
+        "PROMPT AUDIT",
+        f"Prompts audited: {prompt['count']}",
+        f"Unsafe prompts: {prompt['unsafe_prompts']}",
+        f"System policy safe: {str(prompt['system_policy_safe']).lower()}",
+        f"Retrieved knowledge safe: {str(prompt['retrieved_knowledge_safe']).lower()}",
+        f"Dynamic payload safe: {str(prompt['dynamic_payload_safe']).lower()}",
+        f"Schema instruction safe: {str(prompt['schema_instruction_safe']).lower()}",
+        f"Negative policy instruction only: {str(prompt['negative_policy_instruction_only']).lower()}",
+        f"Actual sensitive values: {prompt['actual_sensitive_values']}",
+        f"Provider smoke payload safe: {str(provider_smoke['payload_safe']).lower()}",
+        f"Provider boundary reached: {str(provider_smoke['provider_boundary_reached']).lower()}",
+        f"PROVIDER_SMOKE_PROMPT_SAFE: {str(summary['provider_smoke_prompt_safe']).lower()}",
+        "",
+        "PROVIDER SMOKE",
+        f"Execution mode: {summary['execution_mode']}",
+        f"Real call attempted: {str(provider_smoke['real_call_attempted']).lower()}",
+        f"Real call completed: {str(provider_smoke['real_call_completed']).lower()}",
+        f"Chat completion calls: {provider_smoke['chat_completion_calls_current_run']}",
+        f"JSON valid: {provider_smoke['json_valid'] if provider_smoke['json_valid'] is not None else 'NOT_EXECUTED'}",
+        f"Schema valid: {provider_smoke['schema_valid'] if provider_smoke['schema_valid'] is not None else 'NOT_EXECUTED'}",
+        f"Provider failure: {provider_smoke['provider_failure'] or 'NONE'}",
+        f"GO_PROVIDER_SMOKE: {summary['go_provider_smoke']}",
+        "",
+        "CAMPAIGN ISOLATION",
+        "Circuit cases executed: 0",
+        "Use cases executed: 0",
+        "Frozen cases executed: 0",
+        "Ngspice benchmark executions: 0",
+        "Full campaign approved: false",
+        "Comparison metrics: NOT_APPLICABLE",
+        "",
+        "READY",
+        f"Ready for new freeze commit: {str(ready['ready_for_new_freeze_commit']).lower()}",
+        f"Ready for real provider smoke after commit: {str(ready['ready_for_real_provider_smoke']).lower()}",
+        f"Ready for single cases: {str(ready['ready_for_single_cases']).lower()}",
+        f"Ready for Frozen: {str(ready['ready_for_frozen']).lower()}",
+        f"Remaining blockers: {'; '.join(ready['remaining_blockers']) if ready['remaining_blockers'] else 'none'}",
+        f"Final decision: {ready['final_decision']}",
+        "",
+        "TESTS",
+        f"pytest passed: {pytest_counts.get('passed', 0)}",
+        f"pytest failed: {pytest_counts.get('failed', 0)}",
+        f"pytest skipped: {pytest_counts.get('skipped', 0)}",
+        f"ngspice integration passed: {str(tests.get('ngspice_integration_passed', False)).lower()}",
+        f"PySpice-disabled passed: {str(tests.get('pyspice_disabled_passed', False)).lower()}",
+        f"Live tests executed: {str(tests.get('live_tests_executed', False)).lower()}",
+    ]
+
+
+def _preflight_report_lines(summary: dict[str, Any]) -> list[str]:
+    tests = summary["tests"]
+    pytest_counts = tests.get("pytest", {})
+    worktree = summary["worktree"]
+    network = summary["network_accounting"]
+    return [
+        "PRE-LIVE BLOCKER RESOLUTION - FINAL STATUS",
+        "",
+        f"Branch: {worktree['branch']}",
+        "Commit created: false",
+        "Push performed: false",
+        f"Paper modified: {str(worktree['paper_modified']).lower()}",
+        f"Original benchmarks modified: {str(worktree['original_benchmarks_modified']).lower()}",
+        f"Frozen V3 modified: {str(worktree['frozen_v3_modified']).lower()}",
+        f"Knowledge modified: {str(worktree['knowledge_modified']).lower()}",
+        f"Live LLM calls: {network['campaign_chat_completion_calls']}",
+        f"Network calls: {network['campaign_known_network_calls']}",
+        "",
+        "TESTS",
+        f"pytest passed: {pytest_counts.get('passed', 0)}",
+        f"pytest failed: {pytest_counts.get('failed', 0)}",
+        f"pytest skipped: {pytest_counts.get('skipped', 0)}",
+        f"ngspice integration passed: {str(tests.get('ngspice_integration_passed', False)).lower()}",
+        f"PySpice-disabled passed: {str(tests.get('pyspice_disabled_passed', False)).lower()}",
+        f"Live tests executed: {str(tests.get('live_tests_executed', False)).lower()}",
+        "",
+        "READY",
+        f"GO_CODE_FREEZE: {summary['go_code_freeze']}",
+        f"GO_SECRET_SAFETY: {summary['go_secret_safety']}",
+        f"GO_MODEL_DISCOVERY: {summary['go_model_discovery']}",
+        f"GO_PROVIDER_SMOKE: {summary['go_provider_smoke']}",
+        f"Remaining blockers: {'; '.join(summary['ready']['remaining_blockers']) if summary['ready']['remaining_blockers'] else 'none'}",
+        f"Final decision: {summary['ready']['final_decision']}",
+    ]
+
+
+def build_final_status_lines(summary: dict[str, Any]) -> list[str]:
+    if summary.get("requested_stage") == "provider_smoke":
+        return _provider_smoke_report_lines(summary)
+    return _preflight_report_lines(summary)
+
+
+def build_deepseek_live_summary(
+    *,
+    requested_stage: str | None = None,
+    execution_mode: str | None = None,
+    run_id: str | None = None,
+) -> dict[str, Any]:
+    requested_stage = requested_stage or os.getenv("DEEPSEEK_LIVE_REQUESTED_STAGE", "final_summary").strip() or "final_summary"
+    execution_mode = execution_mode or current_execution_mode()
+    run_id = current_run_id() if run_id is None else run_id
     pre_live = read_json(RESULTS_DIR / "pre_live_manifest.json", {})
     secret = read_json(RESULTS_DIR / "secret_audit.json", {})
     env_example = read_json(ENV_EXAMPLE_AUDIT_JSON, secret.get("env_example_audit", {}))
-    model = read_json(RESULTS_DIR / "model_discovery.json", {})
     provider_smoke = read_json(RESULTS_DIR / "provider_smoke.json", {})
     inventory = build_pre_commit_inventory()
     commit_plan = build_clean_commit_plan()
@@ -2339,45 +3373,92 @@ def build_deepseek_live_summary() -> dict[str, Any]:
     call_rows = read_csv(LIVE_CALL_AUDIT_CSV)
     budget_rows = read_csv(LIVE_BUDGET_CSV)
     prompt_rows = read_csv(PROMPT_AUDIT_CSV)
-    comparison = compare_deterministic_stub_deepseek()
-    live_call_rows = [row for row in call_rows if row.get("provider_call_performed") in {"True", "true", True}]
-    model_discovery_calls = sum(1 for row in live_call_rows if row.get("stage") == "model_discovery")
-    chat_completion_calls = sum(1 for row in live_call_rows if row.get("stage") != "model_discovery")
+    current_prompt_rows = [row for row in prompt_rows if not run_id or row.get("run_id", "") == run_id]
+    current_call_rows = [row for row in call_rows if not run_id or row.get("run_id", "") == run_id]
+    current_budget_rows = [row for row in budget_rows if not run_id or row.get("run_id", "") == run_id]
+    current_live_calls = [row for row in current_call_rows if _csv_truthy(row.get("provider_call_performed"))]
+    campaign_live_calls = [row for row in call_rows if _csv_truthy(row.get("provider_call_performed"))]
+    model_state = load_model_discovery_reuse_state()
+    git_state = collect_git_state()
     inventory_rows = inventory["rows"]
     inventory_counts = inventory["counts"]
     tracked_secret_matches = secret.get("tracked_secret_matches", [])
     untracked_secret_matches = secret.get("untracked_secret_matches", [])
-    ready_for_clean_commit = (
-        secret.get("go_secret_safety") == "PASS"
-        and not pre_live.get("paper_files_modified", False)
-        and not pre_live.get("original_benchmark_files_modified", False)
-        and not pre_live.get("frozen_v3_files_modified", False)
+    current_model_discovery_calls = sum(1 for row in current_live_calls if row.get("stage") == "model_discovery")
+    current_chat_completion_calls = sum(1 for row in current_live_calls if row.get("stage") != "model_discovery")
+    campaign_model_discovery_calls = max(
+        1 if model_state["live_confirmed"] else 0,
+        sum(1 for row in campaign_live_calls if row.get("stage") == "model_discovery"),
     )
-    ready_for_model_discovery_after_commit = ready_for_clean_commit
-    ready_for_provider_smoke_after_commit = ready_for_model_discovery_after_commit and model.get("go_model_discovery") == "PASS"
+    campaign_chat_calls = sum(1 for row in campaign_live_calls if row.get("stage") != "model_discovery")
+    prompt_summary = {
+        "count": len(current_prompt_rows),
+        "unsafe_prompts": sum(1 for row in current_prompt_rows if str(row.get("prompt_safe", "")).lower() == "false"),
+        "system_policy_safe": all(str(row.get("system_policy_safe", "false")).lower() == "true" for row in current_prompt_rows)
+        if current_prompt_rows
+        else False,
+        "retrieved_knowledge_safe": all(
+            str(row.get("retrieved_knowledge_safe", "false")).lower() == "true" for row in current_prompt_rows
+        )
+        if current_prompt_rows
+        else False,
+        "dynamic_payload_safe": all(str(row.get("dynamic_payload_safe", "false")).lower() == "true" for row in current_prompt_rows)
+        if current_prompt_rows
+        else False,
+        "schema_instruction_safe": all(
+            str(row.get("schema_instruction_safe", "false")).lower() == "true" for row in current_prompt_rows
+        )
+        if current_prompt_rows
+        else False,
+        "negative_policy_instruction_only": any(
+            str(row.get("negative_policy_instruction_only", "false")).lower() == "true" for row in current_prompt_rows
+        ),
+        "actual_sensitive_values": sum(
+            1 for row in current_prompt_rows if str(row.get("actual_sensitive_value_present", "false")).lower() == "true"
+        ),
+    }
+    provider_smoke_prompt_safe = bool(provider_smoke.get("provider_smoke_prompt_safe", prompt_summary["count"] > 0))
+    ready_for_new_freeze_commit = (
+        secret.get("go_secret_safety") == "PASS"
+        and not git_state.get("paper_files_modified", False)
+        and not git_state.get("original_benchmark_files_modified", False)
+        and not git_state.get("knowledge_files_modified", False)
+        and not git_state.get("frozen_v3_files_modified", False)
+    )
+    ready_for_real_provider_smoke = (
+        pre_live.get("go_code_freeze", "NO_GO") == "PASS"
+        and secret.get("go_secret_safety") == "PASS"
+        and model_state["valid"]
+        and provider_smoke_prompt_safe
+        and bool(provider_smoke.get("provider_boundary_reached", False))
+    )
+    full_campaign_guard = live_guard_state(require_full_campaign=True)
+    ready_for_single_cases = ready_for_real_provider_smoke and full_campaign_guard["allowed"]
+    ready_for_frozen = ready_for_single_cases and provider_smoke.get("GO_PROVIDER_SMOKE") == "PASS"
     remaining_blockers: list[str] = []
     if pre_live.get("go_code_freeze") != "PASS":
-        remaining_blockers.append("uncommitted worktree keeps GO_CODE_FREEZE at NO_GO")
+        remaining_blockers.append("commit the current source changes to restore GO_CODE_FREEZE=PASS")
     if secret.get("go_secret_safety") != "PASS":
         remaining_blockers.append("secret audit must pass before any live stage")
-    if not ready_for_provider_smoke_after_commit:
-        remaining_blockers.append("model discovery has not been executed and live approval remains disabled")
+    if not model_state["valid"]:
+        remaining_blockers.append("model_discovery.json must remain valid and reusable")
+    if not provider_smoke_prompt_safe:
+        remaining_blockers.append("provider smoke prompt audit must stay safe")
+    if not provider_smoke.get("provider_boundary_reached", False):
+        remaining_blockers.append("provider smoke dry-run must reach the provider boundary")
+    if not full_campaign_guard["allowed"]:
+        remaining_blockers.append("DEEPSEEK_FULL_CAMPAIGN_APPROVED remains disabled for wider live stages")
+    blocker_analysis = build_provider_smoke_blocker_analysis()
     summary = {
         "campaign_name": CAMPAIGN_NAME,
         "generated_at": utc_now_iso(),
+        "requested_stage": requested_stage,
+        "execution_mode": execution_mode,
         "go_code_freeze": pre_live.get("go_code_freeze", "NO_GO"),
         "go_secret_safety": secret.get("go_secret_safety", "NO_GO"),
-        "go_model_discovery": model.get("go_model_discovery", "NO_GO"),
+        "go_model_discovery": "PASS" if model_state["valid"] else "NO_GO",
+        "provider_smoke_prompt_safe": provider_smoke_prompt_safe,
         "go_provider_smoke": provider_smoke.get("GO_PROVIDER_SMOKE", "NOT_EXECUTED"),
-        "live_calls_attempted": len(live_call_rows),
-        "network_llm_calls": len(live_call_rows),
-        "model_discovery_calls": model_discovery_calls,
-        "chat_completion_calls": chat_completion_calls,
-        "prompt_audits": len(prompt_rows),
-        "unsafe_prompts": sum(1 for row in prompt_rows if str(row.get("prompt_safe", "")).lower() == "false"),
-        "input_tokens": sum(int(float(row.get("prompt_tokens", 0) or 0)) for row in budget_rows),
-        "output_tokens": sum(int(float(row.get("completion_tokens", 0) or 0)) for row in budget_rows),
-        "total_tokens": sum(int(float(row.get("total_tokens", 0) or 0)) for row in budget_rows),
         "env_example": env_example,
         "secret_audit": {
             "tracked_secrets": len(tracked_secret_matches),
@@ -2385,8 +3466,58 @@ def build_deepseek_live_summary() -> dict[str, Any]:
             "authorization_headers": secret.get("authorization_header_matches", 0),
             "values_redacted": secret.get("values_redacted", True),
             "false_positive_rules_corrected": secret.get("false_positive_rules_corrected", True),
+            "api_key_logged": bool(tracked_secret_matches or untracked_secret_matches),
+            "authorization_logged": bool(secret.get("authorization_header_matches", 0)),
+        },
+        "model_discovery": {
+            "configured_model": model_state["configured_model"],
+            "configured_model_available": model_state["configured_model_available"],
+            "reused_from_artifact": model_state["reused_from_artifact"],
+            "performed_current_run": current_model_discovery_calls > 0,
+            "artifact_timestamp": model_state["artifact_timestamp"],
+            "artifact_response_sha256": model_state["artifact_response_sha256"],
+            "calls_current_run": current_model_discovery_calls,
+            "live_confirmed": model_state["live_confirmed"],
+            "models_returned": model_state["models_returned"],
+            "http_status": model_state["http_status"],
+            "api_key_configured": read_json(RESULTS_DIR / "model_discovery.json", {}).get("api_key_configured", False),
+            "validation_errors": model_state["errors"],
+        },
+        "provider_smoke": {
+            "prompt_safe": provider_smoke_prompt_safe,
+            "payload_safe": provider_smoke.get("payload_safe", False),
+            "provider_boundary_reached": bool(provider_smoke.get("provider_boundary_reached", False)),
+            "real_call_attempted": bool(provider_smoke.get("real_call_attempted", False)),
+            "real_call_completed": bool(provider_smoke.get("real_call_completed", False)),
+            "chat_completion_calls_current_run": int(provider_smoke.get("chat_completion_calls_current_run", 0) or 0),
+            "http_status": provider_smoke.get("http_status"),
+            "json_valid": provider_smoke.get("json_valid"),
+            "schema_valid": provider_smoke.get("schema_valid"),
+            "terminal_status": provider_smoke.get("terminal_status", "NOT_EXECUTED"),
+            "provider_failure": provider_smoke.get("provider_failure", ""),
+            "dynamic_sensitive_fields": int(provider_smoke.get("dynamic_sensitive_fields", 0) or 0),
+            "benchmark_identifiers": int(provider_smoke.get("benchmark_identifiers", 0) or 0),
+            "frozen_identifiers": int(provider_smoke.get("frozen_identifiers", 0) or 0),
+            "historical_values": int(provider_smoke.get("historical_values", 0) or 0),
+            "local_paths": int(provider_smoke.get("local_paths", 0) or 0),
+        },
+        "prompt_audits": prompt_summary,
+        "network_accounting": {
+            "model_discovery_performed_current_run": current_model_discovery_calls > 0,
+            "model_discovery_reused_from_artifact": model_state["reused_from_artifact"],
+            "model_discovery_artifact_live_confirmed": model_state["live_confirmed"],
+            "model_discovery_artifact_timestamp": model_state["artifact_timestamp"],
+            "model_discovery_artifact_response_sha256": model_state["artifact_response_sha256"],
+            "model_discovery_calls_current_run": current_model_discovery_calls,
+            "chat_completion_calls_current_run": current_chat_completion_calls,
+            "current_run_network_calls": current_model_discovery_calls + current_chat_completion_calls,
+            "campaign_model_discovery_calls": campaign_model_discovery_calls,
+            "campaign_chat_completion_calls": campaign_chat_calls,
+            "campaign_known_network_calls": campaign_model_discovery_calls + campaign_chat_calls,
         },
         "worktree": {
+            "branch": git_state.get("branch", ""),
+            "git_commit": git_state.get("git_commit", ""),
             "modified_files": len(inventory_rows),
             "source_files": inventory_counts.get("SOURCE_CODE", 0),
             "test_files": inventory_counts.get("TEST", 0),
@@ -2396,91 +3527,39 @@ def build_deepseek_live_summary() -> dict[str, Any]:
             "files_proposed_for_commit": len(commit_plan["FILES_TO_COMMIT"]),
             "files_proposed_for_exclusion": len(commit_plan["FILES_TO_EXCLUDE"]),
             "scientific_worktree_clean": inventory["scientific_worktree_clean"],
+            "paper_modified": git_state.get("paper_files_modified", False),
+            "original_benchmarks_modified": git_state.get("original_benchmark_files_modified", False),
+            "knowledge_modified": git_state.get("knowledge_files_modified", False),
+            "frozen_v3_modified": git_state.get("frozen_v3_files_modified", False),
         },
-        "tests": test_matrix,
+        "tests": {
+            **test_matrix,
+            "current_run_prompt_tokens": sum(int(float(row.get("prompt_tokens", 0) or 0)) for row in current_budget_rows),
+            "current_run_completion_tokens": sum(int(float(row.get("completion_tokens", 0) or 0)) for row in current_budget_rows),
+            "current_run_total_tokens": sum(int(float(row.get("total_tokens", 0) or 0)) for row in current_budget_rows),
+        },
+        "blocker_analysis": blocker_analysis,
+        "comparison": _comparison_for_stage(requested_stage),
         "ready": {
-            "ready_for_clean_commit": ready_for_clean_commit,
-            "ready_for_push": False,
-            "ready_for_model_discovery_after_commit": ready_for_model_discovery_after_commit,
-            "ready_for_provider_smoke_after_commit": ready_for_provider_smoke_after_commit,
+            "ready_for_new_freeze_commit": ready_for_new_freeze_commit,
+            "ready_for_real_provider_smoke": ready_for_real_provider_smoke,
+            "ready_for_single_cases": ready_for_single_cases,
+            "ready_for_frozen": ready_for_frozen,
             "remaining_blockers": remaining_blockers,
-            "final_decision": "NO_GO",
+            "final_decision": "READY_FOR_REAL_PROVIDER_SMOKE" if ready_for_real_provider_smoke else "NO_GO",
         },
-        "comparison": comparison,
     }
     write_json(FINAL_SUMMARY_JSON, summary)
-    pytest_counts = test_matrix.get("pytest", {})
-    expected_blocker = "uncommitted worktree changes" if pre_live.get("go_code_freeze") != "PASS" else "none"
-    lines = [
-        "PRE-LIVE BLOCKER RESOLUTION - FINAL STATUS",
-        "",
-        f"Branch: {pre_live.get('branch', '')}",
-        "Commit created: false",
-        "Push performed: false",
-        f"Paper modified: {str(pre_live.get('paper_files_modified', False)).lower()}",
-        f"Original benchmarks modified: {str(pre_live.get('original_benchmark_files_modified', False)).lower()}",
-        f"Frozen V3 modified: {str(pre_live.get('frozen_v3_files_modified', False)).lower()}",
-        f"Live LLM calls: {summary['live_calls_attempted']}",
-        f"Network calls: {summary['network_llm_calls']}",
-        "",
-        "ENV EXAMPLE",
-        f"File found: {str(env_example.get('file_exists', False)).lower()}",
-        f"Tracked: {str(env_example.get('tracked_by_git', False)).lower()}",
-        f"API key variable: {str(env_example.get('api_key_variable_present', False)).lower()}",
-        f"API key value empty: {str(env_example.get('api_key_value_empty', False)).lower()}",
-        f"Realistic secret placeholder: {str(env_example.get('realistic_key_placeholder_present', False)).lower()}",
-        f"Safe: {str(env_example.get('safe', False)).lower()}",
-        "",
-        "SECRET AUDIT",
-        f"Tracked secrets: {len(tracked_secret_matches)}",
-        f"Untracked secrets: {len(untracked_secret_matches)}",
-        f"Authorization headers: {secret.get('authorization_header_matches', 0)}",
-        f"Values redacted: {str(secret.get('values_redacted', True)).lower()}",
-        f"False-positive rules corrected: {str(secret.get('false_positive_rules_corrected', True)).lower()}",
-        f"GO_SECRET_SAFETY: {summary['go_secret_safety']}",
-        "",
-        "WORKTREE",
-        f"Modified files: {len(inventory_rows)}",
-        f"Source files: {inventory_counts.get('SOURCE_CODE', 0)}",
-        f"Test files: {inventory_counts.get('TEST', 0)}",
-        f"Prompt files: {inventory_counts.get('PROMPT', 0)}",
-        f"Generated artifacts: {inventory_counts.get('GENERATED_PRELIVE_ARTIFACT', 0)}",
-        f"Temporary files: {inventory_counts.get('TEMPORARY', 0)}",
-        f"Files proposed for commit: {len(commit_plan['FILES_TO_COMMIT'])}",
-        f"Files proposed for exclusion: {len(commit_plan['FILES_TO_EXCLUDE'])}",
-        f"Scientific worktree clean: {str(inventory['scientific_worktree_clean']).lower()}",
-        f"GO_CODE_FREEZE: {summary['go_code_freeze']}",
-        "",
-        "TESTS",
-        f"pytest passed: {pytest_counts.get('passed', 0)}",
-        f"pytest failed: {pytest_counts.get('failed', 0)}",
-        f"pytest skipped: {pytest_counts.get('skipped', 0)}",
-        f"ngspice integration passed: {str(test_matrix.get('ngspice_integration_passed', False)).lower()}",
-        f"PySpice-disabled passed: {str(test_matrix.get('pyspice_disabled_passed', False)).lower()}",
-        f"Live tests executed: {str(test_matrix.get('live_tests_executed', False)).lower()}",
-        "",
-        "DRY RUN",
-        f"Provider network calls: {summary['network_llm_calls']}",
-        f"Model discovery calls: {summary['model_discovery_calls']}",
-        f"Chat completion calls: {summary['chat_completion_calls']}",
-        f"GO_PROVIDER_SMOKE: {summary['go_provider_smoke']}",
-        f"Expected blocker: {expected_blocker}",
-        "",
-        "READY",
-        f"Ready for clean commit: {str(ready_for_clean_commit).lower()}",
-        f"Ready for push: false",
-        f"Ready for model discovery after commit: {str(ready_for_model_discovery_after_commit).lower()}",
-        f"Ready for provider smoke after commit: {str(ready_for_provider_smoke_after_commit).lower()}",
-        f"Remaining blockers: {'; '.join(remaining_blockers) if remaining_blockers else 'none'}",
-        "Final decision: NO_GO",
-    ]
+    lines = build_final_status_lines(summary)
     write_markdown(FINAL_STATUS_MD, lines)
+    if requested_stage == "provider_smoke":
+        write_markdown(REPORTS_DIR / "provider_smoke.md", lines)
     return summary
 
 
-def run_stage(stage: str) -> dict[str, Any]:
+def run_stage(stage: str, *, dry_run: bool = False) -> dict[str, Any]:
     if stage == "model_discovery":
-        return run_model_discovery()
+        return run_model_discovery(dry_run=dry_run)
     if stage == "provider_smoke":
         return run_provider_smoke()
     if stage == "single_ac":
@@ -2502,5 +3581,9 @@ def run_stage(stage: str) -> dict[str, Any]:
     if stage == "post_live_deterministic":
         return run_post_live_deterministic_parity()
     if stage == "final_summary":
-        return build_deepseek_live_summary()
+        return build_deepseek_live_summary(
+            requested_stage=os.getenv("DEEPSEEK_LIVE_REQUESTED_STAGE", "final_summary"),
+            execution_mode=current_execution_mode(),
+            run_id=current_run_id(),
+        )
     raise ValueError(f"Unsupported stage: {stage}")
