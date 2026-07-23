@@ -150,10 +150,11 @@ class DeepSeekProvider(LLMProvider):
                 content = (choice.message.content or "").strip()
                 usage = getattr(response, "usage", None)
                 finish_reason = getattr(choice, "finish_reason", None)
+                http_status = self._extract_status_code(response)
                 attempts.append(
                     {
                         "attempt_number": attempt_number,
-                        "http_status": 200,
+                        "http_status": http_status,
                         "error_type": None,
                         "retryable": False,
                         "delay_before_retry": 0.0,
@@ -178,6 +179,12 @@ class DeepSeekProvider(LLMProvider):
                     raw_metadata={
                         "id": getattr(response, "id", None),
                         "created": getattr(response, "created", None),
+                        "http_status": http_status,
+                        "http_status_observation": http_status
+                        if http_status is not None
+                        else "HTTP_STATUS_NOT_EXPOSED_BY_CURRENT_CLIENT_PATH",
+                        "request_id": self._extract_request_id(response),
+                        "response_headers": self._extract_response_headers(response),
                         "attempts": attempts,
                     },
                 )
@@ -283,6 +290,20 @@ class DeepSeekProvider(LLMProvider):
             if isinstance(value, str) and value.strip():
                 return value.strip()
         return None
+
+    @staticmethod
+    def _extract_response_headers(response: Any) -> dict[str, str]:
+        raw_response = getattr(response, "response", None)
+        headers = getattr(raw_response, "headers", None)
+        if headers is None or not hasattr(headers, "get"):
+            return {}
+        allowed_headers = ("content-type", "x-request-id", "request-id", "openai-processing-ms")
+        extracted: dict[str, str] = {}
+        for key in allowed_headers:
+            value = headers.get(key)
+            if isinstance(value, str) and value.strip():
+                extracted[key] = value.strip()
+        return extracted
 
     def _bounded_backoff_seconds(self, attempt_number: int) -> float:
         base = [1.0, 2.0, 4.0][min(attempt_number - 1, 2)]

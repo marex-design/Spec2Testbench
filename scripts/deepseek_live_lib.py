@@ -13,10 +13,13 @@ import subprocess
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 import yaml
+from pydantic import BaseModel, ConfigDict, ValidationError, field_validator
+from pydantic.version import VERSION as PYDANTIC_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -43,6 +46,8 @@ KNOWLEDGE_VERSION = "knowledge_book_v1"
 PROMPT_VERSION = "deepseek_testbench_planner_book_v1"
 PROMPT_PATH = ROOT / "spec2testbench/infrastructure/llm/prompts/deepseek_testbench_planner_book_v1.txt"
 RESPONSE_SCHEMA_VERSION = "testbench_plan_v1_compat"
+PROVIDER_SMOKE_PROMPT_VERSION = "deepseek_provider_smoke_v1"
+PROVIDER_SMOKE_RESPONSE_SCHEMA_VERSION = "provider_smoke_response_v1"
 COMPILER_VERSION = "testbench_plan_compiler_v1"
 CHECKER_VERSION = "verification_pipeline_v1"
 RETRIEVER_VERSION = "deterministic_book_retriever_v1"
@@ -50,6 +55,8 @@ EXPERIMENTS_DIR = ROOT / "experiments" / CAMPAIGN_NAME
 ARTIFACTS_DIR = ROOT / "artifacts" / CAMPAIGN_NAME
 RESULTS_DIR = ROOT / "results" / CAMPAIGN_NAME
 REPORTS_DIR = ROOT / "reports" / CAMPAIGN_NAME
+RUN_RESULTS_DIR = RESULTS_DIR / "runs"
+RUN_REPORTS_DIR = REPORTS_DIR / "runs"
 KNOWLEDGE_ROOT = ROOT / "knowledge"
 LEGACY_USE_CASE_MANIFEST = ROOT / "experiments/llm_deepseek/use_case_smoke_manifest.yaml"
 LEGACY_FROZEN_MANIFEST = ROOT / "experiments/llm_deepseek/frozen_manifest.yaml"
@@ -69,6 +76,7 @@ PRE_COMMIT_INVENTORY_MD = REPORTS_DIR / "pre_commit_inventory.md"
 CLEAN_COMMIT_MANIFEST_CSV = RESULTS_DIR / "clean_commit_manifest.csv"
 CLEAN_COMMIT_PLAN_MD = REPORTS_DIR / "clean_commit_plan.md"
 OFFLINE_TEST_MATRIX_JSON = RESULTS_DIR / "offline_test_matrix.json"
+PROVIDER_SMOKE_PROMPT_PATH = ROOT / "spec2testbench/infrastructure/llm/prompts/deepseek_provider_smoke_v1.txt"
 
 STAGE_ORDER = [
     "model_discovery",
@@ -231,6 +239,15 @@ PROMPT_AUDIT_SAFE_RELATIVE_PATH_PREFIXES = ("analysis/", "knowledge/", "rule/")
 PROVIDER_SMOKE_BLOCKER_ANALYSIS_JSON = RESULTS_DIR / "provider_smoke_blocker_analysis.json"
 PROVIDER_SMOKE_BLOCKER_ANALYSIS_MD = REPORTS_DIR / "provider_smoke_blocker_analysis.md"
 PROVIDER_SMOKE_SANITIZED_PAYLOAD_JSON = RESULTS_DIR / "provider_smoke_sanitized_payload.json"
+PROVIDER_SMOKE_EXPECTED_SHAPE_JSON = RESULTS_DIR / "provider_smoke_expected_shape.json"
+PROVIDER_SMOKE_JSON_SCHEMA_JSON = RESULTS_DIR / "provider_smoke_json_schema.json"
+PROVIDER_SMOKE_VALIDATION_INVENTORY_CSV = RESULTS_DIR / "provider_smoke_validation_inventory.csv"
+PROVIDER_SMOKE_VALIDATION_INVENTORY_MD = REPORTS_DIR / "provider_smoke_validation_inventory.md"
+PROVIDER_SMOKE_SCHEMA_ERRORS_JSON = RESULTS_DIR / "provider_smoke_schema_errors.json"
+PROVIDER_SMOKE_SCHEMA_ERRORS_CSV = RESULTS_DIR / "provider_smoke_schema_errors.csv"
+PROVIDER_SMOKE_SCHEMA_ERRORS_MD = REPORTS_DIR / "provider_smoke_schema_errors.md"
+PROVIDER_SMOKE_ROOT_CAUSE_JSON = RESULTS_DIR / "provider_smoke_root_cause.json"
+PROVIDER_SMOKE_ROOT_CAUSE_MD = REPORTS_DIR / "provider_smoke_root_cause.md"
 PROVIDER_SMOKE_FIX_COMMIT_MANIFEST_CSV = RESULTS_DIR / "provider_smoke_fix_commit_manifest.csv"
 PROVIDER_SMOKE_FIX_COMMIT_PLAN_MD = REPORTS_DIR / "provider_smoke_fix_commit_plan.md"
 
@@ -352,6 +369,40 @@ class PromptLeakageAuditResult:
         }
 
 
+class ProviderSmokeCapability(str, Enum):
+    JSON_ONLY = "JSON_ONLY"
+    PROVIDER_REACHABLE = "PROVIDER_REACHABLE"
+    SCHEMA_COMPLIANCE = "SCHEMA_COMPLIANCE"
+
+
+class ProviderSmokeConstraint(str, Enum):
+    NO_MARKDOWN = "NO_MARKDOWN"
+    NO_EXPLANATION = "NO_EXPLANATION"
+    NO_VERDICT = "NO_VERDICT"
+    NO_RAW_SPICE = "NO_RAW_SPICE"
+    NO_LOCAL_PATHS = "NO_LOCAL_PATHS"
+    NO_HISTORICAL_RESULTS = "NO_HISTORICAL_RESULTS"
+
+
+class ProviderSmokeResponseV1(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: Literal["1.0"]
+    smoke_id: Literal["provider_smoke"]
+    status: Literal["READY"]
+    capabilities: list[ProviderSmokeCapability]
+    acknowledged_constraints: list[ProviderSmokeConstraint]
+
+    @field_validator("capabilities", "acknowledged_constraints")
+    @classmethod
+    def _validate_non_empty_unique_enum_list(cls, value: list[Any]) -> list[Any]:
+        if not value:
+            raise ValueError("must not be empty")
+        if len(value) != len(set(value)):
+            raise ValueError("must be unique")
+        return value
+
+
 @dataclass(frozen=True)
 class CampaignCase:
     case_id: str
@@ -381,6 +432,10 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def sha256_text(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
 def sha256_tree(root: Path) -> str:
     entries: list[dict[str, str]] = []
     for path in sorted(item for item in root.rglob("*") if item.is_file()):
@@ -392,6 +447,11 @@ def sha256_tree(root: Path) -> str:
 def write_json(path: Path, payload: Any) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=True), encoding="utf-8")
+
+
+def write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
 
 
 def write_yaml(path: Path, payload: Any) -> None:
@@ -433,6 +493,608 @@ def current_run_id() -> str:
 
 def current_execution_mode() -> str:
     return os.getenv("DEEPSEEK_LIVE_EXECUTION_MODE", "LIVE").strip().upper() or "LIVE"
+
+
+def provider_smoke_run_results_dir(run_id: str) -> Path:
+    return RUN_RESULTS_DIR / run_id
+
+
+def provider_smoke_run_reports_dir(run_id: str) -> Path:
+    return RUN_REPORTS_DIR / run_id
+
+
+def provider_smoke_artifact_dir(run_id: str) -> Path:
+    return ARTIFACTS_DIR / "provider_smoke" / run_id
+
+
+def build_provider_smoke_expected_response() -> ProviderSmokeResponseV1:
+    return ProviderSmokeResponseV1.model_validate(
+        {
+            "schema_version": "1.0",
+            "smoke_id": "provider_smoke",
+            "status": "READY",
+            "capabilities": [
+                ProviderSmokeCapability.JSON_ONLY,
+                ProviderSmokeCapability.PROVIDER_REACHABLE,
+                ProviderSmokeCapability.SCHEMA_COMPLIANCE,
+            ],
+            "acknowledged_constraints": [
+                ProviderSmokeConstraint.NO_MARKDOWN,
+                ProviderSmokeConstraint.NO_EXPLANATION,
+                ProviderSmokeConstraint.NO_VERDICT,
+                ProviderSmokeConstraint.NO_RAW_SPICE,
+                ProviderSmokeConstraint.NO_LOCAL_PATHS,
+                ProviderSmokeConstraint.NO_HISTORICAL_RESULTS,
+            ],
+        }
+    )
+
+
+def provider_smoke_expected_shape_payload() -> dict[str, Any]:
+    return build_provider_smoke_expected_response().model_dump(mode="json")
+
+
+def provider_smoke_json_schema_payload() -> dict[str, Any]:
+    return ProviderSmokeResponseV1.model_json_schema()
+
+
+def _write_provider_smoke_contract_artifacts() -> None:
+    write_json(PROVIDER_SMOKE_EXPECTED_SHAPE_JSON, provider_smoke_expected_shape_payload())
+    write_json(PROVIDER_SMOKE_JSON_SCHEMA_JSON, provider_smoke_json_schema_payload())
+
+
+def _redact_sensitive_text(text: str) -> str:
+    if not text:
+        return ""
+    redacted = BEARER_TOKEN_RE.sub("Bearer ***", text)
+    redacted = API_KEY_LITERAL_RE.sub('api_key="***"', redacted)
+    redacted = SK_TOKEN_RE.sub("***", redacted)
+    return redacted
+
+
+def _provider_smoke_run_id(run_id: str | None = None) -> str:
+    candidate = (run_id or current_run_id()).strip()
+    return candidate or "run_id_not_set"
+
+
+def _provider_smoke_user_payload(audit_input: PromptAuditInput) -> dict[str, Any]:
+    return {
+        "retrieved_knowledge": audit_input.retrieved_knowledge,
+        "sanitized_dynamic_payload": audit_input.sanitized_dynamic_payload,
+        "output_schema_instruction": audit_input.output_schema_instruction,
+    }
+
+
+def _provider_smoke_user_prompt_text(audit_input: PromptAuditInput) -> str:
+    return json.dumps(_provider_smoke_user_payload(audit_input), ensure_ascii=True)
+
+
+def _write_provider_smoke_request_artifacts(
+    *,
+    audit_input: PromptAuditInput,
+    run_id: str,
+    execution_mode: str,
+    model: str,
+) -> Path:
+    artifact_dir = provider_smoke_artifact_dir(run_id)
+    user_payload = _provider_smoke_user_payload(audit_input)
+    user_prompt_text = _provider_smoke_user_prompt_text(audit_input)
+    prompt_sha = audit_input.prompt_sha256()
+    write_json(
+        artifact_dir / "request_metadata.json",
+        {
+            "run_id": run_id,
+            "stage": audit_input.stage,
+            "opaque_case_id": audit_input.opaque_case_id,
+            "trial_id": audit_input.trial_id,
+            "execution_mode": execution_mode,
+            "model": model,
+            "prompt_version": PROVIDER_SMOKE_PROMPT_VERSION,
+            "response_schema_version": PROVIDER_SMOKE_RESPONSE_SCHEMA_VERSION,
+            "prompt_sha256": prompt_sha,
+            "user_prompt_sha256": sha256_text(user_prompt_text),
+        },
+    )
+    write_json(artifact_dir / "sanitized_payload.json", user_payload)
+    write_text(artifact_dir / "system_prompt.txt", audit_input.system_policy)
+    write_text(artifact_dir / "user_prompt.txt", user_prompt_text)
+    write_text(artifact_dir / "prompt.sha256", f"{prompt_sha}\n")
+    return artifact_dir
+
+
+def _serialize_validation_errors(
+    exc: ValidationError,
+    *,
+    run_id: str,
+    validation_model: str,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for index, error in enumerate(exc.errors(include_url=False), start=1):
+        location = ".".join(str(item) for item in error.get("loc", ())) or "<root>"
+        error_type = str(error.get("type", "") or "")
+        input_value = error.get("input")
+        if input_value is None:
+            input_redacted = ""
+        elif isinstance(input_value, (str, int, float, bool)):
+            input_redacted = _redact_sensitive_text(str(input_value))[:120]
+        else:
+            input_redacted = type(input_value).__name__
+        expected_type = ""
+        message = str(error.get("msg", "") or "")
+        lowered_message = message.lower()
+        if "literal" in lowered_message or "enum" in lowered_message:
+            expected_type = "enum"
+        elif "list" in lowered_message:
+            expected_type = "list"
+        elif "dict" in lowered_message:
+            expected_type = "dict"
+        rows.append(
+            {
+                "run_id": run_id,
+                "validation_model": validation_model,
+                "error_index": index,
+                "location": location,
+                "error_type": error_type,
+                "message": _redact_sensitive_text(message),
+                "expected_type": expected_type,
+                "received_type": type(input_value).__name__ if input_value is not None else "",
+                "input_redacted": input_redacted,
+                "root_cause_category": _classify_schema_error_category(error_type=error_type, message=message, location=location),
+                "repairable_offline": True,
+            }
+        )
+    return rows
+
+
+def _classify_schema_error_category(*, error_type: str, message: str, location: str) -> str:
+    lowered_type = error_type.lower()
+    lowered_message = message.lower()
+    if "missing" in lowered_type:
+        return "MISSING_REQUIRED_FIELD"
+    if "extra_forbidden" in lowered_type or "extra inputs are not permitted" in lowered_message:
+        return "EXTRA_FORBIDDEN_FIELD"
+    if "literal" in lowered_type or "enum" in lowered_type or "expected" in lowered_message and "allowed" in lowered_message:
+        return "ENUM_VALUE_MISMATCH"
+    if "list" in lowered_type and "too_short" in lowered_type:
+        return "EMPTY_REQUIRED_COLLECTION"
+    if any(token in lowered_type for token in ("int", "string_type", "dict_type", "list_type", "model_type", "float")):
+        return "TYPE_MISMATCH"
+    if location == "<root>":
+        return "WRONG_TOP_LEVEL_SHAPE"
+    return "UNKNOWN_SCHEMA_FAILURE"
+
+
+def _write_provider_smoke_response_artifacts(
+    *,
+    artifact_dir: Path,
+    response_content: str | None,
+    parsed_response: dict[str, Any] | None,
+    json_valid: bool | None,
+    json_error: Exception | None,
+    schema_valid: bool | None,
+    validation_model: str,
+    schema_error_rows: list[dict[str, Any]],
+    provider_response_metadata: dict[str, Any],
+    live_call_record: dict[str, Any],
+    provider_smoke_result: dict[str, Any],
+    run_id: str,
+) -> None:
+    if response_content is not None:
+        write_text(artifact_dir / "raw_response.txt", response_content)
+        write_text(artifact_dir / "raw_response.sha256", f"{sha256_text(response_content)}\n")
+    parse_result = {
+        "run_id": run_id,
+        "json_valid": json_valid,
+        "parser": "json.loads",
+        "error": _redact_sensitive_text(str(json_error)) if json_error is not None else "",
+    }
+    write_json(artifact_dir / "JSON_parse_result.json", parse_result)
+    if parsed_response is not None:
+        write_json(artifact_dir / "parsed_json.json", parsed_response)
+    write_json(
+        artifact_dir / "schema_validation.json",
+        {
+            "run_id": run_id,
+            "validation_model": validation_model,
+            "validation_method": f"{validation_model}.model_validate",
+            "schema_valid": schema_valid,
+            "pydantic_version": PYDANTIC_VERSION,
+            "error_count": len(schema_error_rows),
+        },
+    )
+    write_json(artifact_dir / "schema_validation_errors.json", schema_error_rows)
+    write_json(artifact_dir / "provider_response_metadata.json", provider_response_metadata)
+    write_json(artifact_dir / "live_call_record.json", live_call_record)
+    write_json(artifact_dir / "provider_smoke.json", provider_smoke_result)
+
+
+def _provider_smoke_error_summary_rows(error_rows: list[dict[str, Any]]) -> dict[str, list[str]]:
+    summary = {
+        "missing_fields": [],
+        "extra_fields": [],
+        "type_mismatches": [],
+        "enum_mismatches": [],
+        "empty_required_collections": [],
+    }
+    for row in error_rows:
+        category = row.get("root_cause_category")
+        location = str(row.get("location", "") or "")
+        if category == "MISSING_REQUIRED_FIELD":
+            summary["missing_fields"].append(location)
+        elif category == "EXTRA_FORBIDDEN_FIELD":
+            summary["extra_fields"].append(location)
+        elif category == "TYPE_MISMATCH":
+            summary["type_mismatches"].append(location)
+        elif category == "ENUM_VALUE_MISMATCH":
+            summary["enum_mismatches"].append(location)
+        elif category == "EMPTY_REQUIRED_COLLECTION":
+            summary["empty_required_collections"].append(location)
+    return {key: sorted(dict.fromkeys(value)) for key, value in summary.items()}
+
+
+def _write_provider_smoke_schema_error_reports(
+    *,
+    error_rows: list[dict[str, Any]],
+    run_id: str,
+    validation_model: str,
+    error_details_available: bool,
+    detail_source: str,
+) -> None:
+    write_json(
+        PROVIDER_SMOKE_SCHEMA_ERRORS_JSON,
+        {
+            "run_id": run_id,
+            "validation_model": validation_model,
+            "pydantic_version": PYDANTIC_VERSION,
+            "validation_method": f"{validation_model}.model_validate",
+            "error_details_available": error_details_available,
+            "detail_source": detail_source,
+            "error_count": len(error_rows),
+            "errors": error_rows,
+        },
+    )
+    csv_rows = error_rows or [
+        {
+            "run_id": run_id,
+            "validation_model": validation_model,
+            "error_index": 0,
+            "location": "NOT_AVAILABLE",
+            "error_type": "ERROR_DETAILS_UNAVAILABLE",
+            "message": "Raw response was not persisted; exact ValidationError.errors() output is unavailable for this historical run.",
+            "expected_type": "",
+            "received_type": "",
+            "input_redacted": "",
+            "root_cause_category": "SMOKE_CONTRACT_INCONSISTENT",
+            "repairable_offline": True,
+        }
+    ]
+    write_csv(PROVIDER_SMOKE_SCHEMA_ERRORS_CSV, csv_rows)
+    summary_rows = _provider_smoke_error_summary_rows(error_rows)
+    write_markdown(
+        PROVIDER_SMOKE_SCHEMA_ERRORS_MD,
+        [
+            "# Provider Smoke Schema Errors",
+            "",
+            f"- Run ID: {run_id}",
+            f"- Validation model: {validation_model}",
+            f"- Pydantic version: {PYDANTIC_VERSION}",
+            f"- Validation method: {validation_model}.model_validate",
+            f"- Error details available: {str(error_details_available).lower()}",
+            f"- Detail source: {detail_source}",
+            f"- Error count: {len(error_rows)}",
+            f"- Missing fields: {', '.join(summary_rows['missing_fields']) if summary_rows['missing_fields'] else 'none'}",
+            f"- Extra fields: {', '.join(summary_rows['extra_fields']) if summary_rows['extra_fields'] else 'none'}",
+            f"- Type mismatches: {', '.join(summary_rows['type_mismatches']) if summary_rows['type_mismatches'] else 'none'}",
+            f"- Enum mismatches: {', '.join(summary_rows['enum_mismatches']) if summary_rows['enum_mismatches'] else 'none'}",
+            f"- Empty required collections: {', '.join(summary_rows['empty_required_collections']) if summary_rows['empty_required_collections'] else 'none'}",
+        ],
+    )
+
+
+def _collect_provider_smoke_inventory_rows(run_id: str) -> list[dict[str, Any]]:
+    candidates = [
+        {
+            "path": provider_smoke_artifact_dir(run_id) / "raw_response.txt",
+            "stage": "provider_smoke",
+            "artifact_type": "RAW_RESPONSE",
+            "contains_provider_response": True,
+            "contains_validation_details": False,
+            "selected_for_analysis": True,
+        },
+        {
+            "path": provider_smoke_artifact_dir(run_id) / "provider_response_metadata.json",
+            "stage": "provider_smoke",
+            "artifact_type": "PROVIDER_RESPONSE_METADATA",
+            "contains_provider_response": False,
+            "contains_validation_details": False,
+            "selected_for_analysis": True,
+        },
+        {
+            "path": provider_smoke_artifact_dir(run_id) / "parsed_json.json",
+            "stage": "provider_smoke",
+            "artifact_type": "PARSED_JSON",
+            "contains_provider_response": True,
+            "contains_validation_details": False,
+            "selected_for_analysis": True,
+        },
+        {
+            "path": provider_smoke_artifact_dir(run_id) / "schema_validation_errors.json",
+            "stage": "provider_smoke",
+            "artifact_type": "SCHEMA_VALIDATION_ERRORS",
+            "contains_provider_response": False,
+            "contains_validation_details": True,
+            "selected_for_analysis": True,
+        },
+        {
+            "path": provider_smoke_artifact_dir(run_id) / "request_metadata.json",
+            "stage": "provider_smoke",
+            "artifact_type": "REQUEST_METADATA",
+            "contains_provider_response": False,
+            "contains_validation_details": False,
+            "selected_for_analysis": True,
+        },
+        {
+            "path": provider_smoke_artifact_dir(run_id) / "system_prompt.txt",
+            "stage": "provider_smoke",
+            "artifact_type": "SYSTEM_PROMPT",
+            "contains_provider_response": False,
+            "contains_validation_details": False,
+            "selected_for_analysis": True,
+        },
+        {
+            "path": provider_smoke_artifact_dir(run_id) / "user_prompt.txt",
+            "stage": "provider_smoke",
+            "artifact_type": "USER_PROMPT",
+            "contains_provider_response": False,
+            "contains_validation_details": False,
+            "selected_for_analysis": True,
+        },
+        {
+            "path": RESULTS_DIR / "provider_smoke.json",
+            "stage": "provider_smoke",
+            "artifact_type": "PROVIDER_SMOKE_RESULT",
+            "contains_provider_response": False,
+            "contains_validation_details": True,
+            "selected_for_analysis": True,
+        },
+        {
+            "path": RESULTS_DIR / "provider_smoke_calls.csv",
+            "stage": "provider_smoke",
+            "artifact_type": "PROVIDER_SMOKE_CALL_LEDGER",
+            "contains_provider_response": False,
+            "contains_validation_details": True,
+            "selected_for_analysis": True,
+        },
+        {
+            "path": LIVE_CALL_AUDIT_CSV,
+            "stage": "campaign",
+            "artifact_type": "LIVE_CALL_LEDGER",
+            "contains_provider_response": False,
+            "contains_validation_details": True,
+            "selected_for_analysis": True,
+        },
+        {
+            "path": REPORTS_DIR / "provider_smoke.md",
+            "stage": "provider_smoke",
+            "artifact_type": "REPORT",
+            "contains_provider_response": False,
+            "contains_validation_details": True,
+            "selected_for_analysis": True,
+        },
+        {
+            "path": FINAL_SUMMARY_JSON,
+            "stage": "provider_smoke",
+            "artifact_type": "CURRENT_SUMMARY",
+            "contains_provider_response": False,
+            "contains_validation_details": True,
+            "selected_for_analysis": True,
+        },
+        {
+            "path": FINAL_STATUS_MD,
+            "stage": "provider_smoke",
+            "artifact_type": "CURRENT_REPORT",
+            "contains_provider_response": False,
+            "contains_validation_details": True,
+            "selected_for_analysis": True,
+        },
+    ]
+    rows: list[dict[str, Any]] = []
+    for candidate in candidates:
+        path = candidate["path"]
+        exists = path.exists()
+        text = path.read_text(encoding="utf-8", errors="replace") if exists else ""
+        belongs_to_current_run = run_id in text or run_id in str(path).replace("\\", "/")
+        contains_secret = bool(scan_text_for_secret_matches(text)) if exists else False
+        rows.append(
+            {
+                "path": str(path).replace("\\", "/"),
+                "run_id": run_id,
+                "stage": candidate["stage"],
+                "artifact_type": candidate["artifact_type"],
+                "exists": exists,
+                "size_bytes": path.stat().st_size if exists else 0,
+                "sha256": sha256_file(path) if exists else "",
+                "belongs_to_current_run": belongs_to_current_run,
+                "contains_provider_response": candidate["contains_provider_response"],
+                "contains_validation_details": candidate["contains_validation_details"],
+                "contains_secret": contains_secret,
+                "selected_for_analysis": candidate["selected_for_analysis"],
+            }
+        )
+    return rows
+
+
+def _write_provider_smoke_validation_inventory(run_id: str) -> list[dict[str, Any]]:
+    rows = _collect_provider_smoke_inventory_rows(run_id)
+    write_csv(PROVIDER_SMOKE_VALIDATION_INVENTORY_CSV, rows)
+    write_markdown(
+        PROVIDER_SMOKE_VALIDATION_INVENTORY_MD,
+        [
+            "# Provider Smoke Validation Inventory",
+            "",
+            f"- Run ID: {run_id}",
+            f"- Files scanned: {len(rows)}",
+            f"- Files present: {sum(1 for row in rows if row['exists'])}",
+            f"- Raw response present: {str(any(row['artifact_type'] == 'RAW_RESPONSE' and row['exists'] for row in rows)).lower()}",
+            f"- Validation details present: {str(any(row['contains_validation_details'] and row['exists'] for row in rows)).lower()}",
+            "",
+            "## Selected Artifacts",
+            *(f"- {row['artifact_type']}: {row['path']} ({'present' if row['exists'] else 'missing'})" for row in rows if row["selected_for_analysis"]),
+        ],
+    )
+    return rows
+
+
+def _write_current_run_ledgers(run_id: str) -> None:
+    run_results_dir = provider_smoke_run_results_dir(run_id)
+    write_csv(run_results_dir / "live_call_audit_current_run.csv", [row for row in read_csv(LIVE_CALL_AUDIT_CSV) if row.get("run_id", "") == run_id])
+    write_csv(run_results_dir / "live_budget_current_run.csv", [row for row in read_csv(LIVE_BUDGET_CSV) if row.get("run_id", "") == run_id])
+    write_csv(run_results_dir / "prompt_leakage_audit_current_run.csv", [row for row in read_csv(PROMPT_AUDIT_CSV) if row.get("run_id", "") == run_id])
+
+
+def _provider_smoke_root_cause_payload(
+    *,
+    run_id: str,
+    provider_smoke: dict[str, Any],
+    inventory_rows: list[dict[str, Any]],
+    error_rows: list[dict[str, Any]],
+) -> dict[str, Any]:
+    raw_response_found = any(row["artifact_type"] == "RAW_RESPONSE" and row["exists"] for row in inventory_rows)
+    schema_error_summary = _provider_smoke_error_summary_rows(error_rows)
+    categories = sorted(
+        dict.fromkeys(
+            [row["root_cause_category"] for row in error_rows]
+            or [
+                "WRONG_VALIDATION_MODEL",
+                "MODEL_OUTPUT_SCHEMA_MISMATCH",
+                "SMOKE_CONTRACT_INCONSISTENT",
+            ]
+        )
+    )
+    expected_shape = provider_smoke_expected_shape_payload()
+    return {
+        "run_id": run_id,
+        "json_valid": provider_smoke.get("json_valid"),
+        "schema_valid": provider_smoke.get("schema_valid"),
+        "provider_failure_code": provider_smoke.get("provider_failure_code", ""),
+        "provider_failure_stage": provider_smoke.get("provider_failure_stage", ""),
+        "raw_response_found": raw_response_found,
+        "exact_validation_errors_available": bool(error_rows),
+        "original_expected_schema": "TestbenchPlan",
+        "prompt_claimed_schema": "TestbenchPlanV2",
+        "final_smoke_schema": "ProviderSmokeResponseV1",
+        "production_schema_used_for_real_circuits": "TestbenchPlan",
+        "original_contract_internally_consistent": False,
+        "root_cause_categories": categories,
+        "root_cause": (
+            "The historical provider smoke contract was internally inconsistent: the smoke prompt asked for a generic "
+            "TestbenchPlanV2-style payload while the executor validated the response against the strict production "
+            "TestbenchPlan model. A generic smoke probe without DUT, metrics, recipes, or analysis jobs cannot satisfy "
+            "that production schema without inventing scientific content."
+        ),
+        "what_deepseek_returned": (
+            "A JSON object was returned and counted for tokens, but the exact raw body was not persisted for the historical run."
+            if not raw_response_found
+            else "A JSON object was returned and persisted in raw_response.txt."
+        ),
+        "what_schema_required": {
+            "historical_validator": "TestbenchPlan.model_validate",
+            "historical_required_fields": ["case_id", "analysis_type", "measurements", "simulation_parameters", "concise_rationale"],
+            "current_smoke_expected_shape": expected_shape,
+        },
+        "gap_introduced_in": [
+            "build_provider_smoke_prompt_audit_input",
+            "execute_provider_smoke_probe",
+        ],
+        "json_valid_but_schema_invalid_reason": (
+            "The provider returned syntactically valid JSON, but schema validation failed because the smoke response "
+            "shape did not match the strict production TestbenchPlan model."
+        ),
+        "missing_fields": schema_error_summary["missing_fields"],
+        "extra_fields": schema_error_summary["extra_fields"],
+        "type_mismatches": schema_error_summary["type_mismatches"],
+        "enum_mismatches": schema_error_summary["enum_mismatches"],
+        "empty_required_collections": schema_error_summary["empty_required_collections"],
+        "repairable_offline": True,
+        "production_schema_weakened": False,
+        "dedicated_smoke_schema_introduced": True,
+    }
+
+
+def _write_provider_smoke_root_cause_reports(payload: dict[str, Any]) -> None:
+    write_json(PROVIDER_SMOKE_ROOT_CAUSE_JSON, payload)
+    write_markdown(
+        PROVIDER_SMOKE_ROOT_CAUSE_MD,
+        [
+            "# Provider Smoke Root Cause",
+            "",
+            f"- Run ID: {payload['run_id']}",
+            f"- Raw response found: {str(payload['raw_response_found']).lower()}",
+            f"- Exact validation errors available: {str(payload['exact_validation_errors_available']).lower()}",
+            f"- Original expected schema: {payload['original_expected_schema']}",
+            f"- Prompt claimed schema: {payload['prompt_claimed_schema']}",
+            f"- Final smoke schema: {payload['final_smoke_schema']}",
+            f"- Original contract internally consistent: {str(payload['original_contract_internally_consistent']).lower()}",
+            f"- Root cause categories: {', '.join(payload['root_cause_categories'])}",
+            f"- Root cause: {payload['root_cause']}",
+            f"- JSON valid but schema invalid reason: {payload['json_valid_but_schema_invalid_reason']}",
+            f"- Missing fields: {', '.join(payload['missing_fields']) if payload['missing_fields'] else 'none'}",
+            f"- Extra fields: {', '.join(payload['extra_fields']) if payload['extra_fields'] else 'none'}",
+            f"- Type mismatches: {', '.join(payload['type_mismatches']) if payload['type_mismatches'] else 'none'}",
+            f"- Enum mismatches: {', '.join(payload['enum_mismatches']) if payload['enum_mismatches'] else 'none'}",
+            f"- Empty required collections: {', '.join(payload['empty_required_collections']) if payload['empty_required_collections'] else 'none'}",
+            f"- Dedicated smoke schema introduced: {str(payload['dedicated_smoke_schema_introduced']).lower()}",
+            f"- Production schema weakened: {str(payload['production_schema_weakened']).lower()}",
+        ],
+    )
+
+
+def reconcile_provider_smoke_run_artifacts(run_id: str) -> dict[str, Any]:
+    normalized_run_id = _provider_smoke_run_id(run_id)
+    _write_provider_smoke_contract_artifacts()
+    _write_current_run_ledgers(normalized_run_id)
+    provider_smoke = read_json(RESULTS_DIR / "provider_smoke.json", {})
+    if provider_smoke.get("run_id") == normalized_run_id and provider_smoke.get("provider_failure") == "ValidationError":
+        provider_smoke["provider_failure"] = "SCHEMA_ERROR"
+        provider_smoke["provider_failure_code"] = "SCHEMA_ERROR"
+        provider_smoke["provider_failure_stage"] = "SCHEMA_VALIDATION"
+        provider_smoke["provider_exception_class"] = "ValidationError"
+        provider_smoke["provider_exception_message_sanitized"] = "Raw response was not persisted; exact ValidationError details unavailable."
+        provider_smoke["semantic_valid"] = "NOT_EXECUTED"
+        provider_smoke["transport_response_received"] = True
+        provider_smoke["content_received"] = True
+        provider_smoke["json_parsed"] = True
+        provider_smoke["schema_valid"] = False
+        provider_smoke["GO_PROVIDER_TRANSPORT"] = "PASS"
+        provider_smoke["GO_PROVIDER_JSON"] = "PASS"
+        provider_smoke["GO_PROVIDER_SMOKE_SCHEMA"] = "NO_GO"
+        provider_smoke["GO_PROVIDER_SMOKE"] = "NO_GO"
+        write_json(RESULTS_DIR / "provider_smoke.json", provider_smoke)
+        write_json(provider_smoke_run_results_dir(normalized_run_id) / "provider_smoke.json", provider_smoke)
+    inventory_rows = _write_provider_smoke_validation_inventory(normalized_run_id)
+    raw_response_path = provider_smoke_artifact_dir(normalized_run_id) / "raw_response.txt"
+    error_details_available = (provider_smoke_artifact_dir(normalized_run_id) / "schema_validation_errors.json").exists()
+    error_rows = read_json(provider_smoke_artifact_dir(normalized_run_id) / "schema_validation_errors.json", [])
+    _write_provider_smoke_schema_error_reports(
+        error_rows=error_rows,
+        run_id=normalized_run_id,
+        validation_model="TestbenchPlan",
+        error_details_available=error_details_available,
+        detail_source=str(raw_response_path).replace("\\", "/") if error_details_available else "RAW_RESPONSE_MISSING",
+    )
+    root_cause_payload = _provider_smoke_root_cause_payload(
+        run_id=normalized_run_id,
+        provider_smoke=provider_smoke,
+        inventory_rows=inventory_rows,
+        error_rows=error_rows,
+    )
+    _write_provider_smoke_root_cause_reports(root_cause_payload)
+    return {
+        "provider_smoke": provider_smoke,
+        "inventory_rows": inventory_rows,
+        "schema_error_rows": error_rows,
+        "root_cause": root_cause_payload,
+    }
 
 
 def append_csv_rows(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -2051,7 +2713,8 @@ def load_model_discovery_reuse_state() -> dict[str, Any]:
 
 
 def build_provider_smoke_prompt_audit_input() -> PromptAuditInput:
-    system_prompt = PROMPT_PATH.read_text(encoding="utf-8")
+    system_prompt = PROVIDER_SMOKE_PROMPT_PATH.read_text(encoding="utf-8")
+    expected_response = provider_smoke_expected_shape_payload()
     retrieved_knowledge = {
         "rule_ids": [
             "CHECKER_DOES_NOT_INFER_PASS_FROM_MISSING_EVIDENCE",
@@ -2060,33 +2723,31 @@ def build_provider_smoke_prompt_audit_input() -> PromptAuditInput:
         "recipe_ids": [],
         "tool_ids": [],
         "semantic_guard_ids": [],
-        "notes": "Use only the provided schema and capabilities. Do not include a verdict.",
+        "notes": "Use only the supplied smoke schema and example. Do not include a verdict.",
     }
     sanitized_dynamic_payload = {
-        "task": "Return one minimal JSON object conforming to TestbenchPlanV2.",
-        "opaque_case_id": "provider_smoke",
-        "requested_metrics": [],
-        "available_analysis_types": ["op"],
-        "available_harness_policies": ["op"],
-        "available_recipe_ids": [],
-        "available_tool_ids": [],
-        "available_semantic_guard_ids": [],
-        "circuit_context": {
-            "kind": "generic_provider_boundary_probe",
-            "description": "No real DUT, benchmark answer, local path, mutation, or historical result is included.",
-            "nodes": [],
-            "components": [],
-        },
+        "task": "Return exactly one JSON object conforming to ProviderSmokeResponseV1.",
+        "smoke_id": "provider_smoke",
+        "response_schema_name": "ProviderSmokeResponseV1",
+        "response_schema_version": "1.0",
+        "required_fields": list(expected_response.keys()),
+        "allowed_capabilities": [item.value for item in ProviderSmokeCapability],
+        "required_constraints": [item.value for item in ProviderSmokeConstraint],
+        "example_response": expected_response,
         "provider_mode": "LIVE",
         "scientific_llm_evidence": False,
-        "prompt_version": PROMPT_VERSION,
-        "schema_version": RESPONSE_SCHEMA_VERSION,
+        "prompt_version": PROVIDER_SMOKE_PROMPT_VERSION,
+        "schema_version": PROVIDER_SMOKE_RESPONSE_SCHEMA_VERSION,
     }
     output_schema_instruction = "\n".join(
         [
             "Return exactly one JSON object that conforms to the supplied schema.",
-            "Do not include a verdict.",
-            json.dumps(TestbenchPlan.model_json_schema(), sort_keys=True, ensure_ascii=True),
+            "No Markdown. No code fence. No explanation. No extra fields.",
+            "Use the exact enum values and field names from the schema and example.",
+            f"Schema name: ProviderSmokeResponseV1",
+            f"Schema version: {expected_response['schema_version']}",
+            f"Example JSON: {json.dumps(expected_response, sort_keys=True, ensure_ascii=True)}",
+            f"JSON Schema: {json.dumps(provider_smoke_json_schema_payload(), sort_keys=True, ensure_ascii=True)}",
         ]
     )
     return PromptAuditInput(
@@ -2154,23 +2815,61 @@ def execute_provider_smoke_probe(
 ) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], dict[str, Any]]:
     model_state = load_model_discovery_reuse_state()
     audit_input = build_provider_smoke_prompt_audit_input()
+    _write_provider_smoke_contract_artifacts()
     prompt_audit = audit_prompt_payload(audit_input=audit_input)
     payload_analysis = _provider_smoke_payload_analysis(prompt_audit, audit_input)
     write_json(PROVIDER_SMOKE_SANITIZED_PAYLOAD_JSON, payload_analysis)
+    run_id = _provider_smoke_run_id()
+    execution_mode = "DRY_RUN" if dry_run else "LIVE"
+    configured_model = str(model_state.get("configured_model", "") or "")
+    artifact_dir = _write_provider_smoke_request_artifacts(
+        audit_input=audit_input,
+        run_id=run_id,
+        execution_mode=execution_mode,
+        model=configured_model,
+    )
 
     provider_boundary_reached = False
     real_call_attempted = False
     real_call_completed = False
+    transport_response_received = False
+    content_received = False
+    json_parsed = False
+    smoke_terminal_success = False
     json_valid = None
     schema_valid = None
     http_status = None
+    http_status_detail = ""
     provider_failure = ""
+    provider_failure_code = ""
+    provider_failure_stage = ""
+    provider_exception_class = ""
+    provider_exception_message_sanitized = ""
     prompt_tokens = 0
     completion_tokens = 0
     total_tokens = 0
     latency_seconds = 0.0
     provider_status = "PROMPT_LEAKAGE_BLOCKED"
     terminal_status = "PROMPT_LEAKAGE_BLOCKED"
+    semantic_valid: str | bool | None = "NOT_EXECUTED"
+    response_content: str | None = None
+    parsed_response: dict[str, Any] | None = None
+    json_error: Exception | None = None
+    schema_error_rows: list[dict[str, Any]] = []
+    validation_model = "ProviderSmokeResponseV1"
+    provider_response_metadata = {
+        "run_id": run_id,
+        "provider": "deepseek",
+        "model": configured_model,
+        "http_status": None,
+        "http_status_observation": "NOT_EXECUTED",
+        "request_id": None,
+        "response_id": None,
+        "created": None,
+        "finish_reason": None,
+        "attempts": [],
+        "headers": {},
+    }
 
     if prompt_audit["prompt_safe"]:
         provider_boundary_reached = True
@@ -2180,7 +2879,7 @@ def execute_provider_smoke_probe(
                     "stage": "provider_smoke",
                     "opaque_case_id": audit_input.opaque_case_id,
                     "trial_id": audit_input.trial_id,
-                    "execution_mode": "DRY_RUN" if dry_run else "LIVE",
+                    "execution_mode": execution_mode,
                 }
             )
         if dry_run:
@@ -2212,47 +2911,155 @@ def execute_provider_smoke_probe(
                 prompt_tokens = int(response.prompt_tokens or 0)
                 completion_tokens = int(response.completion_tokens or 0)
                 total_tokens = int(response.total_tokens or 0)
-                parsed_response = json.loads(response.content)
-                json_valid = isinstance(parsed_response, dict)
-                if json_valid:
-                    TestbenchPlan.model_validate(parsed_response)
+                transport_response_received = True
+                response_content = response.content
+                content_received = bool((response_content or "").strip())
+                provider_response_metadata = {
+                    "run_id": run_id,
+                    "provider": "deepseek",
+                    "model": response.model,
+                    "http_status": response.raw_metadata.get("http_status"),
+                    "http_status_observation": response.raw_metadata.get(
+                        "http_status_observation",
+                        "HTTP_STATUS_NOT_EXPOSED_BY_CURRENT_CLIENT_PATH",
+                    ),
+                    "request_id": response.raw_metadata.get("request_id"),
+                    "response_id": response.raw_metadata.get("id"),
+                    "created": response.raw_metadata.get("created"),
+                    "finish_reason": response.finish_reason,
+                    "attempts": response.raw_metadata.get("attempts", []),
+                    "headers": response.raw_metadata.get("response_headers", {}),
+                }
+                http_status = response.raw_metadata.get("http_status")
+                http_status_detail = str(
+                    response.raw_metadata.get("http_status_observation", "HTTP_STATUS_NOT_EXPOSED_BY_CURRENT_CLIENT_PATH")
+                )
+                parsed_candidate = json.loads(response.content)
+                json_parsed = True
+                json_valid = isinstance(parsed_candidate, dict)
+                parsed_response = parsed_candidate if isinstance(parsed_candidate, dict) else None
+                if json_valid and parsed_response is not None:
+                    ProviderSmokeResponseV1.model_validate(parsed_response)
                     schema_valid = True
+                    semantic_valid = "NOT_EXECUTED"
                     real_call_completed = True
+                    smoke_terminal_success = True
                     provider_status = "SUCCESS"
                     terminal_status = "PROVIDER_SMOKE_COMPLETED"
-                    http_status = 200
+                    provider_failure = ""
+                    provider_failure_code = ""
+                    provider_failure_stage = ""
+                elif json_valid is False:
+                    schema_valid = None
+                    provider_failure = "JSON_ERROR"
+                    provider_failure_code = "JSON_ERROR"
+                    provider_failure_stage = "JSON_PARSING"
+                    provider_status = provider_failure_code
+                    terminal_status = "PROVIDER_SMOKE_FAILED"
+            except ValidationError as exc:
+                schema_valid = False
+                provider_failure = "SCHEMA_ERROR"
+                provider_failure_code = "SCHEMA_ERROR"
+                provider_failure_stage = "SCHEMA_VALIDATION"
+                provider_exception_class = type(exc).__name__
+                provider_exception_message_sanitized = _redact_sensitive_text(str(exc))
+                schema_error_rows = _serialize_validation_errors(exc, run_id=run_id, validation_model=validation_model)
+                provider_status = provider_failure_code
+                terminal_status = "PROVIDER_SMOKE_FAILED"
+            except json.JSONDecodeError as exc:
+                json_valid = False
+                json_error = exc
+                provider_failure = "JSON_ERROR"
+                provider_failure_code = "JSON_ERROR"
+                provider_failure_stage = "JSON_PARSING"
+                provider_exception_class = type(exc).__name__
+                provider_exception_message_sanitized = _redact_sensitive_text(str(exc))
+                provider_status = provider_failure_code
+                terminal_status = "PROVIDER_SMOKE_FAILED"
             except Exception as exc:  # noqa: BLE001
-                provider_failure = type(exc).__name__
-                provider_status = type(exc).__name__
+                provider_failure = "TRANSPORT_ERROR"
+                provider_failure_code = "TRANSPORT_ERROR"
+                provider_failure_stage = "TRANSPORT"
+                provider_exception_class = type(exc).__name__
+                provider_exception_message_sanitized = _redact_sensitive_text(str(exc))
+                provider_status = provider_failure_code
                 terminal_status = "PROVIDER_SMOKE_FAILED"
 
-    go_provider_smoke = "NOT_EXECUTED" if dry_run and prompt_audit["prompt_safe"] else "PASS" if schema_valid else "NO_GO"
+    if provider_failure_code == "":
+        provider_failure_code = provider_failure
+    if not provider_exception_class and provider_failure_stage:
+        provider_exception_class = provider_exception_class or ""
+    go_provider_transport = (
+        "NOT_EXECUTED"
+        if not real_call_attempted
+        else "PASS"
+        if transport_response_received
+        else "NO_GO"
+    )
+    go_provider_json = (
+        "NOT_EXECUTED"
+        if not transport_response_received
+        else "PASS"
+        if json_valid is True
+        else "NO_GO"
+    )
+    go_provider_smoke_schema = (
+        "NOT_EXECUTED"
+        if json_valid is not True
+        else "PASS"
+        if schema_valid is True
+        else "NO_GO"
+    )
+    go_provider_smoke = (
+        "NOT_EXECUTED"
+        if dry_run and prompt_audit["prompt_safe"]
+        else "PASS"
+        if schema_valid is True
+        else "NO_GO"
+    )
     row = {
         "stage": "provider_smoke",
-        "run_id": current_run_id(),
+        "run_id": run_id,
         "case_id": "provider_smoke",
         "opaque_case_id": audit_input.opaque_case_id,
         "trial_id": audit_input.trial_id,
         "provider": "deepseek",
         "provider_mode": "LIVE",
-        "execution_mode": "DRY_RUN" if dry_run else "LIVE",
-        "model": model_state.get("configured_model", ""),
+        "execution_mode": execution_mode,
+        "model": configured_model,
         "prompt_sha256": prompt_audit["prompt_sha256"],
         "prompt_safe": prompt_audit["prompt_safe"],
         "provider_boundary_reached": provider_boundary_reached,
         "real_call_attempted": real_call_attempted,
         "real_call_completed": real_call_completed,
+        "transport_response_received": transport_response_received,
+        "content_received": content_received,
+        "json_parsed": json_parsed,
+        "semantic_valid": semantic_valid,
+        "smoke_terminal_success": smoke_terminal_success,
         "json_valid": json_valid,
         "schema_valid": schema_valid,
         "http_status": http_status,
+        "http_status_detail": http_status_detail,
         "provider_failure": provider_failure,
+        "provider_failure_code": provider_failure_code,
+        "provider_failure_stage": provider_failure_stage,
+        "provider_exception_class": provider_exception_class,
+        "provider_exception_message_sanitized": provider_exception_message_sanitized,
+        "provider_transport_success": transport_response_received,
+        "validation_model": validation_model,
+        "validation_method": f"{validation_model}.model_validate",
+        "pydantic_version": PYDANTIC_VERSION,
         "terminal_status": terminal_status,
         "chat_completion_calls_current_run": 0 if dry_run else int(real_call_attempted),
+        "GO_PROVIDER_TRANSPORT": go_provider_transport,
+        "GO_PROVIDER_JSON": go_provider_json,
+        "GO_PROVIDER_SMOKE_SCHEMA": go_provider_smoke_schema,
         "go_stage": "PASS" if go_provider_smoke == "PASS" else "NOT_EXECUTED" if go_provider_smoke == "NOT_EXECUTED" else "NO_GO",
     }
     call_audit = {
         "stage": "provider_smoke",
-        "run_id": current_run_id(),
+        "run_id": run_id,
         "case_id": "provider_smoke",
         "opaque_case_id": audit_input.opaque_case_id,
         "trial_id": audit_input.trial_id,
@@ -2270,7 +3077,7 @@ def execute_provider_smoke_probe(
     }
     budget_row = {
         "stage": "provider_smoke",
-        "run_id": current_run_id(),
+        "run_id": run_id,
         "case_id": "provider_smoke",
         "trial_id": audit_input.trial_id,
         "latency_seconds": latency_seconds,
@@ -2281,17 +3088,31 @@ def execute_provider_smoke_probe(
     result = {
         "stage": "provider_smoke",
         "timestamp": utc_now_iso(),
-        "run_id": current_run_id(),
-        "execution_mode": "DRY_RUN" if dry_run else "LIVE",
+        "run_id": run_id,
+        "execution_mode": execution_mode,
         "provider_smoke_prompt_safe": prompt_audit["prompt_safe"],
         "provider_boundary_reached": provider_boundary_reached,
         "real_call_attempted": real_call_attempted,
         "real_call_completed": real_call_completed,
+        "transport_response_received": transport_response_received,
+        "content_received": content_received,
+        "json_parsed": json_parsed,
+        "semantic_valid": semantic_valid,
+        "smoke_terminal_success": smoke_terminal_success,
         "chat_completion_calls_current_run": 0 if dry_run else int(real_call_attempted),
         "http_status": http_status,
+        "http_status_detail": http_status_detail,
         "json_valid": json_valid,
         "schema_valid": schema_valid,
         "provider_failure": provider_failure,
+        "provider_failure_code": provider_failure_code,
+        "provider_failure_stage": provider_failure_stage,
+        "provider_exception_class": provider_exception_class,
+        "provider_exception_message_sanitized": provider_exception_message_sanitized,
+        "provider_transport_success": transport_response_received,
+        "validation_model": validation_model,
+        "validation_method": f"{validation_model}.model_validate",
+        "pydantic_version": PYDANTIC_VERSION,
         "terminal_status": terminal_status,
         "payload_safe": payload_analysis["payload_safe"],
         "dynamic_sensitive_fields": payload_analysis["dynamic_sensitive_fields"],
@@ -2299,8 +3120,26 @@ def execute_provider_smoke_probe(
         "frozen_identifiers": payload_analysis["frozen_identifiers"],
         "historical_values": payload_analysis["historical_values"],
         "local_paths": payload_analysis["local_paths"],
+        "GO_PROVIDER_TRANSPORT": go_provider_transport,
+        "GO_PROVIDER_JSON": go_provider_json,
+        "GO_PROVIDER_SMOKE_SCHEMA": go_provider_smoke_schema,
         "GO_PROVIDER_SMOKE": go_provider_smoke,
     }
+    _write_provider_smoke_response_artifacts(
+        artifact_dir=artifact_dir,
+        response_content=response_content,
+        parsed_response=parsed_response,
+        json_valid=json_valid,
+        json_error=json_error,
+        schema_valid=schema_valid,
+        validation_model=validation_model,
+        schema_error_rows=schema_error_rows,
+        provider_response_metadata=provider_response_metadata,
+        live_call_record=call_audit,
+        provider_smoke_result=result,
+        run_id=run_id,
+    )
+    write_json(provider_smoke_run_results_dir(run_id) / "provider_smoke.json", result)
     return result, prompt_audit, call_audit, budget_row
 
 
@@ -2856,6 +3695,7 @@ def run_provider_smoke() -> dict[str, Any]:
     append_csv_rows(PROMPT_AUDIT_CSV, [prompt_audit])
     append_csv_rows(LIVE_CALL_AUDIT_CSV, [call_audit])
     append_csv_rows(LIVE_BUDGET_CSV, [budget_row])
+    _write_current_run_ledgers(result.get("run_id", ""))
     write_markdown(
         REPORTS_DIR / "provider_smoke.md",
         [
@@ -2866,6 +3706,12 @@ def run_provider_smoke() -> dict[str, Any]:
             f"- Prompt safe: {str(result['provider_smoke_prompt_safe']).lower()}",
             f"- Provider boundary reached: {str(result['provider_boundary_reached']).lower()}",
             f"- Real call attempted: {str(result['real_call_attempted']).lower()}",
+            f"- Transport response received: {str(result['transport_response_received']).lower()}",
+            f"- JSON valid: {result['json_valid'] if result['json_valid'] is not None else 'NOT_EXECUTED'}",
+            f"- Schema valid: {result['schema_valid'] if result['schema_valid'] is not None else 'NOT_EXECUTED'}",
+            f"- GO_PROVIDER_TRANSPORT: {result['GO_PROVIDER_TRANSPORT']}",
+            f"- GO_PROVIDER_JSON: {result['GO_PROVIDER_JSON']}",
+            f"- GO_PROVIDER_SMOKE_SCHEMA: {result['GO_PROVIDER_SMOKE_SCHEMA']}",
             f"- Chat completion calls current run: {result['chat_completion_calls_current_run']}",
             f"- GO_PROVIDER_SMOKE: {result['GO_PROVIDER_SMOKE']}",
         ],
@@ -3225,6 +4071,8 @@ def _provider_smoke_report_lines(summary: dict[str, Any]) -> list[str]:
     ready = summary["ready"]
     tests = summary["tests"]
     pytest_counts = tests.get("pytest", {})
+    historical_issues = summary.get("historical_resolved_issues", [])
+    current_blockers = summary.get("current_blockers", [])
     return [
         "DEEPSEEK PROVIDER SMOKE — FINAL STATUS",
         "",
@@ -3247,9 +4095,11 @@ def _provider_smoke_report_lines(summary: dict[str, Any]) -> list[str]:
         "MODEL DISCOVERY",
         f"Configured model: {model['configured_model'] or '<unset>'}",
         f"Configured model available: {str(model['configured_model_available']).lower()}",
-        f"Artifact reused: {str(model['reused_from_artifact']).lower()}",
+        f"Artifact loaded before call: {str(model['artifact_loaded_before_call']).lower()}",
+        f"Live discovery performed: {str(model['live_discovery_performed']).lower()}",
+        f"Artifact refreshed after call: {str(model['artifact_refreshed_after_call']).lower()}",
+        f"Artifact reused without network: {str(model['artifact_reused_without_network']).lower()}",
         f"Artifact live confirmed: {str(model['live_confirmed']).lower()}",
-        f"Performed current run: {str(model['performed_current_run']).lower()}",
         f"HTTP status from artifact: {model['http_status'] if model['http_status'] is not None else 'NOT_AVAILABLE'}",
         f"Models returned: {model['models_returned']}",
         f"Response SHA-256: {model['artifact_response_sha256'] or 'NOT_AVAILABLE'}",
@@ -3271,11 +4121,20 @@ def _provider_smoke_report_lines(summary: dict[str, Any]) -> list[str]:
         "PROVIDER SMOKE",
         f"Execution mode: {summary['execution_mode']}",
         f"Real call attempted: {str(provider_smoke['real_call_attempted']).lower()}",
+        f"Transport response received: {str(provider_smoke['transport_response_received']).lower()}",
+        f"Content received: {str(provider_smoke['content_received']).lower()}",
+        f"JSON parsed: {str(provider_smoke['json_parsed']).lower()}",
         f"Real call completed: {str(provider_smoke['real_call_completed']).lower()}",
         f"Chat completion calls: {provider_smoke['chat_completion_calls_current_run']}",
+        f"HTTP status: {provider_smoke['http_status'] if provider_smoke['http_status'] is not None else provider_smoke['http_status_detail']}",
         f"JSON valid: {provider_smoke['json_valid'] if provider_smoke['json_valid'] is not None else 'NOT_EXECUTED'}",
         f"Schema valid: {provider_smoke['schema_valid'] if provider_smoke['schema_valid'] is not None else 'NOT_EXECUTED'}",
-        f"Provider failure: {provider_smoke['provider_failure'] or 'NONE'}",
+        f"Failure code: {provider_smoke['provider_failure_code'] or 'NONE'}",
+        f"Failure stage: {provider_smoke['provider_failure_stage'] or 'NONE'}",
+        f"Exception class: {provider_smoke['provider_exception_class'] or 'NONE'}",
+        f"GO_PROVIDER_TRANSPORT: {provider_smoke['GO_PROVIDER_TRANSPORT']}",
+        f"GO_PROVIDER_JSON: {provider_smoke['GO_PROVIDER_JSON']}",
+        f"GO_PROVIDER_SMOKE_SCHEMA: {provider_smoke['GO_PROVIDER_SMOKE_SCHEMA']}",
         f"GO_PROVIDER_SMOKE: {summary['go_provider_smoke']}",
         "",
         "CAMPAIGN ISOLATION",
@@ -3284,13 +4143,21 @@ def _provider_smoke_report_lines(summary: dict[str, Any]) -> list[str]:
         "Frozen cases executed: 0",
         "Ngspice benchmark executions: 0",
         "Full campaign approved: false",
+        f"Historical dry-run records: {network['historical_dry_run_records']}",
         "Comparison metrics: NOT_APPLICABLE",
+        "",
+        "BLOCKERS",
+        f"Current blockers: {', '.join(current_blockers) if current_blockers else 'none'}",
+        f"Historical resolved issues: {', '.join(item['code'] for item in historical_issues) if historical_issues else 'none'}",
         "",
         "READY",
         f"Ready for new freeze commit: {str(ready['ready_for_new_freeze_commit']).lower()}",
         f"Ready for real provider smoke after commit: {str(ready['ready_for_real_provider_smoke']).lower()}",
+        f"Ready for provider smoke retry after fix: {str(ready['ready_for_provider_smoke_retry_after_fix']).lower()}",
         f"Ready for single cases: {str(ready['ready_for_single_cases']).lower()}",
+        f"Ready for seven use cases: {str(ready['ready_for_seven_use_cases']).lower()}",
         f"Ready for Frozen: {str(ready['ready_for_frozen']).lower()}",
+        f"Ready for full campaign: {str(ready['ready_for_full_campaign']).lower()}",
         f"Remaining blockers: {'; '.join(ready['remaining_blockers']) if ready['remaining_blockers'] else 'none'}",
         f"Final decision: {ready['final_decision']}",
         "",
@@ -3358,7 +4225,13 @@ def build_deepseek_live_summary(
     pre_live = read_json(RESULTS_DIR / "pre_live_manifest.json", {})
     secret = read_json(RESULTS_DIR / "secret_audit.json", {})
     env_example = read_json(ENV_EXAMPLE_AUDIT_JSON, secret.get("env_example_audit", {}))
-    provider_smoke = read_json(RESULTS_DIR / "provider_smoke.json", {})
+    if requested_stage == "provider_smoke" and run_id:
+        reconciliation = reconcile_provider_smoke_run_artifacts(run_id)
+        provider_smoke = reconciliation["provider_smoke"]
+        current_root_cause = reconciliation["root_cause"]
+    else:
+        provider_smoke = read_json(RESULTS_DIR / "provider_smoke.json", {})
+        current_root_cause = read_json(PROVIDER_SMOKE_ROOT_CAUSE_JSON, {})
     inventory = build_pre_commit_inventory()
     commit_plan = build_clean_commit_plan()
     test_matrix = read_json(
@@ -3378,6 +4251,7 @@ def build_deepseek_live_summary(
     current_budget_rows = [row for row in budget_rows if not run_id or row.get("run_id", "") == run_id]
     current_live_calls = [row for row in current_call_rows if _csv_truthy(row.get("provider_call_performed"))]
     campaign_live_calls = [row for row in call_rows if _csv_truthy(row.get("provider_call_performed"))]
+    historical_dry_run_records = sum(1 for row in call_rows if str(row.get("execution_mode", "")).strip().upper() == "DRY_RUN")
     model_state = load_model_discovery_reuse_state()
     git_state = collect_git_state()
     inventory_rows = inventory["rows"]
@@ -3418,6 +4292,11 @@ def build_deepseek_live_summary(
         ),
     }
     provider_smoke_prompt_safe = bool(provider_smoke.get("provider_smoke_prompt_safe", prompt_summary["count"] > 0))
+    artifact_loaded_before_call = model_state["valid"]
+    live_discovery_performed = current_model_discovery_calls > 0
+    artifact_refreshed_after_call = live_discovery_performed
+    artifact_reused_without_network = model_state["valid"] and not live_discovery_performed
+    provider_smoke_failed_live = bool(provider_smoke.get("real_call_attempted")) and provider_smoke.get("GO_PROVIDER_SMOKE") != "PASS"
     ready_for_new_freeze_commit = (
         secret.get("go_secret_safety") == "PASS"
         and not git_state.get("paper_files_modified", False)
@@ -3426,29 +4305,56 @@ def build_deepseek_live_summary(
         and not git_state.get("frozen_v3_files_modified", False)
     )
     ready_for_real_provider_smoke = (
-        pre_live.get("go_code_freeze", "NO_GO") == "PASS"
+        execution_mode == "DRY_RUN"
+        and pre_live.get("go_code_freeze", "NO_GO") == "PASS"
+        and secret.get("go_secret_safety") == "PASS"
+        and model_state["valid"]
+        and provider_smoke_prompt_safe
+        and bool(provider_smoke.get("provider_boundary_reached", False))
+        and not provider_smoke_failed_live
+    )
+    full_campaign_guard = live_guard_state(require_full_campaign=True)
+    ready_for_provider_smoke_retry_after_fix = (
+        provider_smoke.get("provider_failure_code") == "SCHEMA_ERROR"
         and secret.get("go_secret_safety") == "PASS"
         and model_state["valid"]
         and provider_smoke_prompt_safe
         and bool(provider_smoke.get("provider_boundary_reached", False))
     )
-    full_campaign_guard = live_guard_state(require_full_campaign=True)
-    ready_for_single_cases = ready_for_real_provider_smoke and full_campaign_guard["allowed"]
-    ready_for_frozen = ready_for_single_cases and provider_smoke.get("GO_PROVIDER_SMOKE") == "PASS"
+    ready_for_single_cases = provider_smoke.get("GO_PROVIDER_SMOKE") == "PASS" and full_campaign_guard["allowed"]
+    ready_for_seven_use_cases = False
+    ready_for_frozen = False
+    ready_for_full_campaign = False
     remaining_blockers: list[str] = []
+    current_blockers: list[str] = []
     if pre_live.get("go_code_freeze") != "PASS":
         remaining_blockers.append("commit the current source changes to restore GO_CODE_FREEZE=PASS")
+        current_blockers.append("CODE_FREEZE")
     if secret.get("go_secret_safety") != "PASS":
         remaining_blockers.append("secret audit must pass before any live stage")
+        current_blockers.append("SECRET_AUDIT")
     if not model_state["valid"]:
         remaining_blockers.append("model_discovery.json must remain valid and reusable")
+        current_blockers.append("MODEL_DISCOVERY")
     if not provider_smoke_prompt_safe:
         remaining_blockers.append("provider smoke prompt audit must stay safe")
+        current_blockers.append("PROMPT_AUDIT")
     if not provider_smoke.get("provider_boundary_reached", False):
         remaining_blockers.append("provider smoke dry-run must reach the provider boundary")
-    if not full_campaign_guard["allowed"]:
+        current_blockers.append("PROVIDER_BOUNDARY")
+    if provider_smoke.get("GO_PROVIDER_SMOKE_SCHEMA") == "NO_GO":
+        remaining_blockers.append("provider smoke schema validation failure")
+        current_blockers.append("SCHEMA_ERROR")
+    if provider_smoke.get("GO_PROVIDER_SMOKE") == "PASS" and not full_campaign_guard["allowed"]:
         remaining_blockers.append("DEEPSEEK_FULL_CAMPAIGN_APPROVED remains disabled for wider live stages")
-    blocker_analysis = build_provider_smoke_blocker_analysis()
+    historical_issue = build_provider_smoke_blocker_analysis()
+    historical_resolved_issues = [
+        {
+            "code": "RESOLVED_PROMPT_AUDIT_FALSE_POSITIVE",
+            "status": "RESOLVED",
+            "summary": historical_issue["root_cause"],
+        }
+    ]
     summary = {
         "campaign_name": CAMPAIGN_NAME,
         "generated_at": utc_now_iso(),
@@ -3472,8 +4378,12 @@ def build_deepseek_live_summary(
         "model_discovery": {
             "configured_model": model_state["configured_model"],
             "configured_model_available": model_state["configured_model_available"],
-            "reused_from_artifact": model_state["reused_from_artifact"],
-            "performed_current_run": current_model_discovery_calls > 0,
+            "reused_from_artifact": artifact_reused_without_network,
+            "performed_current_run": live_discovery_performed,
+            "artifact_loaded_before_call": artifact_loaded_before_call,
+            "live_discovery_performed": live_discovery_performed,
+            "artifact_refreshed_after_call": artifact_refreshed_after_call,
+            "artifact_reused_without_network": artifact_reused_without_network,
             "artifact_timestamp": model_state["artifact_timestamp"],
             "artifact_response_sha256": model_state["artifact_response_sha256"],
             "calls_current_run": current_model_discovery_calls,
@@ -3489,12 +4399,25 @@ def build_deepseek_live_summary(
             "provider_boundary_reached": bool(provider_smoke.get("provider_boundary_reached", False)),
             "real_call_attempted": bool(provider_smoke.get("real_call_attempted", False)),
             "real_call_completed": bool(provider_smoke.get("real_call_completed", False)),
+            "transport_response_received": bool(provider_smoke.get("transport_response_received", False)),
+            "content_received": bool(provider_smoke.get("content_received", False)),
+            "json_parsed": bool(provider_smoke.get("json_parsed", False)),
             "chat_completion_calls_current_run": int(provider_smoke.get("chat_completion_calls_current_run", 0) or 0),
             "http_status": provider_smoke.get("http_status"),
+            "http_status_detail": provider_smoke.get("http_status_detail", ""),
             "json_valid": provider_smoke.get("json_valid"),
             "schema_valid": provider_smoke.get("schema_valid"),
+            "semantic_valid": provider_smoke.get("semantic_valid", "NOT_EXECUTED"),
             "terminal_status": provider_smoke.get("terminal_status", "NOT_EXECUTED"),
             "provider_failure": provider_smoke.get("provider_failure", ""),
+            "provider_failure_code": provider_smoke.get("provider_failure_code", provider_smoke.get("provider_failure", "")),
+            "provider_failure_stage": provider_smoke.get("provider_failure_stage", ""),
+            "provider_exception_class": provider_smoke.get("provider_exception_class", ""),
+            "provider_exception_message_sanitized": provider_smoke.get("provider_exception_message_sanitized", ""),
+            "provider_transport_success": bool(provider_smoke.get("provider_transport_success", False)),
+            "GO_PROVIDER_TRANSPORT": provider_smoke.get("GO_PROVIDER_TRANSPORT", "NOT_EXECUTED"),
+            "GO_PROVIDER_JSON": provider_smoke.get("GO_PROVIDER_JSON", "NOT_EXECUTED"),
+            "GO_PROVIDER_SMOKE_SCHEMA": provider_smoke.get("GO_PROVIDER_SMOKE_SCHEMA", "NOT_EXECUTED"),
             "dynamic_sensitive_fields": int(provider_smoke.get("dynamic_sensitive_fields", 0) or 0),
             "benchmark_identifiers": int(provider_smoke.get("benchmark_identifiers", 0) or 0),
             "frozen_identifiers": int(provider_smoke.get("frozen_identifiers", 0) or 0),
@@ -3514,6 +4437,7 @@ def build_deepseek_live_summary(
             "campaign_model_discovery_calls": campaign_model_discovery_calls,
             "campaign_chat_completion_calls": campaign_chat_calls,
             "campaign_known_network_calls": campaign_model_discovery_calls + campaign_chat_calls,
+            "historical_dry_run_records": historical_dry_run_records,
         },
         "worktree": {
             "branch": git_state.get("branch", ""),
@@ -3538,22 +4462,38 @@ def build_deepseek_live_summary(
             "current_run_completion_tokens": sum(int(float(row.get("completion_tokens", 0) or 0)) for row in current_budget_rows),
             "current_run_total_tokens": sum(int(float(row.get("total_tokens", 0) or 0)) for row in current_budget_rows),
         },
-        "blocker_analysis": blocker_analysis,
+        "current_blockers": current_blockers,
+        "historical_resolved_issues": historical_resolved_issues,
+        "blocker_analysis": historical_issue,
+        "provider_smoke_root_cause": current_root_cause,
         "comparison": _comparison_for_stage(requested_stage),
         "ready": {
             "ready_for_new_freeze_commit": ready_for_new_freeze_commit,
             "ready_for_real_provider_smoke": ready_for_real_provider_smoke,
+            "ready_for_provider_smoke_retry_after_fix": ready_for_provider_smoke_retry_after_fix,
             "ready_for_single_cases": ready_for_single_cases,
+            "ready_for_seven_use_cases": ready_for_seven_use_cases,
             "ready_for_frozen": ready_for_frozen,
+            "ready_for_full_campaign": ready_for_full_campaign,
             "remaining_blockers": remaining_blockers,
-            "final_decision": "READY_FOR_REAL_PROVIDER_SMOKE" if ready_for_real_provider_smoke else "NO_GO",
+            "final_decision": (
+                "FIX_PROVIDER_SMOKE_SCHEMA_THEN_RETRY"
+                if "SCHEMA_ERROR" in current_blockers
+                else "READY_FOR_REAL_PROVIDER_SMOKE"
+                if ready_for_real_provider_smoke
+                else "NO_GO"
+            ),
         },
     }
     write_json(FINAL_SUMMARY_JSON, summary)
+    if run_id:
+        write_json(provider_smoke_run_results_dir(run_id) / "deepseek_live_campaign_summary.json", summary)
     lines = build_final_status_lines(summary)
     write_markdown(FINAL_STATUS_MD, lines)
     if requested_stage == "provider_smoke":
         write_markdown(REPORTS_DIR / "provider_smoke.md", lines)
+        if run_id:
+            write_markdown(provider_smoke_run_reports_dir(run_id) / "provider_smoke.md", lines)
     return summary
 
 

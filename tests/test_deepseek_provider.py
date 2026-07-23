@@ -43,6 +43,8 @@ class FakeResponse:
     usage: FakeUsage = field(default_factory=FakeUsage)
     id: str = "resp_fake"
     created: int = 0
+    request_id: str | None = None
+    response: object | None = None
 
 
 class FakeError(Exception):
@@ -127,6 +129,23 @@ def test_deepseek_provider_generate_retries_429_then_succeeds():
     assert response.content == '{"ok": true}'
     assert sleep_calls == [1.0]
     assert response.raw_metadata["attempts"][-1]["final_status"] == "SUCCESS"
+
+
+def test_deepseek_provider_generate_exposes_success_metadata():
+    raw_response = type("RawResponse", (), {"status_code": 200, "headers": {"x-request-id": "req_chat", "content-type": "application/json"}})()
+    provider = build_provider([FakeResponse([FakeChoice(FakeMessage('{"ok": true}'))], request_id="req_chat", response=raw_response)])
+    response = provider.generate(build_request())
+    assert response.raw_metadata["http_status"] == 200
+    assert response.raw_metadata["http_status_observation"] == 200
+    assert response.raw_metadata["request_id"] == "req_chat"
+    assert response.raw_metadata["response_headers"]["content-type"] == "application/json"
+
+
+def test_deepseek_provider_generate_uses_http_status_sentinel_when_unavailable():
+    provider = build_provider([FakeResponse([FakeChoice(FakeMessage('{"ok": true}'))])])
+    response = provider.generate(build_request())
+    assert response.raw_metadata["http_status"] is None
+    assert response.raw_metadata["http_status_observation"] == "HTTP_STATUS_NOT_EXPOSED_BY_CURRENT_CLIENT_PATH"
 
 
 @pytest.mark.parametrize(
