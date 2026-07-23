@@ -1,0 +1,11 @@
+campaign: deepseek_live_v1
+manifest_name: frozen_protocol_manifest
+created_at: '2026-07-22T20:17:43+00:00'
+knowledge_version: knowledge_book_v1
+prompt_version: deepseek_testbench_planner_book_v1
+response_schema_version: testbench_plan_v1_compat
+compiler_version: testbench_plan_compiler_v1
+checker_version: verification_pipeline_v1
+provider_mode: LIVE
+scientific_llm_evidence: false
+cases_manifest: experiments/deepseek_live_v1/frozen_case_manifest.yaml

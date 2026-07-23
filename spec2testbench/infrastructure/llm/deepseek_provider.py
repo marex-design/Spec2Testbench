@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import random
@@ -28,11 +29,14 @@ def _mask_secret(text: str, secret: str | None) -> str:
     return text.replace(secret, "***")
 
 
+LEGACY_DEEPSEEK_ALIASES = {"deepseek-chat", "deepseek-reasoner"}
+
+
 @dataclass(frozen=True)
 class DeepSeekProviderConfig:
     api_key: str
     base_url: str = "https://api.deepseek.com"
-    model: str = "deepseek-chat"
+    model: str = ""
     temperature: float = 0.1
     max_tokens: int = 4096
     timeout_seconds: float = 90.0
@@ -40,15 +44,36 @@ class DeepSeekProviderConfig:
 
     @classmethod
     def from_env(cls) -> "DeepSeekProviderConfig":
-        return cls(
+        config = cls(
             api_key=os.getenv("DEEPSEEK_API_KEY", "").strip(),
             base_url=os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com").strip() or "https://api.deepseek.com",
-            model=os.getenv("DEEPSEEK_MODEL", "deepseek-chat").strip() or "deepseek-chat",
+            model=os.getenv("DEEPSEEK_MODEL", "").strip(),
             temperature=float(os.getenv("DEEPSEEK_TEMPERATURE", "0.1")),
             max_tokens=int(os.getenv("DEEPSEEK_MAX_TOKENS", "4096")),
             timeout_seconds=float(os.getenv("DEEPSEEK_TIMEOUT_SECONDS", "90")),
             max_retries=int(os.getenv("DEEPSEEK_MAX_RETRIES", "3")),
         )
+        config.validate_model_selection(
+            allow_empty=True,
+            allow_legacy_alias=os.getenv("ALLOW_LEGACY_DEEPSEEK_ALIAS", "").strip() == "1",
+        )
+        return config
+
+    def validate_model_selection(
+        self,
+        *,
+        allow_empty: bool = False,
+        allow_legacy_alias: bool = False,
+    ) -> None:
+        if not self.model:
+            if allow_empty:
+                return
+            raise ValueError("DEEPSEEK_MODEL must be configured explicitly.")
+        if self.model in LEGACY_DEEPSEEK_ALIASES and not allow_legacy_alias:
+            raise ValueError(
+                f"Legacy DeepSeek alias '{self.model}' is blocked. "
+                "Set ALLOW_LEGACY_DEEPSEEK_ALIAS=1 only for non-canonical exploratory usage."
+            )
 
 
 class DeepSeekProvider(LLMProvider):
@@ -73,6 +98,10 @@ class DeepSeekProvider(LLMProvider):
         return self._config
 
     def list_models(self) -> list[str]:
+        discovery = self.discover_models()
+        return [item["id"] for item in discovery["models"]]
+
+    def discover_models(self) -> dict[str, Any]:
         self._ensure_api_key()
         client = self._client_or_create()
         response = client.models.list()
@@ -80,11 +109,25 @@ class DeepSeekProvider(LLMProvider):
         for item in getattr(response, "data", []):
             model_id = getattr(item, "id", None)
             if model_id:
-                models.append(model_id)
-        return sorted(models)
+                models.append(
+                    {
+                        "id": model_id,
+                        "owned_by": getattr(item, "owned_by", None),
+                    }
+                )
+        payload = {
+            "models": sorted(models, key=lambda entry: str(entry["id"])),
+            "http_status": self._extract_status_code(response) or 200,
+            "request_id": self._extract_request_id(response),
+        }
+        payload["response_sha256"] = hashlib.sha256(
+            json.dumps(payload["models"], sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        return payload
 
     def generate(self, request: LLMRequest) -> LLMResponse:
         self._ensure_api_key()
+        self._config.validate_model_selection(allow_empty=False)
         attempts: list[dict[str, Any]] = []
         last_error: Exception | None = None
         for attempt_number in range(1, max(self._config.max_retries, 1) + 1):
@@ -223,6 +266,22 @@ class DeepSeekProvider(LLMProvider):
             value = getattr(response, "status_code", None)
             if isinstance(value, int):
                 return value
+        return None
+
+    @staticmethod
+    def _extract_request_id(response: Any) -> str | None:
+        for attribute in ("request_id", "id"):
+            value = getattr(response, attribute, None)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        raw_response = getattr(response, "response", None)
+        headers = getattr(raw_response, "headers", None)
+        if headers is None:
+            return None
+        for key in ("x-request-id", "request-id"):
+            value = headers.get(key) if hasattr(headers, "get") else None
+            if isinstance(value, str) and value.strip():
+                return value.strip()
         return None
 
     def _bounded_backoff_seconds(self, attempt_number: int) -> float:

@@ -1,0 +1,60 @@
+campaign: deepseek_live_v1
+manifest_name: use_case_smoke_manifest
+created_at: '2026-07-22T20:17:43+00:00'
+cases:
+- case_id: smoke_p07_bias
+  parent_circuit_id: p07_inverter
+  ground_truth_label: SMOKE_REFERENCE
+  circuit_family: inverter
+  specification_file: examples/benchmark_specs/p07_inverter.yaml
+  netlist_file: benchmark/analogcoder_pro/p07_inverter.cir
+  targeted_metric:
+    name: operating_point
+- case_id: smoke_p05_current
+  parent_circuit_id: p05_amplifier
+  ground_truth_label: SMOKE_REFERENCE
+  circuit_family: amplifier
+  specification_file: examples/benchmark_specs/p05_amplifier.yaml
+  netlist_file: benchmark/analogcoder_pro/p05_amplifier.cir
+  targeted_metric:
+    name: quiescent_current
+- case_id: smoke_p01_gain
+  parent_circuit_id: p01_amplifier
+  ground_truth_label: SMOKE_REFERENCE
+  circuit_family: amplifier
+  specification_file: examples/benchmark_specs/p01_amplifier.yaml
+  netlist_file: benchmark/analogcoder_pro/p01_amplifier.cir
+  targeted_metric:
+    name: dc_gain_db
+- case_id: smoke_p10_cutoff
+  parent_circuit_id: p10_lowpass
+  ground_truth_label: SMOKE_REFERENCE
+  circuit_family: low_pass_filter
+  specification_file: examples/benchmark_specs/p10_lowpass.yaml
+  netlist_file: benchmark/analogcoder_pro/p10_lowpass.cir
+  targeted_metric:
+    name: cutoff_frequency_hz
+- case_id: smoke_p09_delay
+  parent_circuit_id: p09_comparator
+  ground_truth_label: SMOKE_REFERENCE
+  circuit_family: comparator
+  specification_file: examples/benchmark_specs/p09_comparator.yaml
+  netlist_file: benchmark/analogcoder_pro/p09_comparator.cir
+  targeted_metric:
+    name: propagation_delay
+- case_id: smoke_p22_frequency
+  parent_circuit_id: p22_oscillator
+  ground_truth_label: SMOKE_REFERENCE
+  circuit_family: oscillator
+  specification_file: examples/benchmark_specs/p22_oscillator.yaml
+  netlist_file: benchmark/analogcoder_pro/p22_oscillator.cir
+  targeted_metric:
+    name: oscillator_frequency
+- case_id: smoke_p28_hysteresis
+  parent_circuit_id: p28_schmitt
+  ground_truth_label: SMOKE_REFERENCE
+  circuit_family: schmitt_trigger
+  specification_file: experiments/llm_deepseek/specifications/smoke_p28_schmitt_hysteresis.yaml
+  netlist_file: benchmark/analogcoder_pro/p28_schmitt.cir
+  targeted_metric:
+    name: hysteresis_width

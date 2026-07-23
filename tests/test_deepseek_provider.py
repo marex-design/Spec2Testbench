@@ -12,7 +12,11 @@ from spec2testbench.application.ports.llm_provider import (
     LLMRateLimitError,
     LLMRequest,
 )
-from spec2testbench.infrastructure.llm.deepseek_provider import DeepSeekProvider, DeepSeekProviderConfig
+from spec2testbench.infrastructure.llm.deepseek_provider import (
+    LEGACY_DEEPSEEK_ALIASES,
+    DeepSeekProvider,
+    DeepSeekProviderConfig,
+)
 
 
 @dataclass
@@ -54,8 +58,11 @@ class FakeClient:
         self.chat = type("Chat", (), {"completions": type("Completions", (), {"create": self._create})()})()
 
     def _list_models(self):
-        data = [type("Model", (), {"id": item})() for item in ["deepseek-chat", "deepseek-reasoner"]]
-        return type("Response", (), {"data": data})()
+        data = [
+            type("Model", (), {"id": item, "owned_by": "deepseek"})()
+            for item in ["deepseek-chat", "deepseek-reasoner"]
+        ]
+        return type("Response", (), {"data": data, "request_id": "req_models"})()
 
     def _create(self, **kwargs):
         response = self._responses.pop(0)
@@ -65,7 +72,7 @@ class FakeClient:
 
 
 def build_provider(responses, *, api_key: str = "secret-key", sleep_calls: list[float] | None = None):
-    config = DeepSeekProviderConfig(api_key=api_key, max_retries=3)
+    config = DeepSeekProviderConfig(api_key=api_key, model="deepseek-current-model", max_retries=3)
     return DeepSeekProvider(
         config,
         client_factory=lambda cfg: FakeClient(responses),
@@ -96,6 +103,15 @@ def test_deepseek_provider_requires_api_key():
 def test_deepseek_provider_list_models_returns_ids():
     provider = build_provider([FakeResponse([FakeChoice(FakeMessage("{}"))])])
     assert provider.list_models() == ["deepseek-chat", "deepseek-reasoner"]
+
+
+def test_deepseek_provider_discover_models_returns_metadata():
+    provider = build_provider([FakeResponse([FakeChoice(FakeMessage("{}"))])])
+    discovery = provider.discover_models()
+    assert discovery["http_status"] == 200
+    assert discovery["request_id"] == "req_models"
+    assert discovery["models"][0]["owned_by"] == "deepseek"
+    assert discovery["response_sha256"]
 
 
 def test_deepseek_provider_generate_retries_429_then_succeeds():
@@ -150,3 +166,22 @@ def test_deepseek_provider_masks_secret_in_errors():
     with pytest.raises(LLMAuthenticationError) as exc_info:
         provider.generate(build_request())
     assert "secret-key" not in str(exc_info.value)
+
+
+def test_deepseek_provider_config_requires_explicit_model():
+    config = DeepSeekProviderConfig(api_key="secret-key", model="")
+    with pytest.raises(ValueError, match="DEEPSEEK_MODEL"):
+        config.validate_model_selection()
+
+
+def test_deepseek_provider_rejects_legacy_alias_by_default():
+    legacy_model = next(iter(LEGACY_DEEPSEEK_ALIASES))
+    config = DeepSeekProviderConfig(api_key="secret-key", model=legacy_model)
+    with pytest.raises(ValueError, match="Legacy DeepSeek alias"):
+        config.validate_model_selection()
+
+
+def test_deepseek_provider_can_allow_legacy_alias_for_noncanonical_usage():
+    legacy_model = next(iter(LEGACY_DEEPSEEK_ALIASES))
+    config = DeepSeekProviderConfig(api_key="secret-key", model=legacy_model)
+    config.validate_model_selection(allow_legacy_alias=True)

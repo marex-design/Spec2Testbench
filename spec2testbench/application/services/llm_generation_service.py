@@ -70,33 +70,20 @@ class LLMGenerationService:
         knowledge_bundle: dict[str, Any] | None = None,
         knowledge_version: str | None = None,
         provider_mode: str = "UNKNOWN",
-        scientific_llm_evidence: bool = True,
+        scientific_llm_evidence: bool = False,
+        request_overrides: dict[str, Any] | None = None,
     ) -> LLMPlanningOutcome:
-        capability_payload = self._capability_builder.build(
-            specification,
+        capability_payload, system_prompt, request_payload, prompt_sha = self.build_request_context(
+            specification=specification,
             netlist_path=netlist_path,
-            deterministic_testbench=deterministic_testbench if include_deterministic_summary else None,
+            deterministic_testbench=deterministic_testbench,
+            include_deterministic_summary=include_deterministic_summary,
+            knowledge_bundle=knowledge_bundle,
+            knowledge_version=knowledge_version,
+            provider_mode=provider_mode,
+            scientific_llm_evidence=scientific_llm_evidence,
+            request_overrides=request_overrides,
         )
-        system_prompt = self._prompt_path.read_text(encoding="utf-8")
-        request_payload = {
-            "task": "Generate a valid JSON TestbenchPlan",
-            "case_id": capability_payload.case_id,
-            "circuit_family": capability_payload.circuit_family,
-            "available_nodes": capability_payload.available_nodes,
-            "supply_information": capability_payload.supply_information,
-            "requested_metrics": capability_payload.requested_metrics,
-            "supported_capabilities": capability_payload.to_dict()["supported_capabilities"],
-            "normalized_specification": self._normalized_specification(specification),
-            "deterministic_plan_summary": capability_payload.deterministic_plan_summary,
-            "response_schema": TestbenchPlan.model_json_schema(),
-            "provider_mode": provider_mode,
-            "scientific_llm_evidence": scientific_llm_evidence,
-            "knowledge_version": knowledge_version,
-            "knowledge_bundle": knowledge_bundle or {},
-            "knowledge_bundle_sha256": (knowledge_bundle or {}).get("knowledge_bundle_sha256", ""),
-        }
-        prompt_sha = hashlib.sha256(system_prompt.encode("utf-8")).hexdigest()
-
         raw_response, response_metadata = self._request_plan(
             system_prompt=system_prompt,
             request_payload=request_payload,
@@ -155,6 +142,48 @@ class LLMGenerationService:
             parsed_plan=current_validation.parsed_plan,
         )
 
+    def build_request_context(
+        self,
+        *,
+        specification: Specification,
+        netlist_path: Path,
+        deterministic_testbench: TestBench | None,
+        include_deterministic_summary: bool,
+        knowledge_bundle: dict[str, Any] | None = None,
+        knowledge_version: str | None = None,
+        provider_mode: str = "UNKNOWN",
+        scientific_llm_evidence: bool = False,
+        request_overrides: dict[str, Any] | None = None,
+    ) -> tuple[Any, str, dict[str, Any], str]:
+        capability_payload = self._capability_builder.build(
+            specification,
+            netlist_path=netlist_path,
+            deterministic_testbench=deterministic_testbench if include_deterministic_summary else None,
+        )
+        system_prompt = self._prompt_path.read_text(encoding="utf-8")
+        request_payload = {
+            "task": "Generate a valid JSON TestbenchPlan",
+            "case_id": capability_payload.case_id,
+            "circuit_family": capability_payload.circuit_family,
+            "available_nodes": capability_payload.available_nodes,
+            "canonical_circuit_representation": capability_payload.canonical_circuit_representation,
+            "supply_information": capability_payload.supply_information,
+            "requested_metrics": capability_payload.requested_metrics,
+            "supported_capabilities": capability_payload.to_dict()["supported_capabilities"],
+            "normalized_specification": self._normalized_specification(specification),
+            "deterministic_plan_summary": capability_payload.deterministic_plan_summary,
+            "response_schema": TestbenchPlan.model_json_schema(),
+            "provider_mode": provider_mode,
+            "scientific_llm_evidence": scientific_llm_evidence,
+            "knowledge_version": knowledge_version,
+            "knowledge_bundle": knowledge_bundle or {},
+            "knowledge_bundle_sha256": (knowledge_bundle or {}).get("knowledge_bundle_sha256", ""),
+        }
+        if request_overrides:
+            request_payload.update(request_overrides)
+        prompt_sha = hashlib.sha256(system_prompt.encode("utf-8")).hexdigest()
+        return capability_payload, system_prompt, request_payload, prompt_sha
+
     def _request_plan(
         self,
         *,
@@ -202,11 +231,36 @@ class LLMGenerationService:
 
     @staticmethod
     def _normalized_specification(specification: Specification) -> dict[str, Any]:
+        allowed_input_keys = {
+            "vdd",
+            "vss",
+            "vcm",
+            "input_nodes",
+            "output_nodes",
+            "cl",
+            "rl",
+            "temperature",
+            "nominal_temperature",
+            "input_amplitude",
+            "input_frequency",
+            "start_frequency",
+            "stop_frequency",
+            "points_per_decade",
+            "pulse_width",
+            "period",
+            "rise_time",
+            "fall_time",
+        }
+        sanitized_input_conditions = {
+            key: value
+            for key, value in specification.input_conditions.items()
+            if key in allowed_input_keys
+        }
         return {
             "name": specification.name,
             "circuit_type": specification.circuit_type.value,
             "performance_targets": specification.performance_targets,
-            "input_conditions": specification.input_conditions,
+            "input_conditions": sanitized_input_conditions,
             "test_categories": specification.test_categories,
             "measurement": specification.measurement,
         }

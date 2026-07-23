@@ -93,5 +93,5 @@ Citation metadata is available in `CITATION.cff`. Spec2Testbench is distributed 
 
 Authors:
 
-- Exauce Kambale Maruba (`exauce.kambale@unikin.ac.cd`)
+- Exaucé Kambale Maruba (`exauce.kambale@unikin.ac.cd`)
 - Christian-Marie Moanda Ndeko Mosengo (`christianmoanda@yahoo.fr`)

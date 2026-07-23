@@ -24,6 +24,7 @@ class LLMCapabilityPayload:
     case_id: str
     circuit_family: str
     available_nodes: list[str]
+    canonical_circuit_representation: dict[str, Any]
     supply_information: dict[str, Any]
     requested_metrics: list[str]
     supported_analysis_types: list[str]
@@ -37,6 +38,7 @@ class LLMCapabilityPayload:
             "case_id": self.case_id,
             "circuit_family": self.circuit_family,
             "available_nodes": self.available_nodes,
+            "canonical_circuit_representation": self.canonical_circuit_representation,
             "supply_information": self.supply_information,
             "requested_metrics": self.requested_metrics,
             "supported_capabilities": {
@@ -100,6 +102,7 @@ class LLMCapabilityBuilder:
             case_id=specification.case_id or specification.name,
             circuit_family=specification.circuit_type.value,
             available_nodes=available_nodes,
+            canonical_circuit_representation=self._sanitize_netlist(netlist),
             supply_information=supply_information,
             requested_metrics=requested_metrics,
             supported_analysis_types=sorted(analysis_values),
@@ -112,6 +115,37 @@ class LLMCapabilityBuilder:
             supported_metric_definitions=metric_definitions,
             deterministic_plan_summary=self._summarize_testbench(deterministic_testbench),
         )
+
+    @staticmethod
+    def _sanitize_netlist(netlist) -> dict[str, Any]:
+        components = [
+            {
+                "name": component.name,
+                "type": component.type,
+                "nodes": list(component.nodes),
+                "value": component.value,
+                "model": component.model,
+            }
+            for component in netlist.components
+        ]
+        sources = [
+            {
+                "name": component.name,
+                "type": component.type,
+                "nodes": list(component.nodes),
+                "value": component.value,
+            }
+            for component in netlist.components
+            if component.type in {"V", "I"}
+        ]
+        return {
+            "component_count": len(components),
+            "components": components,
+            "nodes": list(netlist.nodes),
+            "models": sorted(netlist.models.keys()),
+            "subcircuits": sorted(netlist.subcircuits.keys()),
+            "sources": sources,
+        }
 
     def _summarize_testbench(self, testbench: TestBench | None) -> dict[str, Any]:
         if testbench is None:
