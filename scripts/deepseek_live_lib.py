@@ -38,6 +38,7 @@ from spec2testbench.infrastructure.llm.deepseek_provider import (
 
 CAMPAIGN_NAME = "deepseek_live_v1"
 CAMPAIGN_SALT = os.getenv("DEEPSEEK_CAMPAIGN_SALT", CAMPAIGN_NAME)
+CAMPAIGN_PROTOCOL_DATE = "2026-07-22"
 KNOWLEDGE_VERSION = "knowledge_book_v1"
 PROMPT_VERSION = "deepseek_testbench_planner_book_v1"
 PROMPT_PATH = ROOT / "spec2testbench/infrastructure/llm/prompts/deepseek_testbench_planner_book_v1.txt"
@@ -598,7 +599,7 @@ def write_default_manifests() -> None:
     provider_smoke_payload = {
         "campaign": CAMPAIGN_NAME,
         "manifest_name": "provider_smoke_manifest",
-        "created_at": utc_now_iso(),
+        "protocol_date": CAMPAIGN_PROTOCOL_DATE,
         "cases": [
             {
                 "case_id": "smoke_p10_cutoff",
@@ -614,7 +615,7 @@ def write_default_manifests() -> None:
     single_payload = {
         "campaign": CAMPAIGN_NAME,
         "manifest_name": "single_case_manifest",
-        "created_at": utc_now_iso(),
+        "protocol_date": CAMPAIGN_PROTOCOL_DATE,
         "cases": [
             {
                 "case_id": case.case_id,
@@ -631,7 +632,7 @@ def write_default_manifests() -> None:
     use_case_payload = {
         "campaign": CAMPAIGN_NAME,
         "manifest_name": "use_case_smoke_manifest",
-        "created_at": utc_now_iso(),
+        "protocol_date": CAMPAIGN_PROTOCOL_DATE,
         "cases": [
             {
                 "case_id": case.case_id,
@@ -648,7 +649,7 @@ def write_default_manifests() -> None:
     frozen_case_payload = {
         "campaign": CAMPAIGN_NAME,
         "manifest_name": "frozen_case_manifest",
-        "created_at": utc_now_iso(),
+        "protocol_date": CAMPAIGN_PROTOCOL_DATE,
         "cases": [
             {
                 "case_id": case.case_id,
@@ -665,7 +666,7 @@ def write_default_manifests() -> None:
     frozen_protocol_payload = {
         "campaign": CAMPAIGN_NAME,
         "manifest_name": "frozen_protocol_manifest",
-        "created_at": utc_now_iso(),
+        "protocol_date": CAMPAIGN_PROTOCOL_DATE,
         "knowledge_version": KNOWLEDGE_VERSION,
         "prompt_version": PROMPT_VERSION,
         "response_schema_version": RESPONSE_SCHEMA_VERSION,
@@ -1216,7 +1217,7 @@ def build_pre_live_manifest() -> dict[str, Any]:
     response_schema = TestbenchPlan.model_json_schema()
     payload = {
         "campaign_name": CAMPAIGN_NAME,
-        "protocol_date": "2026-07-22",
+        "protocol_date": CAMPAIGN_PROTOCOL_DATE,
         "generated_at": utc_now_iso(),
         "branch": git_state["branch"],
         "git_commit": git_state["git_commit"],
@@ -1258,7 +1259,6 @@ def build_pre_live_manifest() -> dict[str, Any]:
         "paper_diff": git_state["paper_diff"],
         "go_code_freeze": "PASS" if git_state["go_code_freeze"] else "NO_GO",
     }
-    write_yaml(EXPERIMENTS_DIR / "pre_live_manifest.yaml", payload)
     write_json(RESULTS_DIR / "pre_live_manifest.json", payload)
     write_markdown(
         REPORTS_DIR / "pre_live_manifest.md",

@@ -21,6 +21,29 @@ from deepseek_live_lib import (  # noqa: E402
 )
 
 
+def _fake_secret_value() -> str:
+    return "".join(
+        [
+            "AbCdEfGhIjKl",
+            "MnOpQrStUvWx",
+            "Yz1234567890",
+            "AlphaBeta42",
+        ]
+    )
+
+
+def _deepseek_api_key_name() -> str:
+    return "DEEPSEEK" "_API_KEY"
+
+
+def _authorization_header_name() -> str:
+    return "Author" "ization"
+
+
+def _bearer_scheme() -> str:
+    return "Be" "arer"
+
+
 def test_empty_deepseek_key_assignment_is_safe():
     assert scan_text_for_secret_matches("DEEPSEEK_API_KEY=\n") == []
 
@@ -30,19 +53,21 @@ def test_variable_name_without_value_is_safe():
 
 
 def test_realistic_nonempty_key_is_flagged():
-    matches = scan_text_for_secret_matches("DEEPSEEK_API_KEY=sk-AbCdEfGhIjKlMnOpQrStUvWxYz1234567890\n")
+    matches = scan_text_for_secret_matches(f"{_deepseek_api_key_name()}={_fake_secret_value()}\n")
     assert matches == [{"match_type": "deepseek_env_assignment"}]
 
 
 def test_authorization_header_is_flagged():
-    matches = scan_text_for_secret_matches('"Authorization": "Bearer sk-AbCdEfGhIjKlMnOpQrStUvWxYz1234567890"')
+    matches = scan_text_for_secret_matches(
+        f'"{_authorization_header_name()}": "{_bearer_scheme()} {_fake_secret_value()}"'
+    )
     assert matches == [{"match_type": "authorization_header"}]
 
 
 def test_secret_value_is_redacted_from_report(tmp_path: Path):
-    secret_value = "sk-AbCdEfGhIjKlMnOpQrStUvWxYz1234567890"
+    secret_value = _fake_secret_value()
     secret_file = tmp_path / "secret.txt"
-    secret_file.write_text(f"DEEPSEEK_API_KEY={secret_value}\n", encoding="utf-8")
+    secret_file.write_text(f"{_deepseek_api_key_name()}={secret_value}\n", encoding="utf-8")
 
     payload = _scan_secrets_in_file(secret_file)
 
@@ -97,3 +122,21 @@ def test_benchmark_change_invalidates_freeze():
 def test_artifact_outside_allowed_root_invalidates_freeze():
     assert freeze_invalidation_reason("artifacts/some_other_campaign/output.json") == "ARTIFACT_OUTSIDE_ALLOWED_ROOT"
     assert invalidates_source_freeze("artifacts/some_other_campaign/output.json") is True
+
+
+def test_committed_experiment_manifests_do_not_use_dynamic_created_at():
+    manifest_paths = [
+        ROOT / "experiments/deepseek_live_v1/provider_smoke_manifest.yaml",
+        ROOT / "experiments/deepseek_live_v1/single_case_manifest.yaml",
+        ROOT / "experiments/deepseek_live_v1/use_case_smoke_manifest.yaml",
+        ROOT / "experiments/deepseek_live_v1/frozen_case_manifest.yaml",
+        ROOT / "experiments/deepseek_live_v1/frozen_protocol_manifest.yaml",
+    ]
+    for path in manifest_paths:
+        content = path.read_text(encoding="utf-8")
+        assert "created_at:" not in content
+        assert "protocol_date:" in content
+
+
+def test_pre_live_manifest_is_not_versioned_under_experiments():
+    assert not (ROOT / "experiments/deepseek_live_v1/pre_live_manifest.yaml").exists()
