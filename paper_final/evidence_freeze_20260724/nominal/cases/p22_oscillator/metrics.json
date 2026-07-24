@@ -1,0 +1,22 @@
+[
+  {
+    "name": "oscillator_frequency",
+    "verdict": "ERROR",
+    "measured": null,
+    "expected_min": 1.0,
+    "expected_max": null,
+    "unit": "Hz",
+    "message": "metric_missing: Metric 'oscillator_frequency' could not be extracted from simulation",
+    "category": "other"
+  },
+  {
+    "name": "startup_amplitude",
+    "verdict": "PASS",
+    "measured": 4.999999969612645e-09,
+    "expected_min": 1e-12,
+    "expected_max": null,
+    "unit": "V",
+    "message": "startup_amplitude = 5e-09 V",
+    "category": "other"
+  }
+]

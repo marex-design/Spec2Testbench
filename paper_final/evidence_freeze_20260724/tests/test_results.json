@@ -1,0 +1,41 @@
+{
+  "freeze_id": "evidence_freeze_20260724",
+  "git_commit": "0db963312862e747ad2f8fdc039313861e9bf8ba",
+  "runs": {
+    "python_m_pytest_q": {
+      "label": "python_m_pytest_q",
+      "command": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\.venv\\Scripts\\python.exe -m pytest -q",
+      "env": {},
+      "returncode": 0,
+      "passed": 304,
+      "failed": 0,
+      "skipped": 17,
+      "warnings": 0
+    },
+    "python_m_pytest_q_ngspice": {
+      "label": "python_m_pytest_q_ngspice",
+      "command": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\.venv\\Scripts\\python.exe -m pytest -q",
+      "env": {
+        "RUN_NGSPICE_INTEGRATION": "1"
+      },
+      "returncode": 0,
+      "passed": 316,
+      "failed": 0,
+      "skipped": 5,
+      "warnings": 0
+    },
+    "python_m_pytest_q_ngspice_no_pyspice": {
+      "label": "python_m_pytest_q_ngspice_no_pyspice",
+      "command": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\.venv\\Scripts\\python.exe -m pytest -q",
+      "env": {
+        "RUN_NGSPICE_INTEGRATION": "1",
+        "SPEC2TESTBENCH_DISABLE_PYSPICE": "1"
+      },
+      "returncode": 0,
+      "passed": 316,
+      "failed": 0,
+      "skipped": 5,
+      "warnings": 0
+    }
+  }
+}

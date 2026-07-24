@@ -1,0 +1,12 @@
+[
+  {
+    "name": "propagation_delay",
+    "verdict": "PASS",
+    "measured": -4.83103e-11,
+    "expected_min": null,
+    "expected_max": 0.001,
+    "unit": "s",
+    "message": "propagation_delay = -4.831e-11 s",
+    "category": "other"
+  }
+]

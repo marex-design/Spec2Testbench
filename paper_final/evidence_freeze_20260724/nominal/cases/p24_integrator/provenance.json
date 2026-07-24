@@ -1,0 +1,107 @@
+{
+  "run_id": "27dc77b5-107a-4a24-979e-6c7aef23c532",
+  "timestamp": "2026-07-24T14:08:14.250962",
+  "framework_version": "0.1.0",
+  "git_commit": "0db963312862e747ad2f8fdc039313861e9bf8ba",
+  "python_version": "3.12.2 (tags/v3.12.2:6abddd9, Feb  6 2024, 21:26:36) [MSC v.1937 64 bit (AMD64)]",
+  "ngspice_version": "ngspice-41 : Circuit level simulation program",
+  "ngspice_command": [
+    "C:\\ProgramData\\chocolatey\\lib\\ngspice\\tools\\Spice64\\bin\\ngspice_con.exe",
+    "-b",
+    "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_eozkm733\\executed_testbench.ckt"
+  ],
+  "ngspice_returncode": 0,
+  "raw_result_file": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_eozkm733\\simulation.raw",
+  "raw_result_file_exists": false,
+  "pyspice_version": "1.5",
+  "operating_system": "Windows-10-10.0.19045-SP0",
+  "circuit_id": "analogcoder_pro_p24_integrator",
+  "case_id": "analogcoder_pro_p24_integrator",
+  "parent_circuit_id": null,
+  "specification_file": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\examples\\benchmark_nominal_specs\\p24_integrator.yaml",
+  "specification_hash": "0a28875422bc1595fd5c244b5e1f0dde166bafac377b088582bc65f4b774609e",
+  "netlist_file": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\benchmark\\analogcoder_pro\\p24_integrator.cir",
+  "netlist_hash": "607bd54b1c7b7151c31838ba762ee0a31cab7af9f7486d4fc74785cf1f5fa132",
+  "testbench_file": null,
+  "testbench_hash": "7c7a1a8ece3a001ee15adacef1d820e8aac7f1bcbff6f6cd077f3d67f6ebe7e6",
+  "expected_netlist_sha256": "607bd54b1c7b7151c31838ba762ee0a31cab7af9f7486d4fc74785cf1f5fa132",
+  "actual_netlist_sha256": "607bd54b1c7b7151c31838ba762ee0a31cab7af9f7486d4fc74785cf1f5fa132",
+  "actual_deck_sha256": "90a0865ff8d24f842e8433d7d8f6219eb388f45c6cebe7d814bd0106d37d7be0",
+  "netlist_binding_status": "MATCH",
+  "required_metric_validation": {
+    "slew_rate": {
+      "target_metric_exists_in_specification": true,
+      "target_metric_supported_by_extractor": true,
+      "target_metric_has_recognized_unit": true,
+      "target_metric_has_operator": true,
+      "target_metric_has_threshold": true,
+      "required_signals_available": true,
+      "required_analysis_generated": true
+    },
+    "settling_time": {
+      "target_metric_exists_in_specification": true,
+      "target_metric_supported_by_extractor": true,
+      "target_metric_has_recognized_unit": true,
+      "target_metric_has_operator": true,
+      "target_metric_has_threshold": true,
+      "required_signals_available": true,
+      "required_analysis_generated": true
+    }
+  },
+  "mutation_effectiveness_status": "NOT_EVALUATED",
+  "measurement_backend": "NGSPICE_MEASURE",
+  "pyspice_required": false,
+  "measurement_source": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_eozkm733\\measures.txt",
+  "measurement_command": "C:\\ProgramData\\chocolatey\\lib\\ngspice\\tools\\Spice64\\bin\\ngspice_con.exe -b C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_eozkm733\\executed_testbench.ckt",
+  "measurement_status": "SUCCESS",
+  "compiled_plan_sha256": "2e8d71c153b106ce31a8040fb2653a3d2de1e82e8f07f7ca0d70d0741ac6d542",
+  "serialized_deck_sha256": "90a0865ff8d24f842e8433d7d8f6219eb388f45c6cebe7d814bd0106d37d7be0",
+  "executed_file_sha256": "90a0865ff8d24f842e8433d7d8f6219eb388f45c6cebe7d814bd0106d37d7be0",
+  "post_execution_file_sha256": "90a0865ff8d24f842e8433d7d8f6219eb388f45c6cebe7d814bd0106d37d7be0",
+  "ngspice_input_file_path": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_eozkm733\\executed_testbench.ckt",
+  "generated_testbench_path": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_eozkm733\\generated_testbench.ckt",
+  "generated_testbench_sha256": "90a0865ff8d24f842e8433d7d8f6219eb388f45c6cebe7d814bd0106d37d7be0",
+  "generated_testbench_alias_byte_identical": true,
+  "post_serialization_deck_mutation": false,
+  "measurement_requests": [
+    {
+      "name": "slew_rate",
+      "unit": "V/s",
+      "expression": "deriv(V(out))",
+      "preferred_backend": "AUTO",
+      "metric_definition_version": "slew_rate_v1",
+      "quantity_type": null,
+      "measurement_expression_id": "TRAN_SLEW_RATE",
+      "semantic_guards": [
+        "requires_output_waveform"
+      ],
+      "output_threshold": 2.5,
+      "input_node": "Vin",
+      "output_node": "Vout"
+    },
+    {
+      "name": "settling_time",
+      "unit": "s",
+      "expression": "time to settle within 1%",
+      "preferred_backend": "AUTO",
+      "metric_definition_version": "settling_time_v1",
+      "quantity_type": null,
+      "measurement_expression_id": "TRAN_SETTLING_TIME",
+      "semantic_guards": [
+        "requires_output_waveform"
+      ],
+      "output_threshold": 2.5,
+      "input_node": "Vin",
+      "output_node": "Vout"
+    }
+  ],
+  "variant_overrides": [],
+  "simulation_mode": "REAL",
+  "execution_status": "SUCCESS",
+  "compliance_status": "PASS",
+  "robustness_status": "NOT_EVALUATED",
+  "scientific_category": "SIMULABLE_COMPLIANT",
+  "runtime_seconds": 1.116699457168579,
+  "error_type": null,
+  "error_message": "Note: vin: dc value used for op instead of transient time=0 value."
+}

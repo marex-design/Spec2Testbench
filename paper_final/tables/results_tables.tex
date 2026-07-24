@@ -1,7 +1,7 @@
 \begin{table*}[t]
 \centering
 \small
-\caption{Nominal ACP-28 execution summary from the canonical paper campaign (\texttt{results/paper\_campaign\_summary.json}, run id \texttt{20260711\_094959}).}
+\caption{Nominal ACP-28 execution summary from the frozen public evidence bundle (\texttt{paper\_final/evidence\_freeze\_20260724/nominal/freeze\_manifest.json}).}
 \label{tab:rq1_nominal_summary}
 \begin{tabular}{lr}
 \toprule
@@ -12,10 +12,10 @@ REAL-mode runs & 28 \\
 Mock runs & 0 \\
 Successful executions & 28 \\
 Scientifically eligible results & 28 \\
-Simulation success rate & 1.0000 \\
-Real simulation rate & 1.0000 \\
-Paper eligibility rate & 1.0000 \\
-Metric extraction success rate & 1.0000 \\
+SIMULABLE\_COMPLIANT & 16 \\
+SIMULABLE\_NONCOMPLIANT & 2 \\
+UNEVALUATED & 10 \\
+Authoritative workflow & public\_cli\_verify \\
 Analysis families covered in extracted evidence & DC / AC / transient / spectral \\
 \bottomrule
 \end{tabular}
@@ -24,16 +24,17 @@ Analysis families covered in extracted evidence & DC / AC / transient / spectral
 \begin{table*}[t]
 \centering
 \scriptsize
-\caption{Compact nominal compliance table from the canonical paper campaign. The full per-circuit table can be moved to an appendix if required.}
+\caption{Compact nominal outcome table from the frozen public replay. The full per-circuit table remains available in \texttt{paper\_final/evidence\_freeze\_20260724/nominal/nominal\_summary.csv}.}
 \label{tab:rq2_nominal_compact}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{llllll}
 \toprule
 Circuit & Mode & Execution & Key metric & Threshold & Scientific category \\
 \midrule
-\texttt{p01\_amplifier}--\texttt{p03\_amplifier} & REAL & SUCCESS & extracted & case-specific & SIMULABLE\_COMPLIANT \\
+\texttt{16 compliant cases} & REAL & SUCCESS & extracted & case-specific & SIMULABLE\_COMPLIANT \\
 \texttt{p04\_amplifier} & REAL & SUCCESS & \texttt{dc\_gain\_db = -160.0000000868589 dB} & \(\ge 0.0\) dB & SIMULABLE\_NONCOMPLIANT \\
-\texttt{p05\_amplifier}--\texttt{p28\_schmitt} except \texttt{p04} & REAL & SUCCESS & extracted & case-specific & SIMULABLE\_COMPLIANT \\
+\texttt{p23\_oscillator} & REAL & SUCCESS & \texttt{startup\_amplitude = 0 V}; \texttt{oscillator\_frequency} missing & case-specific & SIMULABLE\_NONCOMPLIANT \\
+\texttt{10 guarded cases} & REAL & SUCCESS & partial evidence; final metric guard blocks nominal verdict & case-specific & UNEVALUATED \\
 \bottomrule
 \end{tabular}}
 \end{table*}
@@ -41,36 +42,31 @@ Circuit & Mode & Execution & Key metric & Threshold & Scientific category \\
 \begin{table*}[t]
 \centering
 \scriptsize
-\caption{Controlled-violation results must be separated by dataset. The frozen pilot V3 is retained as the canonical small-scope confusion matrix, while the later expanded campaign is reported as a contradictory sensitivity result rather than silently merged.}
+\caption{Frozen pilot V3 controlled-violation summary retained in the frozen evidence bundle (\texttt{paper\_final/evidence\_freeze\_20260724/controlled/frozen\_pilot\_metrics\_v3.json}).}
 \label{tab:rq3_controlled_conflicts}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{p{4.0cm}lrrrrr}
 \toprule
-Dataset & Date / run id & True accept & True detection & False accept & False reject & Unevaluated \\
+Dataset & Scope & True accept & True detection & False accept & False reject & Unevaluated \\
 \midrule
-Frozen pilot V3 & canonical V3 file & 8 & 8 & 0 & 0 & 0 \\
-Expanded controlled campaign & 20260712\_195226 & TBD & 1 effective detection & 1 effective false pass & 0 reported & 0 among effective cases \\
+Frozen pilot V3 & retained 16-case pilot & 8 & 8 & 0 & 0 & 0 \\
 \bottomrule
 \end{tabular}}
 \end{table*}
 
 \begin{table}[t]
 \centering
-\caption{Expanded controlled-violation campaign summary restricted to the executed effective-violation population.}
+\caption{Frozen pilot V3 backend-support details.}
 \label{tab:rq3_effective_summary}
 \begin{tabular}{lr}
 \toprule
 Metric & Value \\
 \midrule
-Generated variants & 30 \\
-Effective controlled violations & 2 \\
-Ineffective mutations & 28 \\
-Detected effective violations & 1 \\
-False accepts among effective violations & 1 \\
-False rejects reported & 0 \\
-Unevaluated effective violations & 0 \\
-Violation detection recall & 0.5000 \\
-False-pass rate & 0.5000 \\
+WRDATA cases & 2 \\
+Independent comparisons within tolerance & 2 \\
+Violation detection recall & 1.0000 \\
+False accept rate & 0.0000 \\
+Go / no-go & GO \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -78,15 +74,15 @@ False-pass rate & 0.5000 \\
 \begin{table*}[t]
 \centering
 \scriptsize
-\caption{Planned LLM Ablation --- Results Pending. No canonical quantitative LLM ablation results are available in the current manuscript evidence.}
+\caption{Planned LLM Ablation --- Results Pending. No frozen-bundle quantitative LLM ablation results are available in the current manuscript evidence.}
 \label{tab:planned_llm_ablation}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{lllllll}
 \toprule
 Configuration & Valid generation rate & Simulation rate & Metric coverage & Correct verdict rate & False accept rate & Cost / variability \\
 \midrule
-Deterministic baseline & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE \\
-LLM-assisted generation & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE \\
+Deterministic baseline & TBD -- NOT IN FROZEN BUNDLE & TBD -- NOT IN FROZEN BUNDLE & TBD -- NOT IN FROZEN BUNDLE & TBD -- NOT IN FROZEN BUNDLE & TBD -- NOT IN FROZEN BUNDLE & TBD -- NOT IN FROZEN BUNDLE \\
+LLM-assisted generation & TBD -- NOT IN FROZEN BUNDLE & TBD -- NOT IN FROZEN BUNDLE & TBD -- NOT IN FROZEN BUNDLE & TBD -- NOT IN FROZEN BUNDLE & TBD -- NOT IN FROZEN BUNDLE & TBD -- NOT IN FROZEN BUNDLE \\
 \bottomrule
 \end{tabular}}
 \end{table*}
@@ -100,11 +96,10 @@ LLM-assisted generation & TBD -- TO BE FILLED FROM CANONICAL EVIDENCE & TBD -- T
 \toprule
 Software / backend item & Canonical value \\
 \midrule
-Pytest unique tests & 66 \\
-Normal-mode passes & 66 \\
-PySpice-disabled passes & 66 \\
-WRDATA independent comparisons & 2 / 2 agreement \\
-Mock results included in canonical test artifact & 0 \\
+Pytest default replay & 304 passed / 17 skipped \\
+ngspice integration replay & 316 passed / 5 skipped \\
+ngspice integration with PySpice disabled & 316 passed / 5 skipped \\
+WRDATA independent comparisons & 2 / 2 within tolerance \\
 \bottomrule
 \end{tabular}
 \end{table}

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "operating_point",
+    "verdict": "PASS",
+    "measured": 0.0766477077,
+    "expected_min": 0.0,
+    "expected_max": 5.0,
+    "unit": "V",
+    "message": "operating_point = 0.07665 V",
+    "category": "dc"
+  },
+  {
+    "name": "quiescent_current",
+    "verdict": "ERROR",
+    "measured": null,
+    "expected_min": null,
+    "expected_max": 0.05,
+    "unit": "A",
+    "message": "metric_missing: Metric 'quiescent_current' could not be extracted from simulation",
+    "category": "dc"
+  }
+]

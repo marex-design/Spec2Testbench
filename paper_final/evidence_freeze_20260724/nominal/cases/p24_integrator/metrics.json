@@ -1,0 +1,22 @@
+[
+  {
+    "name": "slew_rate",
+    "verdict": "PASS",
+    "measured": 35020999.99996844,
+    "expected_min": 1e-06,
+    "expected_max": null,
+    "unit": "V/s",
+    "message": "slew_rate = 3.502e+07 V/s",
+    "category": "transient"
+  },
+  {
+    "name": "settling_time",
+    "verdict": "PASS",
+    "measured": 4.99969601e-05,
+    "expected_min": null,
+    "expected_max": 1.0,
+    "unit": "s",
+    "message": "settling_time = 5e-05 s",
+    "category": "transient"
+  }
+]

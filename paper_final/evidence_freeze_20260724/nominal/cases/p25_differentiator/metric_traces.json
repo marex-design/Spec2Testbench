@@ -1,0 +1,25 @@
+[
+  {
+    "metric_name": "slew_rate",
+    "measured_value": 63041382000.00001,
+    "unit": "V/s",
+    "normalized_value": 63041382000.00001,
+    "expected_operator": ">=",
+    "expected_threshold": 1e-06,
+    "tolerance": null,
+    "status": "PASS",
+    "source_analysis": "TRAN",
+    "source_signal": "vout",
+    "extraction_method": "MetricExtractor.extract:slew_rate",
+    "raw_result_file": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_wd6ubre_\\simulation.raw",
+    "error": null,
+    "metric_definition_version": "slew_rate_v1",
+    "quantity_type": null,
+    "measurement_expression_id": "TRAN_SLEW_RATE",
+    "input_node": "Vin",
+    "output_node": "Vout",
+    "input_ac_magnitude": null,
+    "reference_frequency_hz": null,
+    "measurement_backend": "NGSPICE_WRDATA"
+  }
+]

@@ -1,0 +1,180 @@
+{
+  "circuit_name": "analogcoder_pro_p09_comparator",
+  "timestamp": "2026-07-24T14:07:24.068636",
+  "overall_verdict": "PASS",
+  "terminal_status": "PASS",
+  "execution_status": "SUCCESS",
+  "simulation_mode": "REAL",
+  "compliance_status": "PASS",
+  "robustness_status": "NOT_EVALUATED",
+  "scientific_category": "SIMULABLE_COMPLIANT",
+  "scientifically_eligible": true,
+  "failure_kind": "",
+  "success_rate": 1.0,
+  "compliance_score": 1.0,
+  "nominal_compliance_score": 1.0,
+  "pvt_compliance_score": 0.0,
+  "testbench_generation_success": true,
+  "simulation_success": true,
+  "missing_metrics": [],
+  "failed_metrics": [],
+  "warning_metrics": [],
+  "metrics": [
+    {
+      "name": "propagation_delay",
+      "verdict": "PASS",
+      "measured": -4.83103e-11,
+      "expected_min": null,
+      "expected_max": 0.001,
+      "unit": "s",
+      "message": "propagation_delay = -4.831e-11 s",
+      "category": "other"
+    }
+  ],
+  "metric_traces": [
+    {
+      "metric_name": "propagation_delay",
+      "measured_value": -4.83103e-11,
+      "unit": "s",
+      "normalized_value": -4.83103e-11,
+      "expected_operator": "<=",
+      "expected_threshold": 0.001,
+      "tolerance": null,
+      "status": "PASS",
+      "source_analysis": "",
+      "source_signal": "",
+      "extraction_method": "MetricExtractor.extract:propagation_delay",
+      "raw_result_file": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_faf1ynlz\\simulation.raw",
+      "error": null,
+      "metric_definition_version": "propagation_delay_v1",
+      "quantity_type": null,
+      "measurement_expression_id": "TRAN_PROPAGATION_DELAY",
+      "input_node": "Vin",
+      "output_node": "Vout",
+      "input_ac_magnitude": null,
+      "reference_frequency_hz": null,
+      "measurement_backend": "NGSPICE_MEASURE"
+    }
+  ],
+  "provenance": {
+    "run_id": "b41564dc-d2d1-4712-a9af-7be2d6a27181",
+    "timestamp": "2026-07-24T14:07:24.068636",
+    "framework_version": "0.1.0",
+    "git_commit": "0db963312862e747ad2f8fdc039313861e9bf8ba",
+    "python_version": "3.12.2 (tags/v3.12.2:6abddd9, Feb  6 2024, 21:26:36) [MSC v.1937 64 bit (AMD64)]",
+    "ngspice_version": "ngspice-41 : Circuit level simulation program",
+    "ngspice_command": [
+      "C:\\ProgramData\\chocolatey\\lib\\ngspice\\tools\\Spice64\\bin\\ngspice_con.exe",
+      "-b",
+      "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_faf1ynlz\\executed_testbench.ckt"
+    ],
+    "ngspice_returncode": 0,
+    "raw_result_file": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_faf1ynlz\\simulation.raw",
+    "raw_result_file_exists": false,
+    "pyspice_version": "1.5",
+    "operating_system": "Windows-10-10.0.19045-SP0",
+    "circuit_id": "analogcoder_pro_p09_comparator",
+    "case_id": "analogcoder_pro_p09_comparator",
+    "parent_circuit_id": null,
+    "specification_file": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\examples\\benchmark_nominal_specs\\p09_comparator.yaml",
+    "specification_hash": "d93e65773bf25af72360b3556e2b510f8e8f2321c4932617be1fedb6927a5a5e",
+    "netlist_file": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\benchmark\\analogcoder_pro\\p09_comparator.cir",
+    "netlist_hash": "7c8266dddbe42819163463abfab75752cf3b9e7e145b84413fe453871bb14dec",
+    "testbench_file": null,
+    "testbench_hash": "f690f6017e6cbf296ea451db2650c85d806d1584d77af46388614cf86ce46929",
+    "expected_netlist_sha256": "7c8266dddbe42819163463abfab75752cf3b9e7e145b84413fe453871bb14dec",
+    "actual_netlist_sha256": "7c8266dddbe42819163463abfab75752cf3b9e7e145b84413fe453871bb14dec",
+    "actual_deck_sha256": "694abe70710b256898d5885f53effb12cb82c940ad63ab87499d97c0ac6b2e1e",
+    "netlist_binding_status": "MATCH",
+    "required_metric_validation": {
+      "propagation_delay": {
+        "target_metric_exists_in_specification": true,
+        "target_metric_supported_by_extractor": true,
+        "target_metric_has_recognized_unit": true,
+        "target_metric_has_operator": true,
+        "target_metric_has_threshold": true,
+        "required_signals_available": true,
+        "required_analysis_generated": true
+      }
+    },
+    "mutation_effectiveness_status": "NOT_EVALUATED",
+    "measurement_backend": "NGSPICE_MEASURE",
+    "pyspice_required": false,
+    "measurement_source": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_faf1ynlz\\measures.txt",
+    "measurement_command": "C:\\ProgramData\\chocolatey\\lib\\ngspice\\tools\\Spice64\\bin\\ngspice_con.exe -b C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_faf1ynlz\\executed_testbench.ckt",
+    "measurement_status": "SUCCESS",
+    "compiled_plan_sha256": "89b4d38d004f9f44eb42f817bc46554b00fcc9ebdbb5ff8c7ac9946b99745525",
+    "serialized_deck_sha256": "694abe70710b256898d5885f53effb12cb82c940ad63ab87499d97c0ac6b2e1e",
+    "executed_file_sha256": "694abe70710b256898d5885f53effb12cb82c940ad63ab87499d97c0ac6b2e1e",
+    "post_execution_file_sha256": "694abe70710b256898d5885f53effb12cb82c940ad63ab87499d97c0ac6b2e1e",
+    "ngspice_input_file_path": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_faf1ynlz\\executed_testbench.ckt",
+    "generated_testbench_path": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_faf1ynlz\\generated_testbench.ckt",
+    "generated_testbench_sha256": "694abe70710b256898d5885f53effb12cb82c940ad63ab87499d97c0ac6b2e1e",
+    "generated_testbench_alias_byte_identical": true,
+    "post_serialization_deck_mutation": false,
+    "measurement_requests": [
+      {
+        "name": "slew_rate",
+        "unit": "V/s",
+        "expression": "deriv(V(out))",
+        "preferred_backend": "AUTO",
+        "metric_definition_version": "slew_rate_v1",
+        "quantity_type": null,
+        "measurement_expression_id": "TRAN_SLEW_RATE",
+        "semantic_guards": [
+          "requires_output_waveform"
+        ],
+        "output_threshold": 2.5,
+        "input_node": "Vin",
+        "output_node": "Vout"
+      },
+      {
+        "name": "settling_time",
+        "unit": "s",
+        "expression": "time to settle within 1%",
+        "preferred_backend": "AUTO",
+        "metric_definition_version": "settling_time_v1",
+        "quantity_type": null,
+        "measurement_expression_id": "TRAN_SETTLING_TIME",
+        "semantic_guards": [
+          "requires_output_waveform"
+        ],
+        "output_threshold": 2.5,
+        "input_node": "Vin",
+        "output_node": "Vout"
+      },
+      {
+        "name": "propagation_delay",
+        "unit": "s",
+        "expression": "delay(Vin->Vout)",
+        "preferred_backend": "NGSPICE_MEASURE",
+        "metric_definition_version": "propagation_delay_v1",
+        "quantity_type": null,
+        "measurement_expression_id": "TRAN_PROPAGATION_DELAY",
+        "semantic_guards": [
+          "requires_input_and_output_waveforms"
+        ],
+        "output_threshold": 2.5,
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "time_column": 0,
+        "vin_column": 1,
+        "vout_column": 2
+      }
+    ],
+    "variant_overrides": [],
+    "simulation_mode": "REAL",
+    "execution_status": "SUCCESS",
+    "compliance_status": "PASS",
+    "robustness_status": "NOT_EVALUATED",
+    "scientific_category": "SIMULABLE_COMPLIANT",
+    "runtime_seconds": 1.5788805484771729,
+    "error_type": null,
+    "error_message": "Note: vin: dc value used for op instead of transient time=0 value."
+  },
+  "waveform_analyses": [],
+  "errors": [],
+  "simulation_errors": [
+    "Note: vin: dc value used for op instead of transient time=0 value."
+  ]
+}

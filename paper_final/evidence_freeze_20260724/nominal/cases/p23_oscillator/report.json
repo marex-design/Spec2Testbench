@@ -1,0 +1,272 @@
+{
+  "circuit_name": "analogcoder_pro_p23_oscillator",
+  "timestamp": "2026-07-24T14:08:11.676420",
+  "overall_verdict": "FAIL",
+  "terminal_status": "FAIL",
+  "execution_status": "SUCCESS",
+  "simulation_mode": "REAL",
+  "compliance_status": "FAIL",
+  "robustness_status": "NOT_EVALUATED",
+  "scientific_category": "SIMULABLE_NONCOMPLIANT",
+  "scientifically_eligible": true,
+  "failure_kind": "metric_missing",
+  "success_rate": 0.0,
+  "compliance_score": 0.0,
+  "nominal_compliance_score": 0.0,
+  "pvt_compliance_score": 0.0,
+  "testbench_generation_success": true,
+  "simulation_success": true,
+  "missing_metrics": [
+    "oscillator_frequency"
+  ],
+  "failed_metrics": [
+    "startup_amplitude"
+  ],
+  "warning_metrics": [],
+  "metrics": [
+    {
+      "name": "oscillator_frequency",
+      "verdict": "ERROR",
+      "measured": null,
+      "expected_min": 1.0,
+      "expected_max": null,
+      "unit": "Hz",
+      "message": "metric_missing: Metric 'oscillator_frequency' could not be extracted from simulation",
+      "category": "other"
+    },
+    {
+      "name": "startup_amplitude",
+      "verdict": "FAIL",
+      "measured": 0.0,
+      "expected_min": 1e-12,
+      "expected_max": null,
+      "unit": "V",
+      "message": "startup_amplitude = 0 V < 1e-12 V",
+      "category": "other"
+    }
+  ],
+  "metric_traces": [
+    {
+      "metric_name": "oscillator_frequency",
+      "measured_value": null,
+      "unit": "Hz",
+      "normalized_value": null,
+      "expected_operator": ">=",
+      "expected_threshold": 1.0,
+      "tolerance": null,
+      "status": "NOT_EVALUATED",
+      "source_analysis": "",
+      "source_signal": "vout",
+      "extraction_method": "MetricExtractor.extract:oscillator_frequency",
+      "raw_result_file": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_cnittr40\\simulation.raw",
+      "error": "metric_missing: Metric 'oscillator_frequency' could not be extracted from simulation",
+      "metric_definition_version": "oscillator_frequency_alias_v1",
+      "quantity_type": null,
+      "measurement_expression_id": "TRAN_OSCILLATOR_FREQUENCY",
+      "input_node": "in",
+      "output_node": "Vout",
+      "input_ac_magnitude": null,
+      "reference_frequency_hz": null,
+      "measurement_backend": "NGSPICE_WRDATA"
+    },
+    {
+      "metric_name": "startup_amplitude",
+      "measured_value": 0.0,
+      "unit": "V",
+      "normalized_value": 0.0,
+      "expected_operator": ">=",
+      "expected_threshold": 1e-12,
+      "tolerance": null,
+      "status": "FAIL",
+      "source_analysis": "",
+      "source_signal": "",
+      "extraction_method": "MetricExtractor.extract:startup_amplitude",
+      "raw_result_file": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_cnittr40\\simulation.raw",
+      "error": null,
+      "metric_definition_version": "startup_amplitude_v1",
+      "quantity_type": null,
+      "measurement_expression_id": "TRAN_STARTUP_AMPLITUDE",
+      "input_node": "in",
+      "output_node": "Vout",
+      "input_ac_magnitude": null,
+      "reference_frequency_hz": null,
+      "measurement_backend": "NGSPICE_WRDATA"
+    }
+  ],
+  "provenance": {
+    "run_id": "0867c47b-f9bd-40b7-ac99-de3bc2ed8a1c",
+    "timestamp": "2026-07-24T14:08:11.676420",
+    "framework_version": "0.1.0",
+    "git_commit": "0db963312862e747ad2f8fdc039313861e9bf8ba",
+    "python_version": "3.12.2 (tags/v3.12.2:6abddd9, Feb  6 2024, 21:26:36) [MSC v.1937 64 bit (AMD64)]",
+    "ngspice_version": "ngspice-41 : Circuit level simulation program",
+    "ngspice_command": [
+      "C:\\ProgramData\\chocolatey\\lib\\ngspice\\tools\\Spice64\\bin\\ngspice_con.exe",
+      "-b",
+      "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_cnittr40\\executed_testbench.ckt"
+    ],
+    "ngspice_returncode": 0,
+    "raw_result_file": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_cnittr40\\simulation.raw",
+    "raw_result_file_exists": false,
+    "pyspice_version": "1.5",
+    "operating_system": "Windows-10-10.0.19045-SP0",
+    "circuit_id": "analogcoder_pro_p23_oscillator",
+    "case_id": "analogcoder_pro_p23_oscillator",
+    "parent_circuit_id": null,
+    "specification_file": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\examples\\benchmark_nominal_specs\\p23_oscillator.yaml",
+    "specification_hash": "6034c23a1bfdc8542ec87b644a6533e071c8b9e6571d9d1f62eb279d3a5ac143",
+    "netlist_file": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\benchmark\\analogcoder_pro\\p23_oscillator.cir",
+    "netlist_hash": "40baa4c71ac492520192f553a6e07b7d3ab78dd7e5b6360843e88d1ad0fcceda",
+    "testbench_file": null,
+    "testbench_hash": "aef4f8647a9c083f32e1f72ef4b15ea63f800c480fdd0067197a4290b148c09e",
+    "expected_netlist_sha256": "40baa4c71ac492520192f553a6e07b7d3ab78dd7e5b6360843e88d1ad0fcceda",
+    "actual_netlist_sha256": "40baa4c71ac492520192f553a6e07b7d3ab78dd7e5b6360843e88d1ad0fcceda",
+    "actual_deck_sha256": "bed51a863928ed61583e43bf51cdc1f5cccb77bf1cfe3b7d76ef43f368d9af6a",
+    "netlist_binding_status": "MATCH",
+    "required_metric_validation": {
+      "oscillator_frequency": {
+        "target_metric_exists_in_specification": true,
+        "target_metric_supported_by_extractor": true,
+        "target_metric_has_recognized_unit": true,
+        "target_metric_has_operator": true,
+        "target_metric_has_threshold": true,
+        "required_signals_available": true,
+        "required_analysis_generated": true
+      },
+      "startup_amplitude": {
+        "target_metric_exists_in_specification": true,
+        "target_metric_supported_by_extractor": true,
+        "target_metric_has_recognized_unit": true,
+        "target_metric_has_operator": true,
+        "target_metric_has_threshold": true,
+        "required_signals_available": true,
+        "required_analysis_generated": true
+      }
+    },
+    "mutation_effectiveness_status": "NOT_EVALUATED",
+    "measurement_backend": "NGSPICE_WRDATA",
+    "pyspice_required": false,
+    "measurement_source": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_cnittr40\\vectors.dat",
+    "measurement_command": "C:\\ProgramData\\chocolatey\\lib\\ngspice\\tools\\Spice64\\bin\\ngspice_con.exe -b C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_cnittr40\\executed_testbench.ckt",
+    "measurement_status": "SUCCESS",
+    "compiled_plan_sha256": "174fe7f74321619bfe22b143c6be672f2c2d0544aec97febc6742f1b814272fe",
+    "serialized_deck_sha256": "bed51a863928ed61583e43bf51cdc1f5cccb77bf1cfe3b7d76ef43f368d9af6a",
+    "executed_file_sha256": "bed51a863928ed61583e43bf51cdc1f5cccb77bf1cfe3b7d76ef43f368d9af6a",
+    "post_execution_file_sha256": "bed51a863928ed61583e43bf51cdc1f5cccb77bf1cfe3b7d76ef43f368d9af6a",
+    "ngspice_input_file_path": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_cnittr40\\executed_testbench.ckt",
+    "generated_testbench_path": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_cnittr40\\generated_testbench.ckt",
+    "generated_testbench_sha256": "bed51a863928ed61583e43bf51cdc1f5cccb77bf1cfe3b7d76ef43f368d9af6a",
+    "generated_testbench_alias_byte_identical": true,
+    "post_serialization_deck_mutation": false,
+    "measurement_requests": [
+      {
+        "name": "slew_rate",
+        "unit": "V/s",
+        "expression": "deriv(V(out))",
+        "preferred_backend": "AUTO",
+        "metric_definition_version": "slew_rate_v1",
+        "quantity_type": null,
+        "measurement_expression_id": "TRAN_SLEW_RATE",
+        "semantic_guards": [
+          "requires_output_waveform"
+        ],
+        "output_threshold": 2.5,
+        "input_node": "in",
+        "output_node": "Vout"
+      },
+      {
+        "name": "settling_time",
+        "unit": "s",
+        "expression": "time to settle within 1%",
+        "preferred_backend": "AUTO",
+        "metric_definition_version": "settling_time_v1",
+        "quantity_type": null,
+        "measurement_expression_id": "TRAN_SETTLING_TIME",
+        "semantic_guards": [
+          "requires_output_waveform"
+        ],
+        "output_threshold": 2.5,
+        "input_node": "in",
+        "output_node": "Vout"
+      },
+      {
+        "name": "oscillator_frequency",
+        "unit": "Hz",
+        "expression": "fundamental frequency",
+        "preferred_backend": "NGSPICE_WRDATA",
+        "metric_definition_version": "oscillator_frequency_alias_v1",
+        "quantity_type": null,
+        "measurement_expression_id": "TRAN_OSCILLATOR_FREQUENCY",
+        "semantic_guards": [
+          "requires_valid_oscillation"
+        ],
+        "output_threshold": 2.5,
+        "input_node": "in",
+        "output_node": "Vout",
+        "time_column": 0,
+        "value_column": 1
+      },
+      {
+        "name": "startup_amplitude",
+        "unit": "V",
+        "expression": "steady-state amplitude",
+        "preferred_backend": "NGSPICE_WRDATA",
+        "metric_definition_version": "startup_amplitude_v1",
+        "quantity_type": null,
+        "measurement_expression_id": "TRAN_STARTUP_AMPLITUDE",
+        "semantic_guards": [
+          "requires_output_waveform"
+        ],
+        "output_threshold": 2.5,
+        "input_node": "in",
+        "output_node": "Vout",
+        "time_column": 0,
+        "value_column": 1
+      },
+      {
+        "name": "thd",
+        "unit": "%",
+        "expression": "sqrt(sum(H2^2 + H3^2 + ...))/H1",
+        "preferred_backend": "AUTO",
+        "metric_definition_version": "thd_v1",
+        "quantity_type": null,
+        "measurement_expression_id": "FOURIER_THD_PERCENT",
+        "semantic_guards": [
+          "requires_output_waveform"
+        ],
+        "output_threshold": 2.5,
+        "input_node": "in",
+        "output_node": "Vout",
+        "time_column": 0,
+        "value_column": 1
+      },
+      {
+        "name": "fundamental_frequency",
+        "unit": "Hz",
+        "expression": "FFT fundamental frequency",
+        "preferred_backend": "AUTO",
+        "metric_definition_version": "unversioned",
+        "quantity_type": null,
+        "measurement_expression_id": "FUNDAMENTAL_FREQUENCY",
+        "semantic_guards": [],
+        "output_threshold": 2.5,
+        "input_node": "in",
+        "output_node": "Vout",
+        "time_column": 0,
+        "value_column": 1
+      }
+    ],
+    "variant_overrides": [],
+    "simulation_mode": "REAL",
+    "execution_status": "SUCCESS",
+    "compliance_status": "FAIL",
+    "robustness_status": "NOT_EVALUATED",
+    "scientific_category": "SIMULABLE_NONCOMPLIANT",
+    "runtime_seconds": 0.5152804851531982,
+    "error_type": null,
+    "error_message": null
+  },
+  "waveform_analyses": [],
+  "errors": [],
+  "simulation_errors": []
+}

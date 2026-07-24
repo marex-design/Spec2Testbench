@@ -1,0 +1,32 @@
+[
+  {
+    "name": "operating_point",
+    "verdict": "PASS",
+    "measured": 1.0,
+    "expected_min": 0.0,
+    "expected_max": 5.0,
+    "unit": "V",
+    "message": "operating_point = 1 V",
+    "category": "dc"
+  },
+  {
+    "name": "dc_gain_db",
+    "verdict": "FAIL",
+    "measured": -160.0000000868589,
+    "expected_min": 0.0,
+    "expected_max": null,
+    "unit": "dB",
+    "message": "dc_gain_db = -160 dB < 0.0 dB",
+    "category": "ac"
+  },
+  {
+    "name": "quiescent_current",
+    "verdict": "PASS",
+    "measured": 0.0,
+    "expected_min": null,
+    "expected_max": 0.05,
+    "unit": "A",
+    "message": "quiescent_current = 0 A",
+    "category": "dc"
+  }
+]

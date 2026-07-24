@@ -1,0 +1,173 @@
+{
+  "run_id": "e302306d-bbe3-44b0-ae52-b7216c010814",
+  "timestamp": "2026-07-24T14:08:08.859983",
+  "framework_version": "0.1.0",
+  "git_commit": "0db963312862e747ad2f8fdc039313861e9bf8ba",
+  "python_version": "3.12.2 (tags/v3.12.2:6abddd9, Feb  6 2024, 21:26:36) [MSC v.1937 64 bit (AMD64)]",
+  "ngspice_version": "ngspice-41 : Circuit level simulation program",
+  "ngspice_command": [
+    "C:\\ProgramData\\chocolatey\\lib\\ngspice\\tools\\Spice64\\bin\\ngspice_con.exe",
+    "-b",
+    "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_uoth88li\\executed_testbench.ckt"
+  ],
+  "ngspice_returncode": 0,
+  "raw_result_file": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_uoth88li\\simulation.raw",
+  "raw_result_file_exists": false,
+  "pyspice_version": "1.5",
+  "operating_system": "Windows-10-10.0.19045-SP0",
+  "circuit_id": "analogcoder_pro_p22_oscillator",
+  "case_id": "analogcoder_pro_p22_oscillator",
+  "parent_circuit_id": null,
+  "specification_file": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\examples\\benchmark_nominal_specs\\p22_oscillator.yaml",
+  "specification_hash": "7572ee8b8c7a313cce26bf790b6b01a80e9974244b0c438760ec4c310d9c0020",
+  "netlist_file": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\benchmark\\analogcoder_pro\\p22_oscillator.cir",
+  "netlist_hash": "060c0dc5b6e4b187e05faa579f430ea19b0ad2ce490288d324c174fc2df573cb",
+  "testbench_file": null,
+  "testbench_hash": "ee205538ad430afbcbb1704d30882c03ea3d0991635a2ea700ce4faf45305ebe",
+  "expected_netlist_sha256": "060c0dc5b6e4b187e05faa579f430ea19b0ad2ce490288d324c174fc2df573cb",
+  "actual_netlist_sha256": "060c0dc5b6e4b187e05faa579f430ea19b0ad2ce490288d324c174fc2df573cb",
+  "actual_deck_sha256": "27b4b04c062588b829a6434f7ae7c76376749adadc6a9fe8a4bd9eadda09d749",
+  "netlist_binding_status": "MATCH",
+  "required_metric_validation": {
+    "oscillator_frequency": {
+      "target_metric_exists_in_specification": true,
+      "target_metric_supported_by_extractor": true,
+      "target_metric_has_recognized_unit": true,
+      "target_metric_has_operator": true,
+      "target_metric_has_threshold": true,
+      "required_signals_available": true,
+      "required_analysis_generated": true
+    },
+    "startup_amplitude": {
+      "target_metric_exists_in_specification": true,
+      "target_metric_supported_by_extractor": true,
+      "target_metric_has_recognized_unit": true,
+      "target_metric_has_operator": true,
+      "target_metric_has_threshold": true,
+      "required_signals_available": true,
+      "required_analysis_generated": true
+    }
+  },
+  "mutation_effectiveness_status": "NOT_EVALUATED",
+  "measurement_backend": "NGSPICE_WRDATA",
+  "pyspice_required": false,
+  "measurement_source": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_uoth88li\\vectors.dat",
+  "measurement_command": "C:\\ProgramData\\chocolatey\\lib\\ngspice\\tools\\Spice64\\bin\\ngspice_con.exe -b C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_uoth88li\\executed_testbench.ckt",
+  "measurement_status": "SUCCESS",
+  "compiled_plan_sha256": "f8a28dfd0c64ca3fe893d6751f022b5ae28cdebeef1cbaff4325c1825360e841",
+  "serialized_deck_sha256": "27b4b04c062588b829a6434f7ae7c76376749adadc6a9fe8a4bd9eadda09d749",
+  "executed_file_sha256": "27b4b04c062588b829a6434f7ae7c76376749adadc6a9fe8a4bd9eadda09d749",
+  "post_execution_file_sha256": "27b4b04c062588b829a6434f7ae7c76376749adadc6a9fe8a4bd9eadda09d749",
+  "ngspice_input_file_path": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_uoth88li\\executed_testbench.ckt",
+  "generated_testbench_path": "C:\\Users\\Admin\\AppData\\Local\\Temp\\spec2tb_exec_uoth88li\\generated_testbench.ckt",
+  "generated_testbench_sha256": "27b4b04c062588b829a6434f7ae7c76376749adadc6a9fe8a4bd9eadda09d749",
+  "generated_testbench_alias_byte_identical": true,
+  "post_serialization_deck_mutation": false,
+  "measurement_requests": [
+    {
+      "name": "slew_rate",
+      "unit": "V/s",
+      "expression": "deriv(V(out))",
+      "preferred_backend": "AUTO",
+      "metric_definition_version": "slew_rate_v1",
+      "quantity_type": null,
+      "measurement_expression_id": "TRAN_SLEW_RATE",
+      "semantic_guards": [
+        "requires_output_waveform"
+      ],
+      "output_threshold": 2.5,
+      "input_node": "in",
+      "output_node": "Vout"
+    },
+    {
+      "name": "settling_time",
+      "unit": "s",
+      "expression": "time to settle within 1%",
+      "preferred_backend": "AUTO",
+      "metric_definition_version": "settling_time_v1",
+      "quantity_type": null,
+      "measurement_expression_id": "TRAN_SETTLING_TIME",
+      "semantic_guards": [
+        "requires_output_waveform"
+      ],
+      "output_threshold": 2.5,
+      "input_node": "in",
+      "output_node": "Vout"
+    },
+    {
+      "name": "oscillator_frequency",
+      "unit": "Hz",
+      "expression": "fundamental frequency",
+      "preferred_backend": "NGSPICE_WRDATA",
+      "metric_definition_version": "oscillator_frequency_alias_v1",
+      "quantity_type": null,
+      "measurement_expression_id": "TRAN_OSCILLATOR_FREQUENCY",
+      "semantic_guards": [
+        "requires_valid_oscillation"
+      ],
+      "output_threshold": 2.5,
+      "input_node": "in",
+      "output_node": "Vout",
+      "time_column": 0,
+      "value_column": 1
+    },
+    {
+      "name": "startup_amplitude",
+      "unit": "V",
+      "expression": "steady-state amplitude",
+      "preferred_backend": "NGSPICE_WRDATA",
+      "metric_definition_version": "startup_amplitude_v1",
+      "quantity_type": null,
+      "measurement_expression_id": "TRAN_STARTUP_AMPLITUDE",
+      "semantic_guards": [
+        "requires_output_waveform"
+      ],
+      "output_threshold": 2.5,
+      "input_node": "in",
+      "output_node": "Vout",
+      "time_column": 0,
+      "value_column": 1
+    },
+    {
+      "name": "thd",
+      "unit": "%",
+      "expression": "sqrt(sum(H2^2 + H3^2 + ...))/H1",
+      "preferred_backend": "AUTO",
+      "metric_definition_version": "thd_v1",
+      "quantity_type": null,
+      "measurement_expression_id": "FOURIER_THD_PERCENT",
+      "semantic_guards": [
+        "requires_output_waveform"
+      ],
+      "output_threshold": 2.5,
+      "input_node": "in",
+      "output_node": "Vout",
+      "time_column": 0,
+      "value_column": 1
+    },
+    {
+      "name": "fundamental_frequency",
+      "unit": "Hz",
+      "expression": "FFT fundamental frequency",
+      "preferred_backend": "AUTO",
+      "metric_definition_version": "unversioned",
+      "quantity_type": null,
+      "measurement_expression_id": "FUNDAMENTAL_FREQUENCY",
+      "semantic_guards": [],
+      "output_threshold": 2.5,
+      "input_node": "in",
+      "output_node": "Vout",
+      "time_column": 0,
+      "value_column": 1
+    }
+  ],
+  "variant_overrides": [],
+  "simulation_mode": "REAL",
+  "execution_status": "SUCCESS",
+  "compliance_status": "NOT_EVALUATED",
+  "robustness_status": "NOT_EVALUATED",
+  "scientific_category": "UNEVALUATED",
+  "runtime_seconds": 0.616703987121582,
+  "error_type": null,
+  "error_message": null
+}

@@ -1,0 +1,4 @@
+measurement_backend,cases
+MIXED,12
+NGSPICE_MEASURE,10
+NGSPICE_WRDATA,6

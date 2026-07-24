@@ -1,0 +1,12 @@
+[
+  {
+    "name": "cutoff_frequency_hz",
+    "verdict": "ERROR",
+    "measured": null,
+    "expected_min": 1.0,
+    "expected_max": 1000000000.0,
+    "unit": "Hz",
+    "message": "metric_missing: Metric 'cutoff_frequency_hz' could not be extracted from simulation",
+    "category": "other"
+  }
+]

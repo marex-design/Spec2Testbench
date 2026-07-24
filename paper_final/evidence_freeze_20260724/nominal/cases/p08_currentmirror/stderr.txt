@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 189, in _run_module_as_main
+  File "<frozen runpy>", line 112, in _get_module_details
+  File "E:\my_organisation\Memoire Maruba\code\Spec2Testbench\spec2testbench\presentation\cli\__init__.py", line 7, in <module>
+    from .main import app, run
+  File "E:\my_organisation\Memoire Maruba\code\Spec2Testbench\spec2testbench\presentation\cli\main.py", line 9, in <module>
+    import typer
+ModuleNotFoundError: No module named 'typer'

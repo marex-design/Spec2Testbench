@@ -1,0 +1,8 @@
+
+Spec2Testbench - Verification
+
+
+JSON report saved to paper_final\evidence_freeze_20260724\nominal\cases\p01_amplifier\reports\analogcoder_pro_p01_amplifier_20260724_170432.json
+
+JSON report generated
+
