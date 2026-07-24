@@ -43,6 +43,70 @@ class VariantOverride:
 
 
 @dataclass
+class VerificationSelection:
+    include_tests: List[str] = field(default_factory=list)
+    exclude_tests: List[str] = field(default_factory=list)
+    auto_select: bool = True
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "include_tests": list(self.include_tests),
+            "exclude_tests": list(self.exclude_tests),
+            "auto_select": self.auto_select,
+        }
+
+
+@dataclass
+class PortRoles:
+    input: List[str] = field(default_factory=list)
+    output: List[str] = field(default_factory=list)
+    differential_positive: List[str] = field(default_factory=list)
+    differential_negative: List[str] = field(default_factory=list)
+    common_mode: List[str] = field(default_factory=list)
+    supply_positive: List[str] = field(default_factory=list)
+    supply_negative: List[str] = field(default_factory=list)
+    bias: List[str] = field(default_factory=list)
+    reference: List[str] = field(default_factory=list)
+    loop_break: List[str] = field(default_factory=list)
+    loop_injection: List[str] = field(default_factory=list)
+    current_probe: List[str] = field(default_factory=list)
+
+    def get(self, role: str) -> List[str]:
+        values = getattr(self, role, [])
+        return list(values) if isinstance(values, list) else []
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "input": list(self.input),
+            "output": list(self.output),
+            "differential_positive": list(self.differential_positive),
+            "differential_negative": list(self.differential_negative),
+            "common_mode": list(self.common_mode),
+            "supply_positive": list(self.supply_positive),
+            "supply_negative": list(self.supply_negative),
+            "bias": list(self.bias),
+            "reference": list(self.reference),
+            "loop_break": list(self.loop_break),
+            "loop_injection": list(self.loop_injection),
+            "current_probe": list(self.current_probe),
+        }
+
+
+@dataclass
+class OperatingConditions:
+    nominal_temperature: Optional[float] = None
+    nominal_supply: Optional[float] = None
+    process_corner: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "nominal_temperature": self.nominal_temperature,
+            "nominal_supply": self.nominal_supply,
+            "process_corner": self.process_corner,
+        }
+
+
+@dataclass
 class Specification:
     """
     Specification Entity - Spécifications complètes d'un circuit analogique.
@@ -85,6 +149,10 @@ class Specification:
     parent_circuit_id: Optional[str] = None
     variant_overrides: List[VariantOverride] = field(default_factory=list)
     measurement: Dict[str, Any] = field(default_factory=dict)
+    verification: VerificationSelection = field(default_factory=VerificationSelection)
+    ports: PortRoles = field(default_factory=PortRoles)
+    operating_conditions: OperatingConditions = field(default_factory=OperatingConditions)
+    test_requirements: Dict[str, Any] = field(default_factory=dict)
     
     # =========================================================
     # PROPRIÉTÉS COURANTES (getters simplifiés)
@@ -93,6 +161,8 @@ class Specification:
     @property
     def vdd(self) -> float:
         """Tension d'alimentation (V)."""
+        if self.operating_conditions.nominal_supply is not None:
+            return float(self.operating_conditions.nominal_supply)
         return self.input_conditions.get("vdd", 1.8)
     
     @property
@@ -118,6 +188,8 @@ class Specification:
     @property
     def nominal_temperature(self) -> float:
         """Température nominale (°C)."""
+        if self.operating_conditions.nominal_temperature is not None:
+            return float(self.operating_conditions.nominal_temperature)
         return self.input_conditions.get("temperature", 27.0)
     
     @property
@@ -127,13 +199,20 @@ class Specification:
 
     @property
     def input_nodes(self) -> List[str]:
+        if self.ports.input:
+            return list(self.ports.input)
         raw_nodes = self.input_conditions.get("input_nodes", [])
         return self._normalize_node_list(raw_nodes)
 
     @property
     def output_nodes(self) -> List[str]:
+        if self.ports.output:
+            return list(self.ports.output)
         raw_nodes = self.input_conditions.get("output_nodes", [])
         return self._normalize_node_list(raw_nodes)
+
+    def port_nodes(self, role: str) -> List[str]:
+        return self.ports.get(role)
     
     # =========================================================
     # MÉTHODES D'ACCÈS AUX MÉTRIQUES
@@ -246,12 +325,15 @@ class Specification:
         # Extraire le type de circuit
         circuit_type_str = data.get("circuit_type", "amplifier")
         circuit_type = CircuitType(circuit_type_str)
-        
         # Extraire les performance targets
         perf_targets = cls._normalize_performance_targets(data.get("performance_targets", {}))
         
         # Extraire les input conditions
-        input_conditions = data.get("input_conditions", {})
+        input_conditions = data.get("input_conditions", {}) if isinstance(data.get("input_conditions", {}), dict) else {}
+        verification = cls._load_verification(data.get("verification", {}))
+        ports = cls._load_ports(data.get("ports", {}), input_conditions)
+        operating_conditions = cls._load_operating_conditions(data.get("operating_conditions", {}), input_conditions)
+        test_requirements = cls._normalize_test_requirements(data.get("test_requirements", {}))
         
         # Extraire les test categories
         test_categories = data.get("test_categories", [])
@@ -265,6 +347,11 @@ class Specification:
                 process_corners.append(ProcessCorner(corner.lower()))
             except ValueError:
                 pass  # Ignorer les corners invalides
+        if not process_corners and operating_conditions.process_corner:
+            try:
+                process_corners.append(ProcessCorner(str(operating_conditions.process_corner).lower()))
+            except ValueError:
+                pass
         
         temp_range_str = pvt_config.get("temperature_range", "commercial")
         try:
@@ -290,6 +377,10 @@ class Specification:
             parent_circuit_id=data.get("parent_circuit_id"),
             variant_overrides=cls._load_variant_overrides(path),
             measurement=data.get("measurement", {}) if isinstance(data.get("measurement", {}), dict) else {},
+            verification=verification,
+            ports=ports,
+            operating_conditions=operating_conditions,
+            test_requirements=test_requirements,
         )
     
     @classmethod
@@ -309,13 +400,23 @@ class Specification:
         """Crée une spécification depuis un dictionnaire."""
         circuit_type_str = data.get("circuit_type", "amplifier")
         circuit_type = CircuitType(circuit_type_str)
-        
+        input_conditions = data.get("input_conditions", {}) if isinstance(data.get("input_conditions", {}), dict) else {}
+        verification = cls._load_verification(data.get("verification", {}))
+        ports = cls._load_ports(data.get("ports", {}), input_conditions)
+        operating_conditions = cls._load_operating_conditions(data.get("operating_conditions", {}), input_conditions)
+        test_requirements = cls._normalize_test_requirements(data.get("test_requirements", {}))
+
         # Convertir les process corners
         corners_data = data.get("process_corners", ["tt"])
         process_corners = []
         for c in corners_data:
             try:
                 process_corners.append(ProcessCorner(c))
+            except ValueError:
+                pass
+        if not process_corners and operating_conditions.process_corner:
+            try:
+                process_corners.append(ProcessCorner(str(operating_conditions.process_corner).lower()))
             except ValueError:
                 pass
         
@@ -329,7 +430,7 @@ class Specification:
             name=data.get("name", "unnamed"),
             circuit_type=circuit_type,
             performance_targets=cls._normalize_performance_targets(data.get("performance_targets", {})),
-            input_conditions=data.get("input_conditions", {}),
+            input_conditions=input_conditions,
             test_categories=data.get("test_categories", []),
             process_corners=process_corners,
             temperature_range=temperature_range,
@@ -345,6 +446,10 @@ class Specification:
                 if isinstance(override, dict)
             ],
             measurement=data.get("measurement", {}) if isinstance(data.get("measurement", {}), dict) else {},
+            verification=verification,
+            ports=ports,
+            operating_conditions=operating_conditions,
+            test_requirements=test_requirements,
         )
 
     @staticmethod
@@ -412,6 +517,71 @@ class Specification:
             else:
                 normalized[metric_name] = cls._coerce_numeric(target)
         return normalized
+
+    @classmethod
+    def _normalize_test_requirements(cls, requirements: Dict[str, Any]) -> Dict[str, Any]:
+        if not isinstance(requirements, dict):
+            return {}
+        normalized: Dict[str, Any] = {}
+        for key, value in requirements.items():
+            if isinstance(value, dict):
+                normalized[str(key)] = {
+                    inner_key: cls._coerce_numeric(inner_value)
+                    for inner_key, inner_value in value.items()
+                }
+            else:
+                normalized[str(key)] = cls._coerce_numeric(value)
+        return normalized
+
+    @classmethod
+    def _load_verification(cls, raw_verification: Any) -> VerificationSelection:
+        if not isinstance(raw_verification, dict):
+            return VerificationSelection()
+        return VerificationSelection(
+            include_tests=cls._normalize_node_list(raw_verification.get("include_tests", [])),
+            exclude_tests=cls._normalize_node_list(raw_verification.get("exclude_tests", [])),
+            auto_select=bool(raw_verification.get("auto_select", True)),
+        )
+
+    @classmethod
+    def _load_ports(cls, raw_ports: Any, input_conditions: Dict[str, Any]) -> PortRoles:
+        ports = raw_ports if isinstance(raw_ports, dict) else {}
+        return PortRoles(
+            input=cls._normalize_node_list(ports.get("input", input_conditions.get("input_nodes", []))),
+            output=cls._normalize_node_list(ports.get("output", input_conditions.get("output_nodes", []))),
+            differential_positive=cls._normalize_node_list(ports.get("differential_positive", input_conditions.get("differential_positive", []))),
+            differential_negative=cls._normalize_node_list(ports.get("differential_negative", input_conditions.get("differential_negative", []))),
+            common_mode=cls._normalize_node_list(ports.get("common_mode", input_conditions.get("common_mode", []))),
+            supply_positive=cls._normalize_node_list(
+                ports.get("supply_positive", input_conditions.get("supply_positive", input_conditions.get("vdd_node", [])))
+            ),
+            supply_negative=cls._normalize_node_list(
+                ports.get("supply_negative", input_conditions.get("supply_negative", input_conditions.get("vss_node", [])))
+            ),
+            bias=cls._normalize_node_list(ports.get("bias", input_conditions.get("bias_nodes", []))),
+            reference=cls._normalize_node_list(ports.get("reference", input_conditions.get("reference_nodes", []))),
+            loop_break=cls._normalize_node_list(ports.get("loop_break", input_conditions.get("loop_break_nodes", []))),
+            loop_injection=cls._normalize_node_list(ports.get("loop_injection", input_conditions.get("loop_injection_nodes", []))),
+            current_probe=cls._normalize_node_list(ports.get("current_probe", input_conditions.get("current_probe_nodes", []))),
+        )
+
+    @classmethod
+    def _load_operating_conditions(cls, raw_conditions: Any, input_conditions: Dict[str, Any]) -> OperatingConditions:
+        conditions = raw_conditions if isinstance(raw_conditions, dict) else {}
+        nominal_temperature = cls._coerce_numeric(
+            conditions.get("nominal_temperature", input_conditions.get("temperature"))
+        )
+        nominal_supply = cls._coerce_numeric(
+            conditions.get("nominal_supply", input_conditions.get("vdd"))
+        )
+        process_corner = conditions.get("process_corner")
+        if process_corner is not None:
+            process_corner = str(process_corner)
+        return OperatingConditions(
+            nominal_temperature=nominal_temperature,
+            nominal_supply=nominal_supply,
+            process_corner=process_corner,
+        )
     
     # =========================================================
     # MÉTHODES POUR LLM
@@ -468,6 +638,10 @@ class Specification:
             "technology": self.technology,
             "performance_targets": self.performance_targets,
             "input_conditions": self.input_conditions,
+            "verification": self.verification.to_dict(),
+            "ports": self.ports.to_dict(),
+            "operating_conditions": self.operating_conditions.to_dict(),
+            "test_requirements": self.test_requirements,
             "test_categories": self.test_categories,
             "pvt_config": {
                 "corners": [c.value for c in self.process_corners] if self.process_corners else ["tt"],
@@ -487,6 +661,10 @@ class Specification:
             "technology": self.technology,
             "performance_targets": self.performance_targets,
             "input_conditions": self.input_conditions,
+            "verification": self.verification.to_dict(),
+            "ports": self.ports.to_dict(),
+            "operating_conditions": self.operating_conditions.to_dict(),
+            "test_requirements": self.test_requirements,
             "test_categories": self.test_categories,
             "process_corners": [c.value for c in self.process_corners],
             "temperature_range": self.temperature_range.value,
