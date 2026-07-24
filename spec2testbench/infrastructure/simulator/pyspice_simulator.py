@@ -808,10 +808,11 @@ class PySpiceSimulator(ICircuitSimulator):
             Dictionary with success flag and logs
         """
         # Command to run ngspice in batch mode
+        spice_argument = str(spice_file.resolve()) if cwd else str(spice_file)
         cmd = [
             self.ngspice_path,
             "-b",  # Batch mode
-            str(spice_file)
+            spice_argument
         ]
         
         effective_timeout = timeout_override or self.timeout

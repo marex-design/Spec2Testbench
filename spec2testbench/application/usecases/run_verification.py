@@ -5,6 +5,7 @@ Complete verification pipeline orchestrating all three modules.
 import logging
 import math
 import hashlib
+import os
 import platform
 import shutil
 import subprocess
@@ -503,7 +504,9 @@ class VerificationPipeline:
                 f"Ngspice executable not available: {self.simulator.ngspice_path}",
             )
 
-        result = self.simulator.run(netlist_path, testbench)
+        preserve_artifacts = os.getenv("SPEC2TESTBENCH_PRESERVE_SIM_ARTIFACTS", "").lower() in {"1", "true", "yes"}
+        output_dir = settings.output.output_dir if preserve_artifacts else None
+        result = self.simulator.run(netlist_path, testbench, output_dir=output_dir)
 
         simulation_results = {
             'success': result.get('success', False),
