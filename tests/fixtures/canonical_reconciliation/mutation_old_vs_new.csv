@@ -1,0 +1,5 @@
+mutation_id,old_measured_value,new_measured_value,old_effectiveness_status,new_effectiveness_status,changed_effectiveness_label
+cv_006_p01_rd_low,,,"EFFECTIVE_NO_THRESHOLD_CROSSING",INEFFECTIVE_MUTATION,true
+cv_007_p02_rd_low,,,NO_MEASURABLE_EFFECT,INEFFECTIVE_MUTATION,true
+cv_008_p03_rd_low,,,"EFFECTIVE_NO_THRESHOLD_CROSSING",INEFFECTIVE_MUTATION,true
+cv_009_p14_rd_low,,,"EFFECTIVE_NO_THRESHOLD_CROSSING",INEFFECTIVE_MUTATION,true

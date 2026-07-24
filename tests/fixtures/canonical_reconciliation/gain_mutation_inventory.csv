@@ -1,0 +1,5 @@
+mutation_id,base_case_id,mutated_case_id,mutation_operator,target_component,parameter,old_value,mutated_value,target_metric,old_effectiveness_status,old_measured_value,affected_by_metric_correction
+cv_006_p01_rd_low,p01_amplifier,cv_006_p01_rd_low,gain,Rload,Rload,10k,1,dc_gain_db,EFFECTIVE_NO_THRESHOLD_CROSSING,,true
+cv_007_p02_rd_low,p02_amplifier,cv_007_p02_rd_low,gain,R3,R3,10000,1,dc_gain_db,NO_MEASURABLE_EFFECT,,true
+cv_008_p03_rd_low,p03_amplifier,cv_008_p03_rd_low,gain,Rload,Rload,10k,1,dc_gain_db,EFFECTIVE_NO_THRESHOLD_CROSSING,,true
+cv_009_p14_rd_low,p14_amplifier,cv_009_p14_rd_low,gain,Rload,Rload,10k,1,dc_gain_db,EFFECTIVE_NO_THRESHOLD_CROSSING,,true

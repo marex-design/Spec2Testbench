@@ -15,6 +15,7 @@ from spec2testbench.infrastructure.testbench import TestBenchGenerator as Framew
 
 
 ROOT = Path(__file__).resolve().parents[1]
+FIXTURE_DIR = ROOT / "tests" / "fixtures" / "canonical_reconciliation"
 
 
 def _read_csv(path: Path) -> list[dict[str, str]]:
@@ -113,9 +114,9 @@ def test_nominal_summary_is_recomputed_from_case_rows():
 
 def test_mutation_label_transition_is_documented():
     rows = build_mutation_label_reconciliation_rows(
-        inventory_rows=_read_csv(ROOT / "results" / "corrected_metric_semantics_v1" / "gain_mutation_inventory.csv"),
-        old_vs_new_rows=_read_csv(ROOT / "results" / "corrected_metric_semantics_v1" / "mutation_old_vs_new.csv"),
-        revalidation_rows=_read_csv(ROOT / "results" / "corrected_metric_semantics_v1" / "mutation_revalidation.csv"),
+        inventory_rows=_read_csv(FIXTURE_DIR / "gain_mutation_inventory.csv"),
+        old_vs_new_rows=_read_csv(FIXTURE_DIR / "mutation_old_vs_new.csv"),
+        revalidation_rows=_read_csv(FIXTURE_DIR / "mutation_revalidation.csv"),
     )
 
     assert len(rows) == 4
