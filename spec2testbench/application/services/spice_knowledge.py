@@ -556,7 +556,7 @@ def _build_rule_documents() -> dict[str, dict[str, Any]]:
                 backends=[],
                 requires={"evidence": ["TESTBENCH_PLAN_SCHEMA"]},
                 forbids=["FREE_FORM_SPICE_OUTPUT"],
-                source=_source("CODE_AND_TESTS", "docs/llm_testbench_plan_schema.md"),
+                source=_source("CODE_AND_TESTS", "knowledge/spec2testbench/llm_testbench_plan_schema.md"),
                 dialect_scope=["SPEC2TESTBENCH"],
                 enforcement=spec2tb,
                 verification_status="CONFIRMED_SPEC2TESTBENCH",

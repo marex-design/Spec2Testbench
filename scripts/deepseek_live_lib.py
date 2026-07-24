@@ -1770,12 +1770,20 @@ def write_default_manifests() -> None:
 def collect_git_state() -> dict[str, Any]:
     _, status_short, _ = _git_output("status", "--short")
     _, diff_stat, _ = _git_output("diff", "--stat")
-    _, paper_diff, _ = _git_output("diff", "--", "paper_final/")
+    _, source_freeze_diff, _ = _git_output(
+        "diff",
+        "--",
+        "spec2testbench/",
+        "scripts/",
+        "tests/",
+        "knowledge/",
+        "configs/",
+        "examples/",
+    )
     _, head, _ = _git_output("rev-parse", "HEAD")
     _, branch, _ = _git_output("branch", "--show-current")
     modified_lines = [line for line in status_short.splitlines() if line.strip()]
     modified_paths = [path for _, path in (parse_status_line(line) for line in modified_lines) if path]
-    paper_modified = bool(paper_diff.strip()) or any(path.startswith("paper_final/") for path in modified_paths)
     benchmark_modified = any(path.startswith("benchmark/analogcoder_pro/") for path in modified_paths)
     knowledge_modified = any(path.startswith("knowledge/") for path in modified_paths)
     frozen_v3_modified = any(
@@ -1786,6 +1794,7 @@ def collect_git_state() -> dict[str, Any]:
     )
     scientific_dirty_paths = sorted(path for path in modified_paths if invalidates_source_freeze(path))
     scientific_worktree_clean = not scientific_dirty_paths
+    source_freeze_modified = not scientific_worktree_clean
     spice_book_pdf_matches = [
         path for path in ROOT.rglob("*")
         if path.is_file() and "spice" in path.name.lower() and "book" in path.name.lower() and path.suffix.lower() == ".pdf"
@@ -1800,7 +1809,6 @@ def collect_git_state() -> dict[str, Any]:
         commit_present
         and worktree_clean
         and scientific_worktree_clean
-        and not paper_modified
         and not benchmark_modified
         and not knowledge_modified
         and not frozen_v3_modified
@@ -1813,8 +1821,8 @@ def collect_git_state() -> dict[str, Any]:
         "status_short_lines": modified_lines,
         "modified_paths": modified_paths,
         "diff_stat": diff_stat.strip(),
-        "paper_diff": paper_diff.strip(),
-        "paper_files_modified": paper_modified,
+        "source_freeze_diff": source_freeze_diff.strip(),
+        "source_freeze_modified": source_freeze_modified,
         "original_benchmark_files_modified": benchmark_modified,
         "knowledge_files_modified": knowledge_modified,
         "frozen_v3_files_modified": frozen_v3_modified,
@@ -2310,7 +2318,7 @@ def build_pre_live_manifest() -> dict[str, Any]:
         "worktree_clean": git_state["worktree_clean"],
         "scientific_worktree_clean": git_state["scientific_worktree_clean"],
         "commit_present": git_state["commit_present"],
-        "paper_files_modified": git_state["paper_files_modified"],
+        "source_freeze_modified": git_state["source_freeze_modified"],
         "original_benchmark_files_modified": git_state["original_benchmark_files_modified"],
         "frozen_v3_files_modified": git_state["frozen_v3_files_modified"],
         "spice_book_pdf_ignored": git_state["spice_book_pdf_ignored"],
@@ -2342,7 +2350,7 @@ def build_pre_live_manifest() -> dict[str, Any]:
         "status_short_lines": git_state["status_short_lines"],
         "scientific_dirty_paths": git_state["scientific_dirty_paths"],
         "diff_stat": git_state["diff_stat"],
-        "paper_diff": git_state["paper_diff"],
+        "source_freeze_diff": git_state["source_freeze_diff"],
         "go_code_freeze": "PASS" if git_state["go_code_freeze"] else "NO_GO",
     }
     write_json(RESULTS_DIR / "pre_live_manifest.json", payload)
@@ -2357,7 +2365,7 @@ def build_pre_live_manifest() -> dict[str, Any]:
             f"- Git commit: {payload['git_commit']}",
             f"- Worktree clean: {str(payload['worktree_clean']).lower()}",
             f"- Scientific worktree clean: {str(payload['scientific_worktree_clean']).lower()}",
-            f"- Paper files modified: {str(payload['paper_files_modified']).lower()}",
+            f"- Source-freeze modified: {str(payload['source_freeze_modified']).lower()}",
             f"- Original benchmark files modified: {str(payload['original_benchmark_files_modified']).lower()}",
             f"- Frozen V3 files modified: {str(payload['frozen_v3_files_modified']).lower()}",
             f"- Knowledge version: {payload['knowledge_version']}",
@@ -4080,7 +4088,7 @@ def _provider_smoke_report_lines(summary: dict[str, Any]) -> list[str]:
         f"Branch: {worktree['branch']}",
         f"Commit: {worktree['git_commit']}",
         f"Scientific worktree clean: {str(worktree['scientific_worktree_clean']).lower()}",
-        f"Paper modified: {str(worktree['paper_modified']).lower()}",
+        f"Source-freeze modified: {str(worktree['source_freeze_modified']).lower()}",
         f"Original benchmarks modified: {str(worktree['original_benchmarks_modified']).lower()}",
         f"Frozen V3 modified: {str(worktree['frozen_v3_modified']).lower()}",
         f"Knowledge modified: {str(worktree['knowledge_modified']).lower()}",
@@ -4182,7 +4190,7 @@ def _preflight_report_lines(summary: dict[str, Any]) -> list[str]:
         f"Branch: {worktree['branch']}",
         "Commit created: false",
         "Push performed: false",
-        f"Paper modified: {str(worktree['paper_modified']).lower()}",
+        f"Source-freeze modified: {str(worktree['source_freeze_modified']).lower()}",
         f"Original benchmarks modified: {str(worktree['original_benchmarks_modified']).lower()}",
         f"Frozen V3 modified: {str(worktree['frozen_v3_modified']).lower()}",
         f"Knowledge modified: {str(worktree['knowledge_modified']).lower()}",
@@ -4299,7 +4307,7 @@ def build_deepseek_live_summary(
     provider_smoke_failed_live = bool(provider_smoke.get("real_call_attempted")) and provider_smoke.get("GO_PROVIDER_SMOKE") != "PASS"
     ready_for_new_freeze_commit = (
         secret.get("go_secret_safety") == "PASS"
-        and not git_state.get("paper_files_modified", False)
+        and not git_state.get("source_freeze_modified", False)
         and not git_state.get("original_benchmark_files_modified", False)
         and not git_state.get("knowledge_files_modified", False)
         and not git_state.get("frozen_v3_files_modified", False)
@@ -4451,7 +4459,7 @@ def build_deepseek_live_summary(
             "files_proposed_for_commit": len(commit_plan["FILES_TO_COMMIT"]),
             "files_proposed_for_exclusion": len(commit_plan["FILES_TO_EXCLUDE"]),
             "scientific_worktree_clean": inventory["scientific_worktree_clean"],
-            "paper_modified": git_state.get("paper_files_modified", False),
+            "source_freeze_modified": git_state.get("source_freeze_modified", False),
             "original_benchmarks_modified": git_state.get("original_benchmark_files_modified", False),
             "knowledge_modified": git_state.get("knowledge_files_modified", False),
             "frozen_v3_modified": git_state.get("frozen_v3_files_modified", False),

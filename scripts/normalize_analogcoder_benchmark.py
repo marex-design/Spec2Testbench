@@ -51,7 +51,6 @@ PROTECTED_ROOT_PREFIXES = (
     "benchmark",
     "knowledge",
     "docs",
-    "paper_final",
 )
 SKIP_RECURSION_DIRS = {".git", ".venv", ".agents", ".external"}
 TEXT_REFERENCE_SUFFIXES = {".py", ".md", ".txt", ".yaml", ".yml", ".json", ".csv", ".toml", ".ini"}
@@ -148,8 +147,6 @@ def reference_corpora() -> dict[str, str]:
 
 
 def file_category(rel_path: str, tracked: bool, ignored: bool) -> str:
-    if rel_path.startswith("paper_final/"):
-        return "PROTECTED_PAPER"
     if rel_path.startswith("benchmark/analogcoder_pro/") and rel_path.endswith(".cir"):
         return "PROTECTED_BENCHMARK"
     if rel_path.startswith("analogcoder/AnalogCoderPro-master/"):
@@ -182,7 +179,6 @@ def recommended_action(category: str, tracked: bool) -> tuple[str, str]:
         "PROTECTED_SOURCE",
         "PROTECTED_BENCHMARK",
         "PROTECTED_FROZEN_EVIDENCE",
-        "PROTECTED_PAPER",
         "ACTIVE_CODE",
         "ACTIVE_TEST",
         "ACTIVE_CONFIGURATION",
@@ -1022,11 +1018,22 @@ def write_audit_summary(
     write_text(REPORTS_DIR / "analogcoder_28_audit_summary.md", "\n".join(summary))
 
 
-def write_paper_non_modification_check() -> bool:
-    result = subprocess.run(["git", "diff", "--", "paper_final/"], cwd=ROOT, capture_output=True, text=True, check=True)
+def write_source_freeze_check() -> bool:
+    result = subprocess.run(
+        ["git", "diff", "--", "spec2testbench/", "scripts/", "tests/", "knowledge/", "configs/", "examples/"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
     write_text(
-        REPORTS_DIR / "paper_non_modification_check.md",
-        f"# Paper Non Modification Check\n\nDate: {TODAY}\n\n`git diff -- paper_final/` output length: {len(result.stdout.strip())}\n",
+        REPORTS_DIR / "source_freeze_check.md",
+        (
+            "# Source Freeze Check\n\n"
+            f"Date: {TODAY}\n\n"
+            "`git diff -- spec2testbench/ scripts/ tests/ knowledge/ configs/ examples/` "
+            f"output length: {len(result.stdout.strip())}\n"
+        ),
     )
     return not result.stdout.strip()
 
@@ -1089,14 +1096,14 @@ def main() -> None:
     reference_rows = ac_gain_references()
     comparison_rows, p04_trace_rows, p04_root_cause = audit_ac_gain(report_rows)
     write_ac_gain_reports(reference_rows, comparison_rows, p04_trace_rows, p04_root_cause)
-    paper_clean = write_paper_non_modification_check()
+    source_tree_clean = write_source_freeze_check()
     if args.report_ambiguities:
         for row in ambiguity_rows:
             print(json.dumps(row, ensure_ascii=True))
     print(json.dumps({
         "date": TODAY,
         "cases": case_count,
-        "paper_clean": paper_clean,
+        "source_tree_clean": source_tree_clean,
         "cleanup_deleted_files": deletion_stats["files"],
         "cleanup_deleted_directories": deletion_stats["directories"],
     }, indent=2))

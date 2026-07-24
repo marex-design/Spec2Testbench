@@ -347,7 +347,7 @@ def build_controlled_variants() -> list[dict]:
     write_yaml(CV_DIR / "campaign_config.yaml", {
         "simulation_mode": "REAL",
         "allow_mock": False,
-        "paper_eligible_only": True,
+        "scientifically_eligible_only": True,
         "case_count": len(cases),
         "source_ground_truth_manifest": "experiments/ground_truth/ground_truth_manifest.yaml",
     })
@@ -381,7 +381,7 @@ def run_controlled_campaign(cases: list[dict]) -> dict:
             "compliance_status": report.compliance_status.value,
             "scientific_category": report.scientific_category.value,
             "simulation_mode": report.simulation_mode.value if report.simulation_mode else None,
-            "paper_eligible": report.eligible_for_paper_results,
+            "scientifically_eligible": report.scientifically_eligible,
             "errors": report.errors + report.simulation_errors,
         }
         (case_dir / "comparison.json").write_text(json.dumps({
@@ -404,7 +404,7 @@ def run_controlled_campaign(cases: list[dict]) -> dict:
             "observed_outcome": observed_outcome(report.compliance_status.value, report.execution_status.value),
             "classification_result": classification,
             "simulation_mode": report.simulation_mode.value if report.simulation_mode else "",
-            "paper_eligible": report.eligible_for_paper_results,
+            "scientifically_eligible": report.scientifically_eligible,
         }
         rows.append(row)
         confusion[classification] += 1

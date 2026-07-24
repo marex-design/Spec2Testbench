@@ -1,3 +1,0 @@
-vectors_csv,pipeline_value,independent_value,absolute_error,relative_error,absolute_tolerance,relative_tolerance,agreement
-artifacts\frozen_pilot_v2_wrdata_extension\20260712T183206Z\wrdata_controlled_violation\vectors.csv,4.999999969612645e-09,4.999999969612645e-09,0.0,0.0,1e-12,1e-06,True
-artifacts\frozen_pilot_v2_wrdata_extension\20260712T183206Z\wrdata_nominal\vectors.csv,4.999999969612645e-09,4.999999969612645e-09,0.0,0.0,1e-12,1e-06,True

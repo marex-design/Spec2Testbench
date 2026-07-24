@@ -104,7 +104,7 @@ class VerificationReport:
     compliance_status: ComplianceStatus = ComplianceStatus.NOT_EVALUATED
     robustness_status: RobustnessStatus = RobustnessStatus.NOT_EVALUATED
     scientific_category: ScientificCategory = ScientificCategory.UNEVALUATED
-    eligible_for_paper_results: bool = False
+    scientifically_eligible: bool = False
     spec_results: List[CheckResult] = field(default_factory=list)
     metric_traces: List[MetricTrace] = field(default_factory=list)
     waveform_analyses: List[MultimodalResult] = field(default_factory=list)
@@ -509,7 +509,7 @@ class VerificationPipeline:
             'success': result.get('success', False),
             'simulation_mode': result.get('simulation_mode', SimulationMode.REAL.value),
             'execution_status': result.get('execution_status'),
-            'eligible_for_paper_results': result.get('eligible_for_paper_results'),
+            'scientifically_eligible': result.get('scientifically_eligible'),
             'error_type': result.get('error_type'),
             'error_message': result.get('error_message'),
             'metrics': result.get('metrics', {}),
@@ -598,7 +598,7 @@ class VerificationPipeline:
             'success': True,
             'simulation_mode': SimulationMode.MOCK.value,
             'execution_status': ExecutionStatus.SUCCESS.value,
-            'eligible_for_paper_results': False,
+            'scientifically_eligible': False,
             'logs': ['Mock simulation - ngspice not available'],
             'vdd': vdd,
             'metrics': {
@@ -772,7 +772,7 @@ class VerificationPipeline:
             "success": False,
             "simulation_mode": None,
             "execution_status": ExecutionStatus.SKIPPED.value,
-            "eligible_for_paper_results": False,
+            "scientifically_eligible": False,
             "logs": [],
             "errors": [error_message],
             "error_type": error_type,
@@ -786,7 +786,7 @@ class VerificationPipeline:
             "success": False,
             "simulation_mode": SimulationMode.REAL.value,
             "execution_status": status.value,
-            "eligible_for_paper_results": False,
+            "scientifically_eligible": False,
             "logs": [],
             "errors": [error_message],
             "error_type": error_type,
@@ -867,14 +867,14 @@ class VerificationPipeline:
             report.execution_status,
             report.compliance_status,
         )
-        report.eligible_for_paper_results = (
+        report.scientifically_eligible = (
             report.execution_status == ExecutionStatus.SUCCESS
             and report.simulation_mode in (SimulationMode.REAL, SimulationMode.RECOVERED)
             and report.netlist_binding_status == NetlistBindingStatus.MATCH
         )
         variant_override_records = (report.testbench.metadata or {}).get("variant_overrides", []) if report.testbench else []
         if any(record.get("application_status") in {"OVERWRITTEN", "NOT_APPLIED", "UNSUPPORTED"} for record in variant_override_records):
-            report.eligible_for_paper_results = False
+            report.scientifically_eligible = False
         report.metric_traces = [
             self._build_metric_trace(result, simulation_results)
             for result in report.spec_results

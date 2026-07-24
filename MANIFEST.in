@@ -1,7 +1,5 @@
 include README.md
-include REPRO.md
 include LICENSE
-include CITATION.cff
 recursive-include spec2testbench *.md *.py
 recursive-include benchmark *.cir *.csv *.md
 recursive-include examples *.yaml

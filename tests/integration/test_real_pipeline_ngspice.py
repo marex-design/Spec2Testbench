@@ -108,7 +108,7 @@ def test_real_pipeline_ngspice_family_smoke(case_id, spec_path, netlist_path, tm
             else ScientificCategory.SIMULABLE_COMPLIANT
         )
     assert report.scientific_category == expected_category
-    assert report.eligible_for_paper_results is True
+    assert report.scientifically_eligible is True
     assert report.ngspice_command
     assert any("ngspice" in str(part).lower() for part in report.ngspice_command)
     assert report.ngspice_returncode == 0

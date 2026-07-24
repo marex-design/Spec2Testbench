@@ -35,7 +35,6 @@ BENCHMARK_DIR = ROOT / "benchmark" / "analogcoder_pro"
 SPEC_DIR = ROOT / "examples" / "benchmark_specs"
 CANONICAL_RESULTS_DIR = ROOT / "results" / "canonical_harness_v1"
 CORRECTED_RESULTS_DIR = ROOT / "results" / "corrected_metric_semantics_v1"
-PAPER_RESULTS_DIR = ROOT / "paper_final"
 PRIORITY_CASE_IDS = [
     "p01_amplifier",
     "p02_amplifier",
@@ -122,9 +121,9 @@ def benchmark_hash_rows() -> list[dict[str, Any]]:
     return rows
 
 
-def git_diff_paper() -> str:
+def git_diff_source_tree() -> str:
     result = subprocess.run(
-        ["git", "diff", "--", "paper_final/"],
+        ["git", "diff", "--", "spec2testbench/", "scripts/", "tests/", "knowledge/", "configs/", "examples/"],
         capture_output=True,
         text=True,
         cwd=str(ROOT),
@@ -480,7 +479,7 @@ def orchestrate() -> dict[str, Any]:
     run_id = utc_run_id("nominal_28")
     campaign_artifacts_root = ARTIFACTS_DIR / run_id / "nominal_28"
     initial_hashes = benchmark_hash_rows()
-    initial_paper_diff = git_diff_paper()
+    initial_source_tree_diff = git_diff_source_tree()
 
     pipeline = build_pipeline()
     manifest_rows: list[dict[str, Any]] = []
@@ -615,13 +614,13 @@ def orchestrate() -> dict[str, Any]:
     test_runs = run_required_tests()
     test_summary = {key: parse_pytest_counts(value["output"]) for key, value in test_runs.items()}
     final_hashes = benchmark_hash_rows()
-    final_paper_diff = git_diff_paper()
+    final_source_tree_diff = git_diff_source_tree()
     reconciliation_go = bool(
         nominal_summary["cases_executed"] == 28
         and not repairable_not_evaluated
         and all(run["returncode"] == 0 for run in test_runs.values())
         and initial_hashes == final_hashes
-        and initial_paper_diff == final_paper_diff == ""
+        and initial_source_tree_diff == final_source_tree_diff == ""
     )
 
     write_text(EXPERIMENTS_DIR / "nominal_28_manifest.yaml", json.dumps(manifest_rows, indent=2))
@@ -691,7 +690,7 @@ def orchestrate() -> dict[str, Any]:
             "branch": "test",
             "commit_created": False,
             "push_performed": False,
-            "paper_modified": bool(initial_paper_diff or final_paper_diff),
+            "source_tree_modified": bool(initial_source_tree_diff or final_source_tree_diff),
             "original_benchmarks_modified": initial_hashes != final_hashes,
             "frozen_v3_modified": False,
             "live_llm_calls": 0,

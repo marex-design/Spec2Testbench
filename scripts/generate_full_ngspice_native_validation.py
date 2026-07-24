@@ -180,7 +180,7 @@ def main() -> None:
                 "unit": row["unit"],
                 "source_file": row["source_file"],
                 "pyspice_used": row["pyspice_used"],
-                "paper_eligible": row["paper_eligible"],
+                "scientifically_eligible": row["scientifically_eligible"],
             }
         )
 
@@ -317,7 +317,7 @@ def materialize_case_row(
         "unit": metric_trace.unit,
         "source_file": measurement_source,
         "pyspice_used": report.provenance.get("measurement_backend") == "PYSPICE",
-        "paper_eligible": report.eligible_for_paper_results,
+        "scientifically_eligible": report.scientifically_eligible,
         "simulation_mode": report.simulation_mode.value if report.simulation_mode else "",
         "execution_status": report.execution_status.value,
         "compliance_status": report.compliance_status.value,

@@ -16,7 +16,7 @@ LLM_RESULTS = RESULTS / "llm_deepseek"
 REPORTS = ROOT / "reports"
 LLM_REPORTS = REPORTS / "llm_deepseek"
 USE_CASE_REPORTS = LLM_REPORTS / "use_cases"
-DOCS = ROOT / "docs"
+KNOWLEDGE_DOCS = ROOT / "knowledge" / "spec2testbench"
 CURRENT_DATE = "2026-07-21"
 
 
@@ -154,7 +154,7 @@ Current local state on {CURRENT_DATE}: `DEEPSEEK_API_KEY` is {live_state}. The r
 """,
     )
     write_text(
-        DOCS / "llm_testbench_plan_schema.md",
+        KNOWLEDGE_DOCS / "llm_testbench_plan_schema.md",
         """
 # LLM TestbenchPlan Schema
 
@@ -200,7 +200,7 @@ Stage order:
 3. Run the provider smoke test.
 4. Run the explicit seven-use-case smoke campaign.
 5. Run the explicit frozen pilot campaign.
-6. Generate aggregate CSVs, use-case reports, and reviewer-facing analyses.
+6. Generate aggregate CSVs, use-case reports, and analysis summaries.
 
 Recommended live sequence:
 
@@ -816,9 +816,9 @@ The repository currently provides two validated vector-based comparisons that ca
     )
 
 
-def write_paper_check() -> None:
+def write_source_freeze_check() -> None:
     diff = subprocess.run(
-        ["git", "diff", "--", "paper_final/"],
+        ["git", "diff", "--", "spec2testbench/", "scripts/", "tests/", "knowledge/", "configs/", "examples/"],
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -826,14 +826,14 @@ def write_paper_check() -> None:
     )
     modified = 0 if not diff.stdout.strip() else len(diff.stdout.strip().splitlines())
     write_text(
-        LLM_REPORTS / "paper_non_modification_check.md",
+        LLM_REPORTS / "source_freeze_check.md",
         f"""
-# Paper Non-Modification Check
+# Source Freeze Check
 
 Date: {CURRENT_DATE}
 
-paper_final files modified: {0 if modified == 0 else modified}
-paper modification policy: {"PASS" if modified == 0 else "FAIL"}
+source-freeze files modified: {0 if modified == 0 else modified}
+source-freeze modification policy: {"PASS" if modified == 0 else "FAIL"}
 """,
     )
 
@@ -853,7 +853,7 @@ def main() -> None:
     write_near_threshold_outputs()
     write_acp28_outputs()
     write_wrdata_outputs()
-    write_paper_check()
+    write_source_freeze_check()
 
 
 if __name__ == "__main__":

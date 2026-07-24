@@ -1066,7 +1066,9 @@ def representative_nominal_records() -> list[dict[str, Any]]:
 def summarize_preconditions() -> dict[str, Any]:
     ensure_workspace()
     git_status = run_command(["git", "status", "--short"])
-    paper_diff = run_command(["git", "diff", "--", "paper_final/"])
+    source_freeze_diff = run_command(
+        ["git", "diff", "--", "spec2testbench/", "scripts/", "tests/", "knowledge/", "configs/", "examples/"]
+    )
     branch = run_command(["git", "branch", "--show-current"]).stdout.strip()
     environment = detect_ngspice_environment(DEFAULT_NGSPICE_EXECUTABLE, knowledge_version=CURRENT_KNOWLEDGE_VERSION)
     env_info = environment["environment"]
@@ -1099,8 +1101,8 @@ def summarize_preconditions() -> dict[str, Any]:
         blocker_reasons.append("original benchmark hashes are not confirmed unchanged")
     if len(frozen_v3_rows) != 16:
         blocker_reasons.append(f"expected 16 Frozen V3 rows, found {len(frozen_v3_rows)}")
-    if paper_diff.stdout.strip():
-        blocker_reasons.append("paper_final/ has local modifications")
+    if source_freeze_diff.stdout.strip():
+        blocker_reasons.append("source-freeze paths have local modifications")
     if not all(artifact_presence.values()):
         blocker_reasons.append("one or more historical prerequisite artifacts are missing")
 
@@ -1115,7 +1117,7 @@ def summarize_preconditions() -> dict[str, Any]:
         "metric_coverage_artifacts_found": artifact_presence["metric_coverage_results"] and artifact_presence["metric_coverage_reports"],
         "frozen_v3_cases_found": len(frozen_v3_rows),
         "original_hashes_unchanged": canonical_summary.get("benchmark_hashes_unchanged", False),
-        "paper_diff_status": "UNCHANGED" if not paper_diff.stdout.strip() else "MODIFIED",
+        "source_freeze_status": "UNCHANGED" if not source_freeze_diff.stdout.strip() else "MODIFIED",
         "deepseek_live_disabled": True,
         "stub_provider_available": True,
         "artifact_presence": artifact_presence,
@@ -1138,7 +1140,7 @@ def summarize_preconditions() -> dict[str, Any]:
                 f"- Metric coverage artifacts found: {payload['metric_coverage_artifacts_found']}",
                 f"- Frozen V3 cases found: {payload['frozen_v3_cases_found']}",
                 f"- Original benchmark hashes checked: {payload['original_hashes_unchanged']}",
-                f"- Paper diff status: {payload['paper_diff_status']}",
+                f"- Source-freeze status: {payload['source_freeze_status']}",
                 f"- DeepSeek live disabled: {payload['deepseek_live_disabled']}",
                 f"- Stub provider available: {payload['stub_provider_available']}",
                 (
@@ -3837,7 +3839,7 @@ def build_book_enriched_summary() -> str:
         f"Branch: {preconditions['branch']}",
         "Commit: False",
         "Push: False",
-        f"Paper modified: {preconditions['paper_diff_status'] != 'UNCHANGED'}",
+        f"Source-freeze modified: {preconditions['source_freeze_status'] != 'UNCHANGED'}",
         "Original benchmarks modified: False",
         "Frozen V3 modified: False",
         "Live LLM calls: 0",

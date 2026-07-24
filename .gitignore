@@ -22,22 +22,18 @@ results/
 waveforms/
 test_waveforms/
 waveforms_test/
-paper_final/build/
 *.log
 *.out
 *.raw
 *.tmp
 
-# Large local campaign workspaces. Canonical evidence is added explicitly.
+# Large local campaign workspaces
 artifacts/*
-!artifacts/paper_campaign/
-!artifacts/paper_campaign/20260711_094959/
-!artifacts/paper_campaign/20260711_094959/**
 
 # Local agent and dependency workspaces
 .agents/
+.recovery/
 .external/
-archive/native_extraction_validation_pre_fix/
 experiments/controlled_violations/generated_cases/
 
 # Ignore generated images but keep source examples and sheets

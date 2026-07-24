@@ -298,7 +298,7 @@ def test_successful_real_simulation_all_specs_pass():
     assert report.execution_status == ExecutionStatus.SUCCESS
     assert report.compliance_status == ComplianceStatus.PASS
     assert report.scientific_category == ScientificCategory.SIMULABLE_COMPLIANT
-    assert report.eligible_for_paper_results is True
+    assert report.scientifically_eligible is True
 
 
 def test_missing_required_metric_stays_not_evaluated_not_pass():
@@ -374,7 +374,7 @@ def test_wrong_metric_target_precheck_marks_case_not_evaluated():
     assert "precheck_failed" in report.spec_results[0].message
 
 
-def test_netlist_binding_mismatch_is_not_paper_eligible():
+def test_netlist_binding_mismatch_is_not_scientifically_eligible():
     pipeline = VerificationPipeline(use_llm=False)
     specification = Specification(
         name="binding_case",
@@ -395,7 +395,7 @@ def test_netlist_binding_mismatch_is_not_paper_eligible():
 
     assert report.netlist_binding_status == NetlistBindingStatus.MISMATCH
     assert report.compliance_status == ComplianceStatus.NOT_EVALUATED
-    assert report.eligible_for_paper_results is False
+    assert report.scientifically_eligible is False
 
 
 def test_successful_real_simulation_one_spec_fails():
@@ -464,7 +464,7 @@ def test_timeout_is_non_simulable():
     assert report.scientific_category == ScientificCategory.NON_SIMULABLE
 
 
-def test_mock_explicitly_allowed_is_not_paper_eligible():
+def test_mock_explicitly_allowed_is_not_scientifically_eligible():
     pipeline = VerificationPipeline(use_llm=False, allow_mock=True)
     specification = Specification(
         name="mock_case",
@@ -476,7 +476,7 @@ def test_mock_explicitly_allowed_is_not_paper_eligible():
 
     assert report.simulation_mode == SimulationMode.MOCK
     assert report.execution_status == ExecutionStatus.SUCCESS
-    assert report.eligible_for_paper_results is False
+    assert report.scientifically_eligible is False
 
 
 def test_mock_forbidden_without_netlist_is_skipped():
@@ -494,7 +494,7 @@ def test_mock_forbidden_without_netlist_is_skipped():
     assert report.scientific_category == ScientificCategory.UNEVALUATED
 
 
-def test_recovered_simulation_is_paper_eligible():
+def test_recovered_simulation_is_scientifically_eligible():
     pipeline = VerificationPipeline(use_llm=False)
     specification = Specification(
         name="recovered_case",
@@ -515,7 +515,7 @@ def test_recovered_simulation_is_paper_eligible():
 
     assert report.simulation_mode == SimulationMode.RECOVERED
     assert report.compliance_status == ComplianceStatus.PASS
-    assert report.eligible_for_paper_results is True
+    assert report.scientifically_eligible is True
 
 
 def test_nominal_pass_without_pvt_has_no_robustness_status():

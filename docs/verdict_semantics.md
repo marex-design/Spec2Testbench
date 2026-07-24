@@ -13,7 +13,7 @@ compliance, robustness, and scientific classification.
 ## SimulationMode
 
 - `REAL`: results came from ngspice/PySpice execution.
-- `MOCK`: synthetic development result, never paper eligible.
+- `MOCK`: synthetic development result, never scientifically eligible.
 - `RECOVERED`: a real result obtained after an explicit recovery action.
 
 ## ComplianceStatus

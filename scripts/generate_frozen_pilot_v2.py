@@ -591,7 +591,7 @@ def build_final_case_row(
         "independent_value": independent_value if independent_value is not None else "",
         "absolute_error": absolute_error if absolute_error is not None else "",
         "relative_error": relative_error if relative_error is not None else "",
-        "paper_eligible": report.eligible_for_paper_results,
+        "scientifically_eligible": report.scientifically_eligible,
         "simulation_mode": report.simulation_mode.value if report.simulation_mode else "",
         "execution_status": report.execution_status.value,
         "source_artifact": str(simulation_results.get("measurement_source") or simulation_results.get("raw_result_file") or ""),
@@ -610,7 +610,7 @@ def build_final_case_row(
         "unit": trace.unit if trace else "",
         "source_file": simulation_results.get("measurement_source") or simulation_results.get("raw_result_file") or "",
         "pyspice_used": False,
-        "paper_eligible": report.eligible_for_paper_results,
+        "scientifically_eligible": report.scientifically_eligible,
         "independent_value": independent_value if independent_value is not None else "",
         "independent_agreement": within_tolerance(measured_value, independent_value),
     }

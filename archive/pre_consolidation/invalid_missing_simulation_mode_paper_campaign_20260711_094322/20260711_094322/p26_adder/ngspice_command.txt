@@ -1,1 +1,0 @@
-ngspice -b -r <raw_file> testbench.cir

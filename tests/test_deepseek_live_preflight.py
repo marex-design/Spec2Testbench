@@ -143,7 +143,7 @@ def _provider_smoke_summary(*, requested_stage: str) -> dict:
             "branch": "test",
             "git_commit": "abc123",
             "scientific_worktree_clean": False,
-            "paper_modified": False,
+            "source_freeze_modified": False,
             "original_benchmarks_modified": False,
             "frozen_v3_modified": False,
             "knowledge_modified": False,
@@ -708,7 +708,7 @@ def test_provider_smoke_summary_filters_live_call_audit_by_run_id(tmp_path: Path
         lambda: {
             "branch": "test",
             "git_commit": "abc123",
-            "paper_files_modified": False,
+            "source_freeze_modified": False,
             "original_benchmark_files_modified": False,
             "knowledge_files_modified": False,
             "frozen_v3_files_modified": False,
