@@ -1,0 +1,51 @@
+name: reference_28_t24_schmitt_hysteresis
+case_id: reference_28_t24_schmitt_hysteresis
+circuit_type: schmitt_trigger
+technology: reference_28_behavioral
+description: Reference coverage case for T24 Schmitt hysteresis.
+source:
+  benchmark: reference_28
+  netlist: benchmark/reference_28/non_inverting_schmitt_trigger.cir
+performance_targets:
+  v_t_plus:
+    min: 0.0
+    max: 5.0
+    unit: V
+  v_t_minus:
+    min: 0.0
+    max: 5.0
+    unit: V
+  hysteresis_width:
+    min: 0.0
+    unit: V
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_frequency: 1000.0
+ports:
+  input:
+  - in
+  output:
+  - out
+verification:
+  include_tests:
+  - T24
+  auto_select: false
+test_categories:
+- transient
+- differential
+test_requirements: {}
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+operating_conditions:
+  nominal_temperature: 27
+  nominal_supply: 5.0
+  process_corner: tt
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.1

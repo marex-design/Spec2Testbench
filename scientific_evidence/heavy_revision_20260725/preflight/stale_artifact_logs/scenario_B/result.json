@@ -1,0 +1,18 @@
+{
+  "scenario_id": "B",
+  "expected_behavior": "Explicit replay with a forged expected netlist hash must be rejected.",
+  "observed_behavior": "execution_status=ERROR, validation_status=NETLIST_SHA256_MISMATCH, accepted=False",
+  "pass": true,
+  "artifact_used": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\\results\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_31_23.495088_c6635e20.json",
+  "rejection_reason": "NETLIST_SHA256_MISMATCH",
+  "test_path": "VerificationPipeline.verify",
+  "log_path": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_B\\result.json",
+  "details": {
+    "report_run_id": "3148d5e8-4909-4253-91e3-bf2dcb21488d",
+    "report_timestamp": "2026-07-25T13:49:20.099961",
+    "errors": [],
+    "simulation_errors": [
+      "Artifact validation failed: NETLIST_SHA256_MISMATCH"
+    ]
+  }
+}

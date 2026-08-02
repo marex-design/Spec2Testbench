@@ -1,0 +1,16 @@
+{
+  "scenario_id": "D",
+  "expected_behavior": "A broken ngspice run executed in a folder containing an old successful result must stay in ERROR and must not load the historical success.",
+  "observed_behavior": "execution_status=ERROR, latest_result=2026-07-25T13_49_20.862024_7c83b21e.json, old_result_unchanged=True",
+  "pass": true,
+  "artifact_used": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_D\\s\\results\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_31_23.495088_c6635e20.json",
+  "rejection_reason": "CURRENT_RUN",
+  "test_path": "VerificationPipeline.verify_from_yaml",
+  "log_path": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_D\\result.json",
+  "details": {
+    "new_result_path": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_D\\s\\results\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_49_20.862024_7c83b21e.json",
+    "old_result_sha256": "0730e3022ff9fb8d73b02d8be9a13929abd3e93bf203ad81d722890de09b4101",
+    "new_run_id": "7c83b21e-38db-48f9-9b9a-3c68c148e895",
+    "ngspice_returncode": 1
+  }
+}

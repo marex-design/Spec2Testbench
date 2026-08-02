@@ -1,0 +1,94 @@
+commit 6520d80100bd4ac5806bddbe26e3a4036368d7d8
+Author: ExaucÃ© MARUBA <63616448+Maruba22@users.noreply.github.com>
+Date:   Sat Jul 25 13:29:53 2026 +0100
+
+    fix: reject replay artifacts with mismatched netlist hashes
+
+diff --git a/spec2testbench/application/usecases/run_verification.py b/spec2testbench/application/usecases/run_verification.py
+index 6d9c9e0..30822cf 100644
+--- a/spec2testbench/application/usecases/run_verification.py
++++ b/spec2testbench/application/usecases/run_verification.py
+@@ -424,7 +424,11 @@ class VerificationPipeline:
+                     simulation_results = self._simulation_not_run_result("netlist_missing", "No netlist provided")
+ 
+             if supplied_simulation_results:
+-                artifact_validation = self._validate_supplied_artifacts(report, simulation_results)
++                artifact_validation = self._validate_supplied_artifacts(
++                    report,
++                    simulation_results,
++                    netlist_path=netlist_path,
++                )
+                 simulation_results["artifact_validation"] = artifact_validation
+                 if not artifact_validation.get("accepted", False):
+                     simulation_results = self._artifact_validation_error_result(artifact_validation)
+@@ -1159,6 +1163,8 @@ class VerificationPipeline:
+         self,
+         report: VerificationReport,
+         simulation_results: Dict[str, Any],
++        *,
++        netlist_path: Optional[Path] = None,
+     ) -> Dict[str, Any]:
+         source_paths = self._artifact_source_paths(simulation_results)
+         if not source_paths:
+@@ -1194,6 +1200,25 @@ class VerificationPipeline:
+         current_commit = self._git_commit()
+         reuse_mode = str(simulation_results.get("artifact_reuse_mode") or "").upper()
+         explicit_replay = reuse_mode in {"EXPLICIT_REPLAY", "VALIDATED_IMPORT"}
++        current_netlist_sha = self._sha256_file(netlist_path) if netlist_path else None
++        expected_netlist_sha = simulation_results.get("expected_netlist_sha256")
++        actual_netlist_sha = simulation_results.get("actual_netlist_sha256")
++        has_expected_netlist_sha = isinstance(expected_netlist_sha, str) and bool(re.fullmatch(r"[0-9a-fA-F]{64}", expected_netlist_sha))
++        has_actual_netlist_sha = isinstance(actual_netlist_sha, str) and bool(re.fullmatch(r"[0-9a-fA-F]{64}", actual_netlist_sha))
++        if current_netlist_sha and has_expected_netlist_sha and expected_netlist_sha != current_netlist_sha:
++            return {
++                "accepted": False,
++                "validation_status": "NETLIST_SHA256_MISMATCH",
++                "records": records,
++                "reason": "Supplied artifact provenance does not match the current netlist hash.",
++            }
++        if current_netlist_sha and has_actual_netlist_sha and actual_netlist_sha != current_netlist_sha:
++            return {
++                "accepted": False,
++                "validation_status": "NETLIST_SHA256_MISMATCH",
++                "records": records,
++                "reason": "Supplied artifact binding does not match the current netlist hash.",
++            }
+         accepted_records = []
+ 
+         for role, source_path in source_paths:
+diff --git a/tests/test_scientific_workflow_guards.py b/tests/test_scientific_workflow_guards.py
+index 7430ed4..cd02376 100644
+--- a/tests/test_scientific_workflow_guards.py
++++ b/tests/test_scientific_workflow_guards.py
+@@ -489,6 +489,31 @@ def test_external_artifact_run_id_mismatch_is_rejected(tmp_path: Path, fixed_run
+     assert report.provenance["artifact_validation"]["validation_status"] == "RUN_ID_MISMATCH"
+ 
+ 
++def test_external_artifact_netlist_hash_mismatch_is_rejected(tmp_path: Path, fixed_run_identity: tuple[str, str], monkeypatch: pytest.MonkeyPatch):
++    run_id, timestamp = fixed_run_identity
++    raw_file = tmp_path / "raw.dat"
++    measures_file = tmp_path / "measures.txt"
++    raw_file.write_text("raw", encoding="utf-8")
++    measures_file.write_text("0.9", encoding="utf-8")
++    monkeypatch.setattr(VerificationPipeline, "_git_commit", staticmethod(lambda: "clean-commit"))
++    records = [
++        _artifact_record(raw_file, run_id=run_id, timestamp=timestamp, git_commit="clean-commit"),
++        _artifact_record(measures_file, run_id=run_id, timestamp=timestamp, git_commit="clean-commit"),
++    ]
++    results = _external_results(raw_file, measures_file, records, artifact_reuse_mode="EXPLICIT_REPLAY")
++    results["expected_netlist_sha256"] = "a" * 64
++
++    report = VerificationPipeline(use_llm=False, allow_mock=False).verify(
++        _spec(),
++        netlist_path=_netlist(tmp_path),
++        simulation_results=results,
++        testbench=_testbench(),
++    )
++
++    assert report.execution_status == ExecutionStatus.ERROR
++    assert report.provenance["artifact_validation"]["validation_status"] == "NETLIST_SHA256_MISMATCH"
++
++
+ def test_external_artifact_commit_mismatch_is_rejected(tmp_path: Path, fixed_run_identity: tuple[str, str], monkeypatch: pytest.MonkeyPatch):
+     run_id, timestamp = fixed_run_identity
+     raw_file = tmp_path / "raw.dat"

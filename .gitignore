@@ -22,6 +22,7 @@ results/
 waveforms/
 test_waveforms/
 waveforms_test/
+t/
 *.log
 *.out
 *.raw

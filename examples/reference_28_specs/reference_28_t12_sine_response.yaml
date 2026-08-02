@@ -1,0 +1,46 @@
+name: reference_28_t12_sine_response
+case_id: reference_28_t12_sine_response
+circuit_type: high_pass_filter
+technology: reference_28_behavioral
+description: Reference coverage case for T12 sine response.
+source:
+  benchmark: reference_28
+  netlist: benchmark/reference_28/passive_highpass_filter.cir
+performance_targets:
+  sine_response_amplitude:
+    min: 0.0
+    unit: V
+  sine_response_phase:
+    min: -180.0
+    max: 180.0
+    unit: deg
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_frequency: 1000.0
+ports:
+  input:
+  - in
+  output:
+  - out
+verification:
+  include_tests:
+  - T12
+  auto_select: false
+test_categories:
+- transient
+test_requirements: {}
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+operating_conditions:
+  nominal_temperature: 27
+  nominal_supply: 5.0
+  process_corner: tt
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.1

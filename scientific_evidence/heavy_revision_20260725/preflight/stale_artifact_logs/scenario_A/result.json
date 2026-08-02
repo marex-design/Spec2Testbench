@@ -1,0 +1,17 @@
+{
+  "scenario_id": "A",
+  "expected_behavior": "A new REAL CLI run with a modified netlist must create a fresh result and must not accept the copied historical report as the current run.",
+  "observed_behavior": "return_code=0, validation_status=CURRENT_RUN, new_report=analogcoder_pro_p10_lowpass_20260725_134917.json, old_report_unchanged=True",
+  "pass": true,
+  "artifact_used": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\t\\A\\o\\reports\\analogcoder_pro_p10_lowpass_20260725_133124.json",
+  "rejection_reason": "CURRENT_RUN",
+  "test_path": "public_cli_verify",
+  "log_path": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_A\\stdout.txt",
+  "details": {
+    "old_report_sha256": "1cd0b1502ee449e8256bd9009a40877d2e4f6b08058876f63f15774f2c6f2d0a",
+    "new_report_path": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\t\\A\\o\\reports\\analogcoder_pro_p10_lowpass_20260725_134917.json",
+    "old_netlist_hash": "6051b20abdae27ed489e01671145745fc4b1a3d2d77cb7da7a3929cf5355651c",
+    "new_netlist_hash": "e51d6bef1bd80232b36861cdf48bd0e9a1e0f769d10bb336239a850a59dedbdd",
+    "run_id": "e63c5697-c363-424c-a709-ac3a9f018b6b"
+  }
+}

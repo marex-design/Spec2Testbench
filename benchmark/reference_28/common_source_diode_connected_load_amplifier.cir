@@ -1,0 +1,10 @@
+* Common-source amplifier with diode-connected load
+Vdd vdd 0 DC 5
+Vin in 0 DC 1.5 AC 1
+M1 out in 0 0 NMOS
+M2 out out vdd vdd PMOS
+.model NMOS NMOS LEVEL=1 VTO=1 KP=1m
+.model PMOS PMOS LEVEL=1 VTO=-1 KP=0.5m
+.op
+.ac dec 100 10 10Meg
+.end

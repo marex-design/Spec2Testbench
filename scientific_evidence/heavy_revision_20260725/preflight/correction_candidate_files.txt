@@ -1,0 +1,7 @@
+﻿docs/scientific_workflow_hardening.md
+spec2testbench/application/usecases/run_verification.py
+spec2testbench/config/settings.py
+spec2testbench/presentation/cli/main.py
+tests/integration/test_llm_stub_pipeline.py
+tests/integration/test_real_pipeline_ngspice.py
+tests/test_scientific_workflow_guards.py

@@ -1,0 +1,13 @@
+﻿c90c3dc Freeze reviewer evidence workflow and manuscript anchors
+ paper_final/main.tex                               |   4 +-
+ paper_final/sections/experimental_methodology.tex  |  16 +-
+ paper_final/sections/method_revised.tex            |   4 +-
+ paper_final/sections/results_revised.tex           |  12 +-
+ paper_final/tables/results_tables.tex              |   6 +-
+ reproduce_paper.py                                 |  24 +
+ scripts/freeze_paper_public_evidence.py            | 689 +++++++++++++++++---
+ .../application/usecases/run_verification.py       |   5 +-
+ .../infrastructure/simulator/pyspice_simulator.py  |   3 +-
+ tools/generate_reviewer_phase0_audit.py            | 702 +++++++++++++++++++++
+ 10 files changed, 1361 insertions(+), 104 deletions(-)
+

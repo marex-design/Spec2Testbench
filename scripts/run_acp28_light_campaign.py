@@ -25,7 +25,7 @@ CLI_COMMAND = [
     "verify",
 ]
 CASE_STUDY_PRIORITY = [
-    "p01_amplifier_strict",
+    "p01_amplifier",
     "p10_lowpass",
     "p16_opamp",
     "p19_mixer",
@@ -157,7 +157,7 @@ def recommended_case_studies(rows):
     lookup = {row["circuit_name"]: row for row in rows}
     picks = []
     for name in CASE_STUDY_PRIORITY:
-        if name == "p01_amplifier_strict":
+        if name == "p01_amplifier":
             picks.append({
                 "circuit_name": name,
                 "why": "Cas déjà validé en profondeur avec polarisation corrigée, gain AC crédible et courant IDD cohérent."

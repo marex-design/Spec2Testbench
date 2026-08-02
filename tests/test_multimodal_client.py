@@ -64,7 +64,7 @@ def test_llm_multimodal_client(provider: str = "openai",
     if image_path is None or not image_path.exists():
         print("\n[2] Generating test waveform image...")
         try:
-            plotter = WaveformPlotter(output_dir=Path("./waveforms_test"))
+            plotter = WaveformPlotter(output_dir=Path("./output/waveforms_test"))
             
             import numpy as np
             
@@ -216,7 +216,7 @@ def test_waveform_plotter() -> None:
     print("WaveformPlotter Test")
     print("="*80)
     
-    plotter = WaveformPlotter(output_dir=Path("./waveforms_test"))
+    plotter = WaveformPlotter(output_dir=Path("./output/waveforms_test"))
     
     import numpy as np
     

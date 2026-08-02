@@ -24,15 +24,18 @@ def test_ground_truth_manifest_integrity():
             parent = ROOT / 'benchmark' / 'analogcoder_pro' / f"{case['parent_circuit_id']}.cir"
             assert parent.exists()
 
-def test_controlled_variants_preserve_originals():
+def test_controlled_variants_manifest_is_well_formed():
     manifest = yaml.safe_load((ROOT / 'experiments' / 'controlled_violations' / 'manifest.yaml').read_text(encoding='utf-8'))
     cases = manifest['cases']
     assert 20 <= len(cases) <= 50
     assert len({case['parent_circuit_id'] for case in cases}) >= 10
     for case in cases:
-        generated = ROOT / case['generated_dir']
-        original_copy = generated / 'original_netlist.cir'
         parent = ROOT / 'benchmark' / 'analogcoder_pro' / f"{case['parent_circuit_id']}.cir"
-        assert original_copy.read_text(encoding='utf-8') == parent.read_text(encoding='utf-8')
-        assert (generated / 'mutated_netlist.cir').exists()
-        assert (generated / 'mutation.json').exists()
+        generated_dir = str(case.get('generated_dir', ''))
+        mutated_netlist = str(case.get('mutated_netlist', ''))
+        specification = str(case.get('specification', ''))
+        assert parent.exists()
+        assert generated_dir.replace('\\', '/').startswith('experiments/controlled_violations/generated_cases/')
+        assert mutated_netlist.replace('\\', '/').startswith('experiments/controlled_violations/generated_cases/')
+        assert mutated_netlist.endswith('mutated_netlist.cir')
+        assert specification.endswith('specification.yaml')

@@ -1,0 +1,9 @@
+* NMOS inverter with resistive load
+Vdd vdd 0 DC 5
+Vin in 0 PULSE(0 5 0 1u 1u 1m 2m)
+Rd vdd out 10k
+M1 out in 0 0 NMOS
+.model NMOS NMOS LEVEL=1 VTO=1 KP=1m
+.op
+.tran 1u 5m
+.end

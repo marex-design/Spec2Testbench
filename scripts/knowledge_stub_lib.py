@@ -1072,9 +1072,9 @@ def summarize_preconditions() -> dict[str, Any]:
     branch = run_command(["git", "branch", "--show-current"]).stdout.strip()
     environment = detect_ngspice_environment(DEFAULT_NGSPICE_EXECUTABLE, knowledge_version=CURRENT_KNOWLEDGE_VERSION)
     env_info = environment["environment"]
-    normalized_root = ROOT / "benchmarks_normalized" / "analogcoder_pro"
-    normalized_count = sum(1 for item in normalized_root.iterdir() if item.is_dir()) if normalized_root.exists() else 0
-    frozen_v3_rows = read_csv_rows(ROOT / "results" / "frozen_pilot_results_v3.csv")
+    benchmark_root = ROOT / "benchmark" / "analogcoder_pro"
+    normalized_count = sum(1 for item in benchmark_root.glob("*.cir"))
+    frozen_v3_rows = read_csv_rows(ROOT / "experiments" / "frozen_pilot_v3" / "reference_results.csv")
     canonical_summary = read_json(ROOT / "results" / "canonical_harness_v1" / "reconciliation_summary.json")
     blocker_reasons: list[str] = []
 
@@ -1096,7 +1096,7 @@ def summarize_preconditions() -> dict[str, Any]:
     artifact_presence = {name: path.exists() for name, path in required_artifacts.items()}
 
     if normalized_count != 28:
-        blocker_reasons.append(f"expected 28 normalized circuits, found {normalized_count}")
+        blocker_reasons.append(f"expected 28 canonical benchmark circuits, found {normalized_count}")
     if not canonical_summary.get("benchmark_hashes_unchanged", False):
         blocker_reasons.append("original benchmark hashes are not confirmed unchanged")
     if len(frozen_v3_rows) != 16:
@@ -1113,6 +1113,7 @@ def summarize_preconditions() -> dict[str, Any]:
         "ngspice_version": env_info["ngspice_version"],
         "operating_system": env_info["operating_system"],
         "normalized_circuits_found": normalized_count,
+        "canonical_benchmark_circuits_found": normalized_count,
         "canonical_harness_artifacts_found": artifact_presence["canonical_harness_results"] and artifact_presence["canonical_harness_reports"],
         "metric_coverage_artifacts_found": artifact_presence["metric_coverage_results"] and artifact_presence["metric_coverage_reports"],
         "frozen_v3_cases_found": len(frozen_v3_rows),

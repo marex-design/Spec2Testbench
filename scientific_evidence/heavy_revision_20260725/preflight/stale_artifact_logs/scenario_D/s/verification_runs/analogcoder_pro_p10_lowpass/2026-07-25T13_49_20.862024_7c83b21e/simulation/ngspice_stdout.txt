@@ -1,0 +1,5 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * testbench: analogcoder_pro_p10_lowpass_full_testbench

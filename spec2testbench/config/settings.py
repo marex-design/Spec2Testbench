@@ -64,14 +64,21 @@ class SimulatorSettings:
 
 @dataclass
 class OutputSettings:
-    output_dir: Path = Path(os.getenv("OUTPUT_DIR", "./output"))
-    waveform_dir: Path = Path(os.getenv("WAVEFORM_DIR", "./waveforms"))
-    report_dir: Path = Path(os.getenv("REPORT_DIR", "./reports"))
+    output_dir: Path = field(default_factory=lambda: Path(os.getenv("OUTPUT_DIR", "./output")))
+    waveform_dir: Path = field(
+        default_factory=lambda: Path(
+            os.getenv("WAVEFORM_DIR", str(Path(os.getenv("OUTPUT_DIR", "./output")) / "waveforms"))
+        )
+    )
+    report_dir: Path = field(default_factory=lambda: Path(os.getenv("REPORT_DIR", "./reports")))
+    results_dir: Path = field(default_factory=lambda: Path(os.getenv("RESULTS_DIR", "./results")))
+    persist_outputs: bool = field(default_factory=lambda: os.getenv("SPEC2TESTBENCH_PERSIST_OUTPUTS", "true").lower() in {"1", "true", "yes"})
     
     def __post_init__(self):
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.waveform_dir.mkdir(parents=True, exist_ok=True)
         self.report_dir.mkdir(parents=True, exist_ok=True)
+        self.results_dir.mkdir(parents=True, exist_ok=True)
 
 @dataclass
 class Settings:

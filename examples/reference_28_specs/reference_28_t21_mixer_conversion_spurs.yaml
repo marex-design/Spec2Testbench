@@ -1,0 +1,53 @@
+name: reference_28_t21_mixer_conversion_spurs
+case_id: reference_28_t21_mixer_conversion_spurs
+circuit_type: mixer
+technology: reference_28_behavioral
+description: Reference coverage case for T21 mixer conversion gain and spurs.
+source:
+  benchmark: reference_28
+  netlist: benchmark/reference_28/gilbert_cell_mixer.cir
+performance_targets:
+  conversion_gain:
+    min: -120.0
+    max: 120.0
+    unit: dB
+  spurious_components:
+    max: 0.0
+    unit: dBc
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_frequency: 10000000.0
+ports:
+  input:
+  - rf
+  reference:
+  - lo
+  output:
+  - out
+verification:
+  include_tests:
+  - T21
+  auto_select: false
+test_categories:
+- spectral
+- transient
+test_requirements:
+  T21:
+    rf_node: rf
+    lo_node: lo
+    if_node: out
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+operating_conditions:
+  nominal_temperature: 27
+  nominal_supply: 5.0
+  process_corner: tt
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.1

@@ -144,7 +144,7 @@ def test_real_pipeline_ngspice_family_smoke(case_id, spec_path, netlist_path, tm
     assert generated_reports, f"No JSON report generated for {case_id}"
 
 
-def test_real_pipeline_detects_non_oscillating_variant_as_not_evaluated():
+def test_real_pipeline_detects_noncompliant_frozen_variant():
     if not _integration_enabled():
         pytest.skip("Set RUN_NGSPICE_INTEGRATION=1 to run ngspice integration tests")
     if not PySpiceSimulator(allow_mock=False).is_available:
@@ -152,16 +152,16 @@ def test_real_pipeline_detects_non_oscillating_variant_as_not_evaluated():
 
     pipeline = VerificationPipeline(use_llm=False, allow_mock=False, timeout_seconds=60)
     report = pipeline.verify_from_yaml(
-        Path("experiments/controlled_violations/generated_cases/cv_017_p22_c_large/specification.yaml"),
-        Path("experiments/controlled_violations/generated_cases/cv_017_p22_c_large/mutated_netlist.cir"),
+        Path("experiments/frozen_pilot_v2/fp2_cv_019_p22_amplitude/strong/specification.yaml"),
+        Path("experiments/frozen_pilot_v2/fp2_cv_019_p22_amplitude/strong/netlist.cir"),
     )
 
-    osc_trace = next(trace for trace in report.metric_traces if trace.metric_name == "oscillator_frequency")
+    amp_trace = next(trace for trace in report.metric_traces if trace.metric_name == "startup_amplitude")
 
     assert report.simulation_mode == SimulationMode.REAL
     assert report.execution_status == ExecutionStatus.SUCCESS
-    assert osc_trace.status == "NOT_EVALUATED"
-    assert report.compliance_status == ComplianceStatus.NOT_EVALUATED
+    assert amp_trace.status == "FAIL"
+    assert report.compliance_status == ComplianceStatus.FAIL
 
 
 def test_p22_replay_is_deterministic():

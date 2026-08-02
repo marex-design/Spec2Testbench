@@ -1,0 +1,8 @@
+warning, can't find model 'brokenvalue' from line
+    r1 vin vout brokenvalue
+Error on line 14 or its substitute:
+  r1 vin vout brokenvalue
+  unknown parameter (brokenvalue) 
+    Simulation interrupted due to error!
+
+Note: No ".plot", ".print", or ".fourier" lines; no simulations run

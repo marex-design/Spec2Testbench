@@ -1,0 +1,4 @@
+﻿[cli_help] exit=1 python -m spec2testbench.presentation.cli.main --help
+[pytest_collection] exit=0 python -m pytest --collect-only -q
+[targeted_tests] exit=0 python -m pytest tests/test_canonical_harness.py::test_p4_canonical_ac_bias_is_provenanced tests/test_canonical_harness.py::test_relative_output_dir_is_resolved_before_invoking_ngspice tests/test_verification_pipeline.py::test_mock_explicitly_allowed_is_not_scientifically_eligible tests/test_verification_pipeline.py::test_mock_forbidden_without_netlist_is_skipped -q
+[smoke_test] exit=0 python -m pytest tests/integration/test_real_pipeline_ngspice.py -k "family_smoke and p10_lowpass" -q

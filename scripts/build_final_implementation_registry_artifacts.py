@@ -4,18 +4,18 @@ import csv
 from pathlib import Path
 import sys
 
-import yaml
-
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from spec2testbench.application.services.benchmark_deck_normalizer import BenchmarkDeckNormalizer
 from spec2testbench.application.verification_tests import VerificationApplicabilityEngine
 from spec2testbench.domain.entities.specification import Specification
 from spec2testbench.domain.value_objects.circuit_type import CircuitType
 from spec2testbench.infrastructure.verification_tests import write_verification_registry_csv
 
-NORMALIZED_DIR = ROOT / "benchmarks_normalized" / "analogcoder_pro"
+BENCHMARK_DIR = ROOT / "benchmark" / "analogcoder_pro"
+MANIFEST_PATH = BENCHMARK_DIR / "manifest.csv"
 OUTPUT_DIR = ROOT / "results" / "final_implementation"
 REGISTRY_CSV = OUTPUT_DIR / "verification_test_registry.csv"
 APPLICABILITY_CSV = OUTPUT_DIR / "circuit_test_applicability_matrix.csv"
@@ -54,10 +54,12 @@ def infer_circuit_type(case_id: str, metadata: dict) -> CircuitType:
     return CircuitType.COMPOSITE
 
 
-def build_specification(case_dir: Path) -> Specification:
-    metadata = yaml.safe_load((case_dir / "circuit_metadata.yaml").read_text(encoding="utf-8")) or {}
-    harness = yaml.safe_load((case_dir / "harness_metadata.yaml").read_text(encoding="utf-8")) or {}
-    case_id = str(metadata.get("case_id", case_dir.name))
+def manifest_rows() -> list[dict[str, str]]:
+    with MANIFEST_PATH.open(encoding="utf-8", newline="") as handle:
+        return list(csv.DictReader(handle))
+
+
+def build_specification(case_id: str, metadata: dict, harness: dict) -> Specification:
     circuit_type = infer_circuit_type(case_id, metadata)
 
     signal_inputs = [str(item) for item in metadata.get("signal_inputs", [])]
@@ -130,6 +132,7 @@ def build_specification(case_dir: Path) -> Specification:
 
 def write_applicability_matrix() -> None:
     engine = VerificationApplicabilityEngine()
+    normalizer = BenchmarkDeckNormalizer()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     fieldnames = [
         "case_id",
@@ -143,8 +146,16 @@ def write_applicability_matrix() -> None:
     with APPLICABILITY_CSV.open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames)
         writer.writeheader()
-        for case_dir in sorted(path for path in NORMALIZED_DIR.iterdir() if path.is_dir()):
-            specification = build_specification(case_dir)
+        for row in sorted(manifest_rows(), key=lambda item: item["netlist"]):
+            case_id = Path(row["netlist"]).stem
+            result = normalizer.normalize(
+                BENCHMARK_DIR / row["netlist"],
+                case_id=case_id,
+                declared_type=row["type"],
+                declared_topology=row["description"],
+                description=row["description"],
+            )
+            specification = build_specification(case_id, result.circuit_metadata, result.harness_metadata)
             evaluations = engine.evaluate_all(specification)
             for evaluation in evaluations:
                 writer.writerow(

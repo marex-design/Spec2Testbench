@@ -1,0 +1,1 @@
+﻿spec2testbench verify --specs examples/benchmark_specs/p10_lowpass.yaml --netlist benchmark/analogcoder_pro/p10_lowpass.cir --output "E:\my_organisation\Memoire Maruba\code\Spec2Testbench\scientific_evidence\heavy_revision_20260725\preflight\smoke_real_cli\run_output" --format json --no-llm

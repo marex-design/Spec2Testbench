@@ -1,0 +1,17 @@
+Date: 2026-07-25
+Clean worktree: E:\my_organisation\Memoire Maruba\code\Spec2Testbench-scientific-clean
+Branch: codex/scientific-evidence-clean-20260725
+Base commit: 2678818e33972ae8612aa395f329501e85a3f98d
+
+Commands archived in this directory:
+
+1. python -m pytest tests/test_scientific_workflow_guards.py -q
+2. RUN_NGSPICE_INTEGRATION=1 python -m pytest tests/integration/test_real_pipeline_ngspice.py -q
+3. python -m pytest tests/integration/test_llm_stub_pipeline.py -q
+4. git status --short
+5. git diff --name-only
+6. python -m pytest tests/test_verification_pipeline.py tests/test_canonical_harness.py -q
+
+Notes:
+- `typer` is not installed in this environment, so the two CLI-specific unit tests are skipped intentionally.
+- `RUN_NGSPICE_INTEGRATION=1` was enabled only for the real ngspice integration suite.

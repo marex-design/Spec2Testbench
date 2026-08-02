@@ -43,7 +43,7 @@ def test_original_hash_is_unchanged_and_normalization_is_idempotent():
     assert result_a.original_dut_logical_sha256 == result_a.canonical_dut_logical_sha256
 
 
-def test_required_line_classifications_and_replaceable_rules_are_present():
+def test_canonical_benchmark_decks_preserve_source_roles_and_original_analysis_metadata():
     result = _normalize("p01_amplifier")
     categories = {item.selected_category for item in result.line_classifications}
     assert "MODEL_DEFINITION" in categories
@@ -51,7 +51,6 @@ def test_required_line_classifications_and_replaceable_rules_are_present():
     assert "SIGNAL_SOURCE" in categories
     assert "DUT_LOAD" in categories
     assert "DUT_DEVICE" in categories
-    assert "EMBEDDED_ANALYSIS_DIRECTIVE" in categories
     assert "END_DIRECTIVE" in categories
 
     sources = {item.name: item for item in result.sources}
@@ -59,6 +58,37 @@ def test_required_line_classifications_and_replaceable_rules_are_present():
     assert sources["Vdd"].replaceable_by_testbench is False
     assert sources["Vin"].role == "SIGNAL_SOURCE"
     assert sources["Vin"].replaceable_by_testbench is True
+    assert sources["Vin"].original_definition == "Vin Vin 0 DC 1.0 AC 1n"
+    assert [item["raw_line"] for item in result.original_analysis_metadata] == [".OP", ".AC DEC 100 1 1G"]
+
+
+def test_raw_fixture_embedded_analyses_are_captured(tmp_path):
+    deck = tmp_path / "raw_fixture.cir"
+    deck.write_text(
+        "* AnalogCoder-Pro p99: raw fixture\n"
+        "* Inputs: Vin\n"
+        "* Outputs: Vout\n"
+        ".MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5)\n"
+        "Vdd Vdd 0 5\n"
+        "Vin Vin 0 DC 1 AC 1n\n"
+        "Rload Vout Vdd 10k\n"
+        "M1 Vout Vin 0 0 nmos_model W=5e-05 L=1e-06\n"
+        ".OP\n"
+        ".AC DEC 100 1 1G\n"
+        ".END\n",
+        encoding="utf-8",
+    )
+    result = BenchmarkDeckNormalizer().normalize(
+        deck,
+        case_id="p99_raw_fixture",
+        declared_type="Amplifier",
+        declared_topology="raw fixture",
+        description="raw fixture",
+    )
+
+    categories = {item.selected_category for item in result.line_classifications}
+    assert "EMBEDDED_ANALYSIS_DIRECTIVE" in categories
+    assert [item["raw_line"] for item in result.original_analysis_metadata] == [".OP", ".AC DEC 100 1 1G"]
 
 
 def test_unknown_directive_is_preserved_as_ambiguity(tmp_path):

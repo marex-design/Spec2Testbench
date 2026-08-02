@@ -963,7 +963,11 @@ class PySpiceSimulator(ICircuitSimulator):
         if data.ndim != 2 or data.shape[1] < 2:
             return
 
-        if AnalysisType.TRANSIENT in analysis_types and not (results.get("transient") or results.get("tran")):
+        if (
+            AnalysisType.TRANSIENT in analysis_types
+            and AnalysisType.AC not in analysis_types
+            and not (results.get("transient") or results.get("tran"))
+        ):
             transient = {
                 "time": data[:, 0].tolist(),
                 "vout": data[:, -1].tolist(),

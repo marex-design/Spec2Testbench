@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 
 
-OUT = Path("benchmark_reference_28")
+OUT = Path("benchmark") / "reference_28"
 OUT.mkdir(exist_ok=True)
 
 MANIFEST = OUT / "manifest.csv"

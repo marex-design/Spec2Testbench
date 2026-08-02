@@ -1,0 +1,47 @@
+name: reference_28_t10_input_output_impedance
+case_id: reference_28_t10_input_output_impedance
+circuit_type: opamp
+technology: reference_28_behavioral
+description: Reference coverage case for T10 input and output impedance.
+source:
+  benchmark: reference_28
+  netlist: benchmark/reference_28/two_stage_opamp_active_loads.cir
+performance_targets:
+  input_impedance:
+    min: 1.0
+    unit: Ohm
+  output_impedance:
+    min: 1.0
+    unit: Ohm
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_frequency: 1000.0
+ports:
+  input:
+  - inp
+  output:
+  - out
+  supply_positive:
+  - vdd
+verification:
+  include_tests:
+  - T10
+  auto_select: false
+test_categories:
+- ac
+test_requirements: {}
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+operating_conditions:
+  nominal_temperature: 27
+  nominal_supply: 5.0
+  process_corner: tt
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.1

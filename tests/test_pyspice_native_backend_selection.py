@@ -21,6 +21,25 @@ def _ac_testbench() -> TestBench:
     )
 
 
+def _mixed_ac_tran_testbench() -> TestBench:
+    return TestBench(
+        name="mixed_ac_tran_tb",
+        category="mixed",
+        circuit_name="demo",
+        analyses=[
+            AnalysisConfig(type=AnalysisType.AC, parameters={"start_freq": 1, "stop_freq": 1e6}),
+            AnalysisConfig(type=AnalysisType.TRANSIENT, parameters={"step_time": "1n", "end_time": "1u"}),
+        ],
+        measurements=[Measurement(name="dc_gain_db", expression="20*log10(V(out)/V(in))", unit="dB")],
+        metadata={
+            "measurement_context": {"input_node": "vin", "output_node": "vout"},
+            "measurement_requests": [
+                {"name": "dc_gain_db", "preferred_backend": "NGSPICE_WRDATA", "unit": "dB"},
+            ],
+        },
+    )
+
+
 def test_native_measure_commands_use_transfer_ratio_for_dc_gain():
     simulator = PySpiceSimulator(allow_mock=True)
     commands = simulator._native_measure_commands(_ac_testbench())
@@ -57,6 +76,33 @@ def test_native_control_block_selects_ac_plot_and_uses_vin_then_vout_columns():
     assert "setplot ac1" in commands
     assert any("real(v(vin)) imag(v(vin)) real(v(vout)) imag(v(vout))" in command.lower() for command in commands)
     assert not any(command.strip().lower().startswith("meas ") for command in commands)
+
+
+def test_wrdata_hydration_does_not_invent_transient_for_mixed_ac_and_tran(tmp_path):
+    simulator = PySpiceSimulator(allow_mock=True)
+    vectors_path = tmp_path / "vectors.dat"
+    vectors_path.write_text(
+        "\n".join(
+            [
+                "1 1 0 10 0",
+                "10 1 0 7.0710678118654755 -7.0710678118654755",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    results = {
+        "ac": {},
+        "tran": {},
+        "transient": {},
+        "dc": {},
+        "currents": {},
+        "fourier": {},
+    }
+
+    simulator._hydrate_results_from_vectors(results, _mixed_ac_tran_testbench(), vectors_path)
+
+    assert results["tran"] == {}
+    assert results["transient"] == {}
 
 
 def test_guided_source_renders_multimode_pulse_with_ac_and_dc():

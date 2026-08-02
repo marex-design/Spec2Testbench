@@ -1,0 +1,18 @@
+{
+  "scenario_id": "C",
+  "expected_behavior": "Normal replay using a tampered run_id must be rejected as historical/stale input.",
+  "observed_behavior": "execution_status=ERROR, validation_status=RUN_ID_MISMATCH, accepted=False",
+  "pass": true,
+  "artifact_used": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\\results\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_31_23.495088_c6635e20.json",
+  "rejection_reason": "RUN_ID_MISMATCH",
+  "test_path": "VerificationPipeline.verify",
+  "log_path": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_C\\result.json",
+  "details": {
+    "report_run_id": "5bd0cc3e-b244-4689-83dd-e6969fa212ef",
+    "report_timestamp": "2026-07-25T13:49:20.656758",
+    "errors": [],
+    "simulation_errors": [
+      "Artifact validation failed: RUN_ID_MISMATCH"
+    ]
+  }
+}

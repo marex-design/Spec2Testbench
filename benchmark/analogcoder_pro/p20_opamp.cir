@@ -1,15 +1,17 @@
+* Canonical DUT generated from benchmark/analogcoder_pro/p20_opamp.cir
+* Embedded analyses and output directives were externalized into metadata.
 * AnalogCoder-Pro p20: A two-stage differential opamp (first stage: common-source with an active load and a tail current, second stage: common-source with an active load)
 * Source: analogcoder\AnalogCoderPro-master\sample_design\p20\p20.py
 * AnalogCoder-Pro type: Opamp
 * Inputs: Vinp, Vinn, Vbias1, Vbias2, Vbias3
 * Outputs: Voutp, Vout
-
 .MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5)
 .MODEL pmos_model PMOS (LEVEL=1 KP=5e-05 VTO=-0.5)
-
 Vdd Vdd 0 5
-Vinp Vinp 0 DC 2.5 AC 1n
-Vinn Vinn 0 DC 2.5 AC 1n
+* original signal source: Vinp Vinp 0 DC 2.5 AC 1n
+Vinp Vinp 0 0
+* original signal source: Vinn Vinn 0 DC 2.5 AC 1n
+Vinn Vinn 0 0
 Vb1 Vbias1 0 1
 Vb2 Vbias2 0 4
 Vb3 Vbias3 0 4
@@ -22,7 +24,6 @@ M6 Vout Voutp 0 0 nmos_model W=0.0001 L=1e-06
 M7 Vout Vbias3 Vdd Vdd pmos_model W=0.0001 L=1e-06
 M8 Nbias Vbias3 Vdd Vdd pmos_model W=0.0001 L=1e-06
 Rb Nbias 0 10k
-
-.OP
-.AC DEC 100 1 1G
+* original analysis: .OP
+* original analysis: .AC DEC 100 1 1G
 .END

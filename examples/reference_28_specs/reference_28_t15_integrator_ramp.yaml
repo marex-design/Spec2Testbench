@@ -1,0 +1,46 @@
+name: reference_28_t15_integrator_ramp
+case_id: reference_28_t15_integrator_ramp
+circuit_type: opamp_integrator
+technology: reference_28_behavioral
+description: Reference coverage case for T15 integrator ramp.
+source:
+  benchmark: reference_28
+  netlist: benchmark/reference_28/opamp_integrator.cir
+performance_targets:
+  integrator_ramp_slope:
+    min: 1.0e-06
+    unit: V/s
+  integrator_linearity:
+    min: 0.0
+    max: 1.0
+    unit: score
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_frequency: 1000.0
+ports:
+  input:
+  - in
+  output:
+  - out
+verification:
+  include_tests:
+  - T15
+  auto_select: false
+test_categories:
+- transient
+test_requirements: {}
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+operating_conditions:
+  nominal_temperature: 27
+  nominal_supply: 5.0
+  process_corner: tt
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.1

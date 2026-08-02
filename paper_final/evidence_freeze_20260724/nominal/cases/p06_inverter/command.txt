@@ -1,1 +1,0 @@
-E:\my_organisation\Memoire Maruba\code\Spec2Testbench\.venv\Scripts\python.exe -m spec2testbench.presentation.cli.main verify --specs examples\benchmark_nominal_specs\p06_inverter.yaml --netlist benchmark\analogcoder_pro\p06_inverter.cir --no-llm --format json --output paper_final\evidence_freeze_20260724\nominal\cases\p06_inverter

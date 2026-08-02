@@ -316,7 +316,13 @@ class BenchmarkDeckNormalizer:
             elif classification.selected_category == "UNKNOWN_DIRECTIVE":
                 unknown_directives.append(raw_line)
 
-        source_records = self._build_source_records(components, declared_inputs)
+        for analysis in comment_metadata.get("original_analysis_directives", []):
+            raw_line = str(analysis.get("raw_line", "")).strip().upper()
+            if any(item["raw_line"].strip().upper() == raw_line for item in analyses):
+                continue
+            analyses.append(dict(analysis))
+
+        source_records = self._build_source_records(components, declared_inputs, comment_metadata)
         node_records = self._build_node_records(components, source_records, declared_outputs)
         output_nodes = [record.node_name for record in node_records if record.inferred_role == "output"]
         inferred_topology = self._infer_topology(case_name, description, components, source_records, node_records)
@@ -423,8 +429,13 @@ class BenchmarkDeckNormalizer:
         )
 
     def _comment_metadata(self, lines: list[str]) -> dict[str, Any]:
-        metadata: dict[str, Any] = {"inputs": [], "outputs": []}
-        for raw_line in lines:
+        metadata: dict[str, Any] = {
+            "inputs": [],
+            "outputs": [],
+            "original_signal_sources": [],
+            "original_analysis_directives": [],
+        }
+        for line_number, raw_line in enumerate(lines, start=1):
             stripped = raw_line.strip()
             if not stripped.startswith("*"):
                 continue
@@ -434,9 +445,23 @@ class BenchmarkDeckNormalizer:
             key, value = [part.strip() for part in content.split(":", 1)]
             lowered = key.lower()
             if lowered == "inputs":
-                metadata["inputs"] = [part.strip() for part in value.split(",") if part.strip()]
+                metadata["inputs"] = [] if value in {"", "-"} else [part.strip() for part in value.split(",") if part.strip()]
             elif lowered == "outputs":
-                metadata["outputs"] = [part.strip() for part in value.split(",") if part.strip()]
+                metadata["outputs"] = [] if value in {"", "-"} else [part.strip() for part in value.split(",") if part.strip()]
+            elif lowered == "original signal source":
+                if value:
+                    metadata["original_signal_sources"].append(value)
+            elif lowered == "original analysis":
+                if value:
+                    metadata["original_analysis_directives"].append(
+                        {
+                            "line_number": line_number,
+                            "directive": value.split()[0].upper() if value.split() else "",
+                            "raw_line": value,
+                            "inside_subcircuit": False,
+                            "externalized_from_comment": True,
+                        }
+                    )
             elif re.match(r"analogcoder-pro p\d+$", lowered):
                 metadata["description"] = value
             elif lowered.endswith("type"):
@@ -649,9 +674,15 @@ class BenchmarkDeckNormalizer:
         manual_review = len(unique_candidates) > 1 and "SIGNAL_SOURCE" in unique_candidates and "BIAS_SOURCE" in unique_candidates
         return unique_candidates[0], unique_candidates, 0.7 if manual_review else 0.9, "Ground-referenced static source treated as bias/reference", manual_review
 
-    def _build_source_records(self, components: list[ParsedComponent], declared_inputs: tuple[str, ...]) -> list[SourceRecord]:
+    def _build_source_records(
+        self,
+        components: list[ParsedComponent],
+        declared_inputs: tuple[str, ...],
+        comment_metadata: dict[str, Any] | None = None,
+    ) -> list[SourceRecord]:
         records: list[SourceRecord] = []
         declared_input_names = {_normalize_name(item) for item in declared_inputs}
+        original_signal_sources = list((comment_metadata or {}).get("original_signal_sources", []))
         for component in components:
             if component.component_type not in {"V", "I"}:
                 continue
@@ -666,6 +697,14 @@ class BenchmarkDeckNormalizer:
                 role = "SIGNAL_SOURCE"
                 confidence = max(confidence, 0.8)
                 manual_review = False
+            original_definition = component.raw_line
+            if role == "SIGNAL_SOURCE" and original_signal_sources:
+                candidate_definition = str(original_signal_sources[0])
+                candidate_component = self._parse_component_line(component.line_number, candidate_definition)
+                if candidate_component is not None and _normalize_name(candidate_component.name) == _normalize_name(component.name):
+                    original_signal_sources.pop(0)
+                    original_definition = candidate_definition
+                    dc_value, ac_magnitude, ac_phase, waveform = self._parse_source_values(candidate_component.remainder)
             records.append(
                 SourceRecord(
                     name=component.name,
@@ -673,7 +712,7 @@ class BenchmarkDeckNormalizer:
                     negative_node=component.nodes[1],
                     role=role,
                     replaceable_by_testbench=role == "SIGNAL_SOURCE",
-                    original_definition=component.raw_line,
+                    original_definition=original_definition,
                     original_dc_value=dc_value,
                     original_ac_magnitude=ac_magnitude,
                     original_ac_phase=ac_phase,

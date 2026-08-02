@@ -1,0 +1,13 @@
+{
+  "circuit_name": "analogcoder_pro_p10_lowpass",
+  "case_id": "analogcoder_pro_p10_lowpass",
+  "run_id": "7c83b21e-38db-48f9-9b9a-3c68c148e895",
+  "timestamp": "2026-07-25T13:49:20.862024",
+  "output_root": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_D\\s\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_49_20.862024_7c83b21e",
+  "simulation_dir": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_D\\s\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_49_20.862024_7c83b21e\\simulation",
+  "figures_dir": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_D\\s\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_49_20.862024_7c83b21e\\figures",
+  "report_markdown": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_D\\s\\reports\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_49_20.862024_7c83b21e.md",
+  "report_json": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_D\\s\\reports\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_49_20.862024_7c83b21e.json",
+  "result_summary": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_D\\s\\results\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_49_20.862024_7c83b21e.json",
+  "figures": {}
+}

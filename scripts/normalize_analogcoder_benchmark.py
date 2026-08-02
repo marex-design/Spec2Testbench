@@ -27,10 +27,10 @@ from spec2testbench.domain.entities.specification import Specification
 from spec2testbench.infrastructure.simulator.pyspice_simulator import PySpiceSimulator
 from spec2testbench.infrastructure.simulator.result_backends import parse_measure_file, parse_wrdata_file
 DEFAULT_INPUT_ROOT = ROOT / "benchmark" / "analogcoder_pro"
-DEFAULT_OUTPUT_ROOT = ROOT / "benchmarks_normalized" / "analogcoder_pro"
 REPORTS_DIR = ROOT / "reports" / "benchmark_normalization"
 RESULTS_DIR = ROOT / "results" / "benchmark_normalization"
 ARTIFACTS_DIR = ROOT / "artifacts" / "benchmark_normalization"
+DEFAULT_OUTPUT_ROOT = ARTIFACTS_DIR / "normalized_metadata"
 TODAY = "2026-07-21"
 CASE_REPORTS_DIR = REPORTS_DIR / "circuits"
 LEGACY_PREFLIGHT_VALUES = {
@@ -153,7 +153,10 @@ def file_category(rel_path: str, tracked: bool, ignored: bool) -> str:
         return "PROTECTED_SOURCE"
     if rel_path.startswith("experiments/frozen_pilot_v3/") or rel_path.startswith("artifacts/frozen_pilot_v3/"):
         return "PROTECTED_FROZEN_EVIDENCE"
-    if rel_path in {"results/frozen_pilot_results_v3.csv", "results/frozen_pilot_metrics_v3.json"}:
+    if rel_path in {
+        "experiments/frozen_pilot_v3/reference_results.csv",
+        "experiments/frozen_pilot_v3/reference_metrics.json",
+    }:
         return "PROTECTED_FROZEN_EVIDENCE"
     if rel_path.startswith("tests/"):
         return "ACTIVE_TEST"

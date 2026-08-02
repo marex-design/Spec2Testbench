@@ -4,7 +4,7 @@ from pathlib import Path
 from statistics import mean
 
 
-BENCH_DIR = Path("benchmark_reference_28")
+BENCH_DIR = Path("benchmark") / "reference_28"
 RESULTS_DIR = Path("results")
 LOG_DIR = RESULTS_DIR / "reference_28_logs"
 RAW_DIR = RESULTS_DIR / "reference_28_raw"
@@ -61,7 +61,7 @@ def run_case(netlist: Path) -> dict:
 def main():
     netlists = sorted(BENCH_DIR.glob("*.cir"))
     if not netlists:
-        raise SystemExit("No .cir files found in benchmark_reference_28. Run create_reference_28_netlists.py first.")
+        raise SystemExit("No .cir files found in benchmark/reference_28. Run create_reference_28_netlists.py first.")
 
     rows = []
     for netlist in netlists:

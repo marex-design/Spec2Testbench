@@ -375,11 +375,11 @@ class SpecChecker(ISpecChecker):
         
         if any(x in metric_lower for x in ["pvt", "corner", "temperature", "supply"]):
             return "pvt"
-        elif any(x in metric_lower for x in ["gain", "bandwidth", "gbw", "cmrr", "psrr", "phase"]):
+        elif any(x in metric_lower for x in ["gain", "bandwidth", "gbw", "cmrr", "psrr", "phase", "impedance"]):
             return "ac"
-        elif any(x in metric_lower for x in ["vout_dc", "operating_point", "op_point", "bias", "power", "current", "idd"]):
+        elif any(x in metric_lower for x in ["vout_dc", "operating_point", "op_point", "bias", "power", "current", "idd", "linear_range", "common_mode_range"]):
             return "dc"
-        elif any(x in metric_lower for x in ["slew", "settling", "overshoot", "transient"]):
+        elif any(x in metric_lower for x in ["slew", "settling", "overshoot", "transient", "rise_time", "fall_time", "ringing", "sine_response", "integrator", "differentiator", "delay", "hysteresis", "frequency", "amplitude"]):
             return "transient"
         elif any(x in metric_lower for x in ["thd", "fft", "sfdr", "spectral", "noise"]):
             return "spectral"

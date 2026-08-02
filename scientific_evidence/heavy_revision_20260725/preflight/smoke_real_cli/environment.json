@@ -1,0 +1,13 @@
+﻿{
+  "date_utc": "2026-07-25",
+  "python_executable": "C:\\Users\\Admin\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+  "python_version": "3.12.2 (tags/v3.12.2:6abddd9, Feb  6 2024, 21:26:36) [MSC v.1937 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "cwd": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench-scientific-clean",
+  "git_safe_directory": "E:/my_organisation/Memoire Maruba/code/Spec2Testbench-scientific-clean",
+  "typer_version": "0.27.0",
+  "rich_version": null,
+  "spec2testbench_command": "C:\\Users\\Admin\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\spec2testbench.EXE",
+  "ngspice_con": "C:\\ProgramData\\chocolatey\\bin\\ngspice_con.EXE",
+  "ngspice": "C:\\ProgramData\\chocolatey\\bin\\ngspice.EXE"
+}

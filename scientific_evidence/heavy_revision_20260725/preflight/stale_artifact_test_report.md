@@ -1,0 +1,52 @@
+# Stale Artifact Test Report
+
+- Date: `2026-07-25`
+- Scenarios executed: `5`
+- Passed: `5`
+- Failed: `0`
+
+## Scenario Results
+### Scenario A
+- Expected behavior: A new REAL CLI run with a modified netlist must create a fresh result and must not accept the copied historical report as the current run.
+- Observed behavior: return_code=0, validation_status=CURRENT_RUN, new_report=analogcoder_pro_p10_lowpass_20260725_134917.json, old_report_unchanged=True
+- Pass: `true`
+- Artifact used: `E:\my_organisation\Memoire Maruba\code\Spec2Testbench\t\A\o\reports\analogcoder_pro_p10_lowpass_20260725_133124.json`
+- Rejection reason: `CURRENT_RUN`
+- Test path: `public_cli_verify`
+- Log path: `E:\my_organisation\Memoire Maruba\code\Spec2Testbench\scientific_evidence\heavy_revision_20260725\preflight\stale_artifact_logs\scenario_A\stdout.txt`
+
+### Scenario B
+- Expected behavior: Explicit replay with a forged expected netlist hash must be rejected.
+- Observed behavior: execution_status=ERROR, validation_status=NETLIST_SHA256_MISMATCH, accepted=False
+- Pass: `true`
+- Artifact used: `E:\my_organisation\Memoire Maruba\code\Spec2Testbench\scientific_evidence\heavy_revision_20260725\preflight\smoke_real_cli\run_output\results\verification_runs\analogcoder_pro_p10_lowpass\2026-07-25T13_31_23.495088_c6635e20.json`
+- Rejection reason: `NETLIST_SHA256_MISMATCH`
+- Test path: `VerificationPipeline.verify`
+- Log path: `E:\my_organisation\Memoire Maruba\code\Spec2Testbench\scientific_evidence\heavy_revision_20260725\preflight\stale_artifact_logs\scenario_B\result.json`
+
+### Scenario C
+- Expected behavior: Normal replay using a tampered run_id must be rejected as historical/stale input.
+- Observed behavior: execution_status=ERROR, validation_status=RUN_ID_MISMATCH, accepted=False
+- Pass: `true`
+- Artifact used: `E:\my_organisation\Memoire Maruba\code\Spec2Testbench\scientific_evidence\heavy_revision_20260725\preflight\smoke_real_cli\run_output\results\verification_runs\analogcoder_pro_p10_lowpass\2026-07-25T13_31_23.495088_c6635e20.json`
+- Rejection reason: `RUN_ID_MISMATCH`
+- Test path: `VerificationPipeline.verify`
+- Log path: `E:\my_organisation\Memoire Maruba\code\Spec2Testbench\scientific_evidence\heavy_revision_20260725\preflight\stale_artifact_logs\scenario_C\result.json`
+
+### Scenario D
+- Expected behavior: A broken ngspice run executed in a folder containing an old successful result must stay in ERROR and must not load the historical success.
+- Observed behavior: execution_status=ERROR, latest_result=2026-07-25T13_49_20.862024_7c83b21e.json, old_result_unchanged=True
+- Pass: `true`
+- Artifact used: `E:\my_organisation\Memoire Maruba\code\Spec2Testbench\scientific_evidence\heavy_revision_20260725\preflight\stale_artifact_logs\scenario_D\s\results\verification_runs\analogcoder_pro_p10_lowpass\2026-07-25T13_31_23.495088_c6635e20.json`
+- Rejection reason: `CURRENT_RUN`
+- Test path: `VerificationPipeline.verify_from_yaml`
+- Log path: `E:\my_organisation\Memoire Maruba\code\Spec2Testbench\scientific_evidence\heavy_revision_20260725\preflight\stale_artifact_logs\scenario_D\result.json`
+
+### Scenario E
+- Expected behavior: Explicit replay of an artifact declared as coming from another commit must be rejected.
+- Observed behavior: execution_status=ERROR, validation_status=GIT_COMMIT_MISMATCH, accepted=False
+- Pass: `true`
+- Artifact used: `E:\my_organisation\Memoire Maruba\code\Spec2Testbench\scientific_evidence\heavy_revision_20260725\preflight\smoke_real_cli\run_output\results\verification_runs\analogcoder_pro_p10_lowpass\2026-07-25T13_31_23.495088_c6635e20.json`
+- Rejection reason: `GIT_COMMIT_MISMATCH`
+- Test path: `VerificationPipeline.verify`
+- Log path: `E:\my_organisation\Memoire Maruba\code\Spec2Testbench\scientific_evidence\heavy_revision_20260725\preflight\stale_artifact_logs\scenario_E\result.json`

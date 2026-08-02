@@ -1,0 +1,88 @@
+{
+  "date": "2026-07-25",
+  "decision": "GO",
+  "scientific_commit": "6520d80100bd4ac5806bddbe26e3a4036368d7d8",
+  "authoritative_cli_command": "spec2testbench verify --specs examples/benchmark_specs/p10_lowpass.yaml --netlist benchmark/analogcoder_pro/p10_lowpass.cir --output \"E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\" --format json --no-llm",
+  "planned_campaign_root": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\campaigns\\acp28_nominal_real_6520d801",
+  "gates": [
+    {
+      "gate_id": "G1",
+      "name": "Corrections committed",
+      "status": "PASS",
+      "evidence": "6520d80100bd4ac5806bddbe26e3a4036368d7d8"
+    },
+    {
+      "gate_id": "G2",
+      "name": "Worktree code clean",
+      "status": "PASS",
+      "evidence": "git status --short --branch"
+    },
+    {
+      "gate_id": "G3",
+      "name": "Typer available or CLI validated",
+      "status": "PASS",
+      "evidence": "setup.py dependency audit + CLI help/version smoke"
+    },
+    {
+      "gate_id": "G4",
+      "name": "CLI tests executed",
+      "status": "PASS",
+      "evidence": "cli_tests_after_typer.txt"
+    },
+    {
+      "gate_id": "G5",
+      "name": "Full pytest suite without critical failure",
+      "status": "PASS",
+      "evidence": "pytest_full_summary.json"
+    },
+    {
+      "gate_id": "G6",
+      "name": "Smoke run via public CLI succeeded",
+      "status": "PASS",
+      "evidence": "spec2testbench verify --specs examples/benchmark_specs/p10_lowpass.yaml --netlist benchmark/analogcoder_pro/p10_lowpass.cir --output \"E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\" --format json --no-llm"
+    },
+    {
+      "gate_id": "G7",
+      "name": "REAL mode confirmed",
+      "status": "PASS",
+      "evidence": "smoke_run_validation.md"
+    },
+    {
+      "gate_id": "G8",
+      "name": "Real netlist confirmed",
+      "status": "PASS",
+      "evidence": "smoke_run_validation.md"
+    },
+    {
+      "gate_id": "G9",
+      "name": "All outputs isolated",
+      "status": "PASS",
+      "evidence": "smoke_run_validation.md"
+    },
+    {
+      "gate_id": "G10",
+      "name": "No old result reused",
+      "status": "PASS",
+      "evidence": "artifact_validation=CURRENT_RUN"
+    },
+    {
+      "gate_id": "G11",
+      "name": "Anti-stale tests passed",
+      "status": "PASS",
+      "evidence": "stale_artifact_scenarios.csv"
+    },
+    {
+      "gate_id": "G12",
+      "name": "Provenance and hashes present",
+      "status": "PASS",
+      "evidence": "smoke_run_manifest.json + smoke_run_sha256sums.txt"
+    },
+    {
+      "gate_id": "G13",
+      "name": "No paper file modified",
+      "status": "PASS",
+      "evidence": "paper_final_integrity_report.md"
+    }
+  ],
+  "blockers": []
+}

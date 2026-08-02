@@ -1,0 +1,16 @@
+{
+  "date": "2026-07-25",
+  "worktree_branch": "codex/scientific-evidence-clean-20260725",
+  "pytest_collection_count": 337,
+  "passed": 330,
+  "skipped": 7,
+  "failed": 0,
+  "exit_code": 0,
+  "critical_failures_present": false,
+  "critical_failure_tests": [],
+  "noncritical_skips_present": true,
+  "notes": [
+    "RUN_LLM_LIVE placeholders are optional and expected to skip in the scientific --no-llm environment.",
+    "Two checkout-specific fixture tests skip because controlled-violation generated fixtures are absent from this frozen checkout."
+  ]
+}

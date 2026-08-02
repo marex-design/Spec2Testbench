@@ -1,0 +1,48 @@
+name: reference_28_t11_step_response
+case_id: reference_28_t11_step_response
+circuit_type: low_pass_filter
+technology: reference_28_behavioral
+description: Reference coverage case for T11 step response.
+source:
+  benchmark: reference_28
+  netlist: benchmark/reference_28/passive_lowpass_filter.cir
+performance_targets:
+  slew_rate:
+    min: 1.0e-06
+    unit: V/s
+  settling_time:
+    max: 1.0
+    unit: s
+  overshoot:
+    max: 200.0
+    unit: '%'
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_frequency: 1000.0
+ports:
+  input:
+  - in
+  output:
+  - out
+verification:
+  include_tests:
+  - T11
+  auto_select: false
+test_categories:
+- transient
+test_requirements: {}
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+operating_conditions:
+  nominal_temperature: 27
+  nominal_supply: 5.0
+  process_corner: tt
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.1

@@ -1,0 +1,28 @@
+* TestBench: analogcoder_pro_p10_lowpass_full_testbench
+* Circuit: analogcoder_pro_p10_lowpass
+* Category: full
+*
+.OPTIONS POST=2 PROBE
+.OPTIONS FILETYPE=ASCII
+
+* AnalogCoder-Pro p10: a passive low-pass filter
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p10\p10.py
+* AnalogCoder-Pro type: LowPass
+* Inputs: Vin
+* Outputs: Vout
+Vin Vin 0 DC 2.5 AC 1 PULSE(1.25 3.75 0 1n 1n 10u 20u)
+R1 Vin Vout BROKENVALUE
+C1 Vout 0 10n
+.AC dec 10 1 1000000000.0
+.TRAN 1n 50u 0
+
+
+.control
+set filetype=ascii
+set wr_singlescale
+run
+setplot ac1
+wrdata vectors.dat real(v(Vin)) imag(v(Vin)) real(v(Vout)) imag(v(Vout))
+quit
+.endc
+.END

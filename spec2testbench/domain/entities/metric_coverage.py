@@ -36,7 +36,20 @@ NOT_EVALUATED_CATEGORIES = {
     "UNKNOWN",
 }
 
-_DC_METRICS = {"operating_point", "vout_dc", "quiescent_current", "idd", "power"}
+_DC_METRICS = {
+    "operating_point",
+    "vout_dc",
+    "quiescent_current",
+    "idd",
+    "power",
+    "dc_transfer_curve",
+    "local_gain",
+    "linear_range",
+    "selected_bias",
+    "bias_objective_score",
+    "input_common_mode_range",
+    "current_mirror_matching_error",
+}
 _AC_METRICS = {
     "dc_gain",
     "dc_gain_db",
@@ -49,11 +62,48 @@ _AC_METRICS = {
     "unity_gain_frequency",
     "ugbw",
     "phase_margin",
+    "gain_margin",
+    "cmrr",
+    "psrr",
+    "input_impedance",
+    "output_impedance",
+    "differential_gain",
+    "differential_phase",
 }
-_OSCILLATION_METRICS = {"frequency_hz", "oscillator_frequency", "startup_amplitude"}
+_OSCILLATION_METRICS = {"frequency_hz", "oscillator_frequency", "startup_amplitude", "oscillation_detected"}
 _SCHMITT_METRICS = {"v_t_plus", "v_t_minus", "hysteresis_width"}
-_TRANSIENT_METRICS = {"slew_rate", "settling_time", "propagation_delay", "propagation_delay_s"}
-_SPECTRAL_METRICS = {"thd", "thd_percent", "fundamental_frequency"}
+_TRANSIENT_METRICS = {
+    "slew_rate",
+    "settling_time",
+    "propagation_delay",
+    "propagation_delay_s",
+    "overshoot",
+    "sine_response_amplitude",
+    "sine_response_phase",
+    "rise_time",
+    "fall_time",
+    "ringing",
+    "integrator_ramp_slope",
+    "integrator_linearity",
+    "differentiator_peak",
+    "differentiator_pulse_width",
+}
+_SPECTRAL_METRICS = {
+    "thd",
+    "thd_percent",
+    "fundamental_frequency",
+    "sfdr",
+    "conversion_gain",
+    "spurious_components",
+}
+_PVT_METRICS = {
+    "pvt_dc_gain_variation",
+    "pvt_vout_variation",
+    "pvt_power_variation",
+    "pvt_frequency_variation",
+    "pvt_delay_variation",
+    "pvt_thd_variation",
+}
 
 
 def analysis_id_for_metric(metric_name: str) -> str:
@@ -69,6 +119,8 @@ def analysis_id_for_metric(metric_name: str) -> str:
         return "transient_delay"
     if metric_name in _SPECTRAL_METRICS:
         return "spectral"
+    if metric_name in _PVT_METRICS:
+        return "pvt"
     return "unknown"
 
 

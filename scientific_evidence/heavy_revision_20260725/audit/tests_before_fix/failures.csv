@@ -1,0 +1,2 @@
+﻿phase,exit_code,command,notes
+cli_help,1,"python -m spec2testbench.presentation.cli.main --help","Traceback (most recent call last):"

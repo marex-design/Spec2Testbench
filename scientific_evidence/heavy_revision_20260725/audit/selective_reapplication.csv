@@ -1,0 +1,2 @@
+path,source_worktree,source_status,reason,reviewed,tests_required,applied_to_clean_worktree,commit
+CLEAN_WORKTREE_FRESH_IMPLEMENTATION,dirty-worktree,N/A,"No preexisting dirty-worktree change was selectively re-applied; the validated scientific corrections were implemented fresh in the clean worktree after audit.",true,"tests/test_scientific_workflow_guards.py; tests/integration/test_real_pipeline_ngspice.py; tests/integration/test_llm_stub_pipeline.py",true,NOT_COMMITTED

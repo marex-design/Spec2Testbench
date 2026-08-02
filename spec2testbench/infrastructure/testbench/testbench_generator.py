@@ -412,7 +412,9 @@ class TestBenchGenerator(ITestBenchGenerator):
             token in metric_names
             for token in {
                 "operating_point", "vout_dc", "quiescent_current", "idd", "power",
-                "pvt_vout_variation", "pvt_power_variation"
+                "dc_transfer_curve", "local_gain", "linear_range",
+                "selected_bias", "bias_objective_score", "input_common_mode_range",
+                "current_mirror_matching_error", "pvt_vout_variation", "pvt_power_variation"
             }
         ):
             categories.append("dc")
@@ -421,7 +423,8 @@ class TestBenchGenerator(ITestBenchGenerator):
             for token in {
                 "dc_gain", "dc_gain_db", "bandwidth", "cutoff_frequency_hz",
                 "unity_gain_frequency", "ugbw", "phase_margin", "cmrr", "psrr",
-                "pvt_dc_gain_variation"
+                "gain_margin", "input_impedance", "output_impedance",
+                "differential_gain", "differential_phase", "pvt_dc_gain_variation"
             }
         ):
             categories.append("ac")
@@ -429,7 +432,11 @@ class TestBenchGenerator(ITestBenchGenerator):
             token in metric_names
             for token in {
                 "slew_rate", "settling_time", "propagation_delay", "propagation_delay_s",
-                "startup_amplitude", "oscillator_frequency", "frequency_hz",
+                "overshoot", "sine_response_amplitude", "sine_response_phase",
+                "rise_time", "fall_time", "ringing", "startup_amplitude",
+                "oscillation_detected", "oscillator_frequency", "frequency_hz",
+                "integrator_ramp_slope", "integrator_linearity",
+                "differentiator_peak", "differentiator_pulse_width",
                 "pvt_delay_variation", "pvt_frequency_variation"
             }
         ):
@@ -437,7 +444,8 @@ class TestBenchGenerator(ITestBenchGenerator):
         if any(
             token in metric_names
             for token in {
-                "thd", "thd_percent", "fundamental_frequency", "sfdr", "pvt_thd_variation"
+                "thd", "thd_percent", "fundamental_frequency", "sfdr",
+                "conversion_gain", "spurious_components", "pvt_thd_variation"
             }
         ):
             categories.append("spectral")

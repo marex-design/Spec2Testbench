@@ -5,8 +5,10 @@ Complete verification pipeline orchestrating all three modules.
 import logging
 import math
 import hashlib
+import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -36,6 +38,7 @@ from ...infrastructure.testbench import TestBenchGenerator
 from ...infrastructure.spec_checker import SpecChecker
 from ...infrastructure.waveform_checker import WaveformChecker, WaveformPlotter
 from ...infrastructure.simulator.pyspice_simulator import PySpiceSimulator
+from ...infrastructure.simulator.result_backends import parse_wrdata_file
 from ...config.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -338,6 +341,7 @@ class VerificationPipeline:
         allow_mock: Optional[bool] = None,
         allow_recovery: Optional[bool] = None,
         timeout_seconds: Optional[int] = None,
+        persist_artifacts: Optional[bool] = None,
     ):
         self.use_llm = use_llm
         self.llm_client = llm_client
@@ -345,6 +349,7 @@ class VerificationPipeline:
         self.allow_mock = settings.simulator.allow_mock if allow_mock is None else allow_mock
         self.allow_recovery = settings.simulator.allow_recovery if allow_recovery is None else allow_recovery
         self.timeout_seconds = timeout_seconds or settings.simulator.timeout_seconds
+        self.persist_artifacts = self._resolve_persist_artifacts(persist_artifacts)
         self.testbench_gen = TestBenchGenerator(
             llm_client=llm_client if use_llm else None,
             use_llm=use_llm,
@@ -370,6 +375,7 @@ class VerificationPipeline:
         report.specification = specification
         report.case_id = specification.case_id or specification.name
         report.parent_circuit_id = specification.parent_circuit_id
+        artifact_bundle = self._artifact_bundle_paths(report) if self.persist_artifacts else None
         
         try:
             if testbench is None:
@@ -393,7 +399,11 @@ class VerificationPipeline:
             
             if simulation_results is None and netlist_path and netlist_path.exists():
                 logger.info("Step 2/4: Running simulation with ngspice...")
-                simulation_results = self._run_simulation_with_ngspice(netlist_path, testbench)
+                simulation_results = self._run_simulation_with_ngspice(
+                    netlist_path,
+                    testbench,
+                    output_dir=artifact_bundle["simulation_dir"] if artifact_bundle else None,
+                )
                 report.simulation_logs = simulation_results.get("logs", [])
                 report.simulation_errors = simulation_results.get("errors", [])
             elif simulation_results is None:
@@ -484,10 +494,21 @@ class VerificationPipeline:
                 spec_path=spec_path,
                 netlist_path=netlist_path,
             )
+            if self.persist_artifacts:
+                self._persist_run_artifacts(
+                    report,
+                    simulation_results or {},
+                    artifact_bundle,
+                )
         
         return report
     
-    def _run_simulation_with_ngspice(self, netlist_path: Path, testbench: TestBench) -> Dict[str, Any]:
+    def _run_simulation_with_ngspice(
+        self,
+        netlist_path: Path,
+        testbench: TestBench,
+        output_dir: Optional[Path] = None,
+    ) -> Dict[str, Any]:
         """Run simulation with real ngspice and structured raw parsing."""
         if self.simulator is None:
             self.simulator = PySpiceSimulator(
@@ -505,8 +526,8 @@ class VerificationPipeline:
             )
 
         preserve_artifacts = os.getenv("SPEC2TESTBENCH_PRESERVE_SIM_ARTIFACTS", "").lower() in {"1", "true", "yes"}
-        output_dir = settings.output.output_dir if preserve_artifacts else None
-        result = self.simulator.run(netlist_path, testbench, output_dir=output_dir)
+        resolved_output_dir = output_dir if output_dir is not None else settings.output.output_dir if preserve_artifacts else None
+        result = self.simulator.run(netlist_path, testbench, output_dir=resolved_output_dir)
 
         simulation_results = {
             'success': result.get('success', False),
@@ -947,8 +968,10 @@ class VerificationPipeline:
         metric_lower = metric_name.lower()
         if any(token in metric_lower for token in ("current", "idd", "power")):
             return "supply_current"
-        if any(token in metric_lower for token in ("gain", "bandwidth", "phase", "vout", "slew", "settling", "frequency", "thd")):
+        if any(token in metric_lower for token in ("gain", "bandwidth", "phase", "impedance", "vout", "slew", "settling", "frequency", "thd", "overshoot", "rise_time", "fall_time", "ringing", "integrator", "differentiator")):
             return "vout"
+        if any(token in metric_lower for token in ("bias", "common_mode")):
+            return "vin"
         return ""
 
     @staticmethod
@@ -1015,6 +1038,344 @@ class VerificationPipeline:
             "error_type": report.error_type,
             "error_message": "; ".join(report.errors or report.simulation_errors) if (report.errors or report.simulation_errors) else None,
         }
+
+    @staticmethod
+    def _resolve_persist_artifacts(persist_artifacts: Optional[bool]) -> bool:
+        if persist_artifacts is not None:
+            return persist_artifacts
+        if os.getenv("PYTEST_CURRENT_TEST"):
+            return False
+        return bool(settings.output.persist_outputs)
+
+    @staticmethod
+    def _safe_path_token(value: Optional[str]) -> str:
+        token = re.sub(r"[^A-Za-z0-9._-]+", "_", str(value or "").strip())
+        token = token.strip("._")
+        return token or "unnamed"
+
+    def _artifact_bundle_paths(self, report: VerificationReport) -> Dict[str, Path]:
+        case_slug = self._safe_path_token(report.case_id or report.circuit_name)
+        run_slug = f"{self._safe_path_token(report.timestamp)}_{self._safe_path_token(report.run_id)[:8]}"
+        output_root = settings.output.output_dir / "verification_runs" / case_slug / run_slug
+        simulation_dir = output_root / "simulation"
+        figures_dir = output_root / "figures"
+        report_dir = settings.output.report_dir / "verification_runs" / case_slug
+        results_dir = settings.output.results_dir / "verification_runs" / case_slug
+        for directory in (output_root, simulation_dir, figures_dir, report_dir, results_dir):
+            directory.mkdir(parents=True, exist_ok=True)
+        return {
+            "output_root": output_root,
+            "simulation_dir": simulation_dir,
+            "figures_dir": figures_dir,
+            "report_markdown": report_dir / f"{run_slug}.md",
+            "report_json": report_dir / f"{run_slug}.json",
+            "result_summary": results_dir / f"{run_slug}.json",
+            "manifest_path": output_root / "artifact_manifest.json",
+        }
+
+    def _persist_run_artifacts(
+        self,
+        report: VerificationReport,
+        simulation_results: Dict[str, Any],
+        artifact_bundle: Optional[Dict[str, Path]],
+    ) -> None:
+        if artifact_bundle is None:
+            return
+
+        figure_paths = self._generate_visual_artifacts(
+            report,
+            simulation_results,
+            artifact_bundle["figures_dir"],
+        )
+        artifact_manifest = {
+            "circuit_name": report.circuit_name,
+            "case_id": report.case_id,
+            "run_id": report.run_id,
+            "timestamp": report.timestamp,
+            "output_root": str(artifact_bundle["output_root"]),
+            "simulation_dir": str(artifact_bundle["simulation_dir"]),
+            "figures_dir": str(artifact_bundle["figures_dir"]),
+            "report_markdown": str(artifact_bundle["report_markdown"]),
+            "report_json": str(artifact_bundle["report_json"]),
+            "result_summary": str(artifact_bundle["result_summary"]),
+            "figures": {name: str(path) for name, path in figure_paths.items()},
+        }
+        report.provenance["artifact_bundle"] = artifact_manifest
+        report.provenance["visual_artifacts"] = artifact_manifest["figures"]
+
+        artifact_bundle["manifest_path"].write_text(
+            json.dumps(artifact_manifest, indent=2, ensure_ascii=True),
+            encoding="utf-8",
+        )
+        artifact_bundle["report_markdown"].write_text(
+            self._render_markdown_report(report),
+            encoding="utf-8",
+        )
+        artifact_bundle["report_json"].write_text(
+            json.dumps(self._report_payload(report), indent=2, ensure_ascii=True),
+            encoding="utf-8",
+        )
+        artifact_bundle["result_summary"].write_text(
+            json.dumps(
+                {
+                    **self._report_payload(report),
+                    "artifact_bundle": artifact_manifest,
+                },
+                indent=2,
+                ensure_ascii=True,
+            ),
+            encoding="utf-8",
+        )
+
+    def _generate_visual_artifacts(
+        self,
+        report: VerificationReport,
+        simulation_results: Dict[str, Any],
+        figures_dir: Path,
+    ) -> Dict[str, Path]:
+        plotter = WaveformPlotter(output_dir=figures_dir)
+        artifacts: Dict[str, Path] = {}
+
+        transient = simulation_results.get("transient", {}) or simulation_results.get("tran", {})
+        time_axis = transient.get("time", [])
+        if time_axis:
+            time = self._to_float_array(time_axis)
+            signals: Dict[str, Any] = {}
+            voltage_map = transient.get("voltage", {}) or {}
+            for name, values in voltage_map.items():
+                series = self._to_float_array(values)
+                if len(series) == len(time):
+                    signals[str(name)] = series
+            for fallback_name in ("vin", "vout"):
+                values = transient.get(fallback_name)
+                if values is None or fallback_name in signals:
+                    continue
+                series = self._to_float_array(values)
+                if len(series) == len(time):
+                    signals[fallback_name] = series
+            if signals:
+                artifacts["transient_plot"] = plotter.plot_transient(
+                    time=time,
+                    signals=signals,
+                    title=f"{report.circuit_name} - Transient Waveforms",
+                    filename="transient_waveforms.png",
+                )
+
+        ac_plot_data = self._derive_ac_plot_data(simulation_results)
+        if ac_plot_data is not None:
+            frequency, magnitude, phase_data = ac_plot_data
+            artifacts["bode_plot"] = plotter.plot_ac_response(
+                frequency=frequency,
+                magnitude=magnitude,
+                phase=phase_data,
+                title=f"{report.circuit_name} - Bode Response",
+                filename="bode_response.png",
+                phase_in_degrees=True,
+            )
+
+        fft_requested = bool(simulation_results.get("fourier")) or any(
+            trace.metric_name in {"oscillator_frequency", "frequency_hz", "fundamental_frequency", "thd", "thd_percent"}
+            for trace in report.metric_traces
+        )
+        fft_payload = self._derive_fft_plot_data(simulation_results) if fft_requested else None
+        if fft_payload is not None:
+            frequency_fft, spectrum_fft, fundamental = fft_payload
+            artifacts["fft_plot"] = plotter.plot_fft(
+                frequency=frequency_fft,
+                spectrum=spectrum_fft,
+                fundamental_freq=fundamental,
+                title=f"{report.circuit_name} - Frequency Spectrum",
+                filename="fft_spectrum.png",
+            )
+
+        scalar_metrics: Dict[str, float] = {}
+        for collection in (simulation_results.get("dc", {}) or {}, simulation_results.get("currents", {}) or {}):
+            for name, value in collection.items():
+                if isinstance(value, (int, float)) and math.isfinite(float(value)):
+                    scalar_metrics[str(name)] = float(value)
+        if scalar_metrics:
+            artifacts["dc_summary_plot"] = plotter.plot_scalar_summary(
+                metrics=scalar_metrics,
+                title=f"{report.circuit_name} - DC Summary",
+                ylabel="Value",
+                filename="dc_summary.png",
+            )
+
+        return artifacts
+
+    @staticmethod
+    def _to_float_array(values: Any):
+        import numpy as np
+
+        return np.asarray(values, dtype=float)
+
+    def _derive_ac_plot_data(self, simulation_results: Dict[str, Any]):
+        import numpy as np
+
+        ac = simulation_results.get("ac", {}) or {}
+        frequency = ac.get("frequency", [])
+        magnitude = ac.get("magnitude", [])
+        if frequency and magnitude:
+            phase = ac.get("phase")
+            phase_data = self._to_float_array(phase) if phase else None
+            return self._to_float_array(frequency), self._to_float_array(magnitude), phase_data
+
+        measurement_source = simulation_results.get("measurement_source")
+        measurement_backend = simulation_results.get("measurement_backend")
+        if measurement_backend != "NGSPICE_WRDATA" or not measurement_source:
+            return None
+        try:
+            parsed = parse_wrdata_file(Path(measurement_source))
+        except Exception:
+            return None
+
+        request = next(
+            (
+                item for item in simulation_results.get("measurement_requests", [])
+                if isinstance(item, dict) and {"in_real_column", "in_imag_column", "out_real_column", "out_imag_column"} <= set(item.keys())
+            ),
+            None,
+        )
+        if request is None:
+            return None
+        data = parsed["data"]
+        try:
+            frequency = data[:, 0]
+            vin = data[:, int(request.get("in_real_column", 1))] + 1j * data[:, int(request.get("in_imag_column", 2))]
+            vout = data[:, int(request.get("out_real_column", 3))] + 1j * data[:, int(request.get("out_imag_column", 4))]
+        except Exception:
+            return None
+        vin_mag = np.abs(vin)
+        transfer = np.divide(
+            vout,
+            vin,
+            out=np.full_like(vout, np.nan + 0j, dtype=np.complex128),
+            where=vin_mag > 0,
+        )
+        magnitude = np.abs(transfer).astype(float)
+        phase = np.degrees(np.angle(transfer)).astype(float)
+        finite_mask = np.isfinite(frequency) & np.isfinite(magnitude) & np.isfinite(phase)
+        if not np.any(finite_mask):
+            return None
+        return frequency[finite_mask], magnitude[finite_mask], phase[finite_mask]
+
+    def _derive_fft_plot_data(self, simulation_results: Dict[str, Any]):
+        import numpy as np
+
+        transient = simulation_results.get("transient", {}) or simulation_results.get("tran", {})
+        time = transient.get("time", [])
+        vout = transient.get("vout", [])
+        if time and vout and len(time) == len(vout) and len(time) >= 16:
+            time_arr = np.asarray(time, dtype=float)
+            vout_arr = np.asarray(vout, dtype=float)
+            dt = float(np.mean(np.diff(time_arr)))
+            if math.isfinite(dt) and dt > 0:
+                windowed = (vout_arr - np.mean(vout_arr)) * np.hanning(vout_arr.size)
+                spectrum = np.abs(np.fft.rfft(windowed))
+                frequency = np.fft.rfftfreq(vout_arr.size, dt)
+                if frequency.size > 1:
+                    frequency = frequency[1:]
+                    spectrum = spectrum[1:]
+                    fundamental = simulation_results.get("fourier", {}).get("fundamental_frequency") or simulation_results.get("metrics", {}).get("oscillator_frequency")
+                    return frequency, spectrum, float(fundamental) if fundamental is not None else None
+
+        harmonics = simulation_results.get("fourier", {}).get("harmonics", []) or []
+        if harmonics:
+            frequency = []
+            spectrum = []
+            for harmonic in harmonics:
+                try:
+                    freq = float(harmonic["frequency"])
+                    mag = float(harmonic["magnitude"])
+                except (KeyError, TypeError, ValueError):
+                    continue
+                if freq <= 0 or not math.isfinite(freq) or not math.isfinite(mag):
+                    continue
+                frequency.append(freq)
+                spectrum.append(mag)
+            if frequency and spectrum:
+                fundamental = simulation_results.get("fourier", {}).get("fundamental_frequency")
+                import numpy as np
+
+                return np.asarray(frequency, dtype=float), np.asarray(spectrum, dtype=float), float(fundamental) if fundamental is not None else None
+        return None
+
+    def _report_payload(self, report: VerificationReport) -> Dict[str, Any]:
+        return {
+            "circuit_name": report.circuit_name,
+            "run_id": report.run_id,
+            "timestamp": report.timestamp,
+            "overall_verdict": report.overall_verdict.value,
+            "terminal_status": report.terminal_status,
+            "execution_status": report.execution_status.value,
+            "simulation_mode": report.simulation_mode.value if report.simulation_mode else None,
+            "compliance_status": report.compliance_status.value,
+            "robustness_status": report.robustness_status.value,
+            "scientific_category": report.scientific_category.value,
+            "scientifically_eligible": report.scientifically_eligible,
+            "failure_kind": report.failure_kind,
+            "success_rate": report.success_rate,
+            "compliance_score": report.compliance_score,
+            "nominal_compliance_score": report.nominal_compliance_score,
+            "pvt_compliance_score": report.pvt_compliance_score,
+            "testbench_generation_success": report.testbench_generation_success,
+            "simulation_success": report.simulation_success,
+            "case_id": report.case_id,
+            "parent_circuit_id": report.parent_circuit_id,
+            "metric_traces": [trace.to_dict() for trace in report.metric_traces],
+            "metrics": [
+                {
+                    "name": result.test_name,
+                    "verdict": result.verdict.value,
+                    "measured": result.measured_value,
+                    "expected_min": result.expected_min,
+                    "expected_max": result.expected_max,
+                    "unit": result.unit,
+                    "message": result.message,
+                    "category": result.category,
+                }
+                for result in report.spec_results
+            ],
+            "provenance": report.provenance,
+            "errors": report.errors,
+            "simulation_errors": report.simulation_errors,
+        }
+
+    def _render_markdown_report(self, report: VerificationReport) -> str:
+        lines = [
+            "# Spec2Testbench Verification Run",
+            "",
+            f"- Circuit: `{report.circuit_name}`",
+            f"- Case ID: `{report.case_id}`",
+            f"- Run ID: `{report.run_id}`",
+            f"- Timestamp: `{report.timestamp}`",
+            f"- Overall verdict: `{report.overall_verdict.value}`",
+            f"- Execution status: `{report.execution_status.value}`",
+            f"- Simulation mode: `{report.simulation_mode.value if report.simulation_mode else 'N/A'}`",
+            f"- Compliance status: `{report.compliance_status.value}`",
+            f"- Scientific category: `{report.scientific_category.value}`",
+            f"- Success rate: `{report.success_rate * 100:.1f}%`",
+            f"- Compliance score: `{report.compliance_score:.3f}`",
+            "",
+            "## Metrics",
+            "",
+            "| Metric | Status | Measured | Expected |",
+            "| --- | --- | --- | --- |",
+        ]
+        for result in report.spec_results:
+            lines.append(
+                f"| {result.test_name} | {result.verdict.value} | {result.measured_str} | {result.expected_range} |"
+            )
+        visual_artifacts = report.provenance.get("visual_artifacts", {})
+        if visual_artifacts:
+            lines.extend(["", "## Visual Artifacts", ""])
+            for name, path in visual_artifacts.items():
+                lines.append(f"- `{name}`: `{path}`")
+        if report.errors or report.simulation_errors:
+            lines.extend(["", "## Errors", ""])
+            for error in report.errors + report.simulation_errors:
+                lines.append(f"- {error}")
+        return "\n".join(lines) + "\n"
 
     @staticmethod
     def _sha256_file(path: Optional[Path]) -> Optional[str]:
@@ -1174,13 +1535,13 @@ class VerificationPipeline:
     @staticmethod
     def _required_analysis_for_metric(metric_name: str) -> str:
         metric_lower = metric_name.lower()
-        if any(token in metric_lower for token in ("gain", "bandwidth", "ugbw", "gbw", "phase", "cmrr", "psrr")):
+        if any(token in metric_lower for token in ("gain", "bandwidth", "ugbw", "gbw", "phase", "cmrr", "psrr", "impedance")):
             return "ac"
         if any(token in metric_lower for token in ("cutoff_frequency", "center_frequency")):
             return "ac"
-        if any(token in metric_lower for token in ("slew", "settling", "delay", "hysteresis", "v_t_", "frequency", "amplitude")):
+        if any(token in metric_lower for token in ("slew", "settling", "delay", "hysteresis", "v_t_", "frequency", "amplitude", "overshoot", "rise_time", "fall_time", "ringing", "sine_response", "integrator", "differentiator")):
             return "tran"
-        if "thd" in metric_lower:
+        if any(token in metric_lower for token in ("thd", "sfdr", "spur", "conversion_gain")):
             return "fourier"
         if "pvt" in metric_lower:
             return "pvt"

@@ -1,0 +1,52 @@
+name: reference_28_t27_temperature_sweep
+case_id: reference_28_t27_temperature_sweep
+circuit_type: oscillator
+technology: reference_28_behavioral
+description: Reference coverage case for T27 temperature sweep.
+source:
+  benchmark: reference_28
+  netlist: benchmark/reference_28/rc_shift_oscillator.cir
+performance_targets:
+  pvt_frequency_variation:
+    max: 1000000000.0
+    unit: Hz
+  pvt_delay_variation:
+    max: 1.0
+    unit: s
+  pvt_thd_variation:
+    max: 100.0
+    unit: '%'
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_frequency: 1000.0
+ports:
+  output:
+  - out
+  input:
+  - out
+verification:
+  include_tests:
+  - T27
+  auto_select: false
+test_categories:
+- transient
+- spectral
+- pvt
+test_requirements: {}
+process_corners:
+- tt
+- ff
+temperature_range: extended
+supply_variation: 0.1
+operating_conditions:
+  nominal_temperature: 27
+  nominal_supply: 5.0
+  process_corner: tt
+pvt_config:
+  corners:
+  - tt
+  - ff
+  temperature_range: extended
+  supply_variation: 0.1

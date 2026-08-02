@@ -1,0 +1,4 @@
+﻿[codex/scientific-evidence-clean-20260725 ba61826] fix: harden scientific workflow isolation and provenance
+ 7 files changed, 1310 insertions(+), 25 deletions(-)
+ create mode 100644 docs/scientific_workflow_hardening.md
+ create mode 100644 tests/test_scientific_workflow_guards.py

@@ -1,9 +1,10 @@
+* Canonical DUT generated from benchmark/analogcoder_pro/p27_subtractor.cir
+* Embedded analyses and output directives were externalized into metadata.
 * AnalogCoder-Pro p27: An Op-amp subtractor to make Vout=Vin2-Vin1
 * Source: analogcoder\AnalogCoderPro-master\sample_design\p27\p27.py
 * AnalogCoder-Pro type: Subtractor
 * Inputs: Vin1, Vin2
 * Outputs: Vout
-
 * Opamp subcircuit imported from AnalogCoder-Pro opamp.py
 .SUBCKT Opamp Vinp Vinn Vout
 .MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5)
@@ -16,17 +17,17 @@ M3 Source3 Vbias 0 0 nmos_model W=0.0001 L=1e-06
 M4 Voutp Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06
 M5 Vout Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06
 .ENDS Opamp
-
 Vdd Vdd 0 5
 Vref Vref 0 2.5
-Vin1 Vin1 Vref 3
-Vin2 Vin2 Vref 4
+* original signal source: Vin1 Vin1 Vref 3
+Vin1 Vin1 Vref 0
+* original signal source: Vin2 Vin2 Vref 4
+Vin2 Vin2 Vref 0
 R1 Vin1 Vinn 10k
 R2 Vout Vinn 10k
 R3 Vin2 Vinp 10k
 R4 Vref Vinp 10k
 Xop Vinp Vinn Vout Opamp
-
-.OP
-.TRAN 10U 20M
+* original analysis: .OP
+* original analysis: .TRAN 10U 20M
 .END

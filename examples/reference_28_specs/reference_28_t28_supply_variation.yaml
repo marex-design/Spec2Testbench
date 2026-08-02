@@ -1,0 +1,50 @@
+name: reference_28_t28_supply_variation
+case_id: reference_28_t28_supply_variation
+circuit_type: amplifier
+technology: reference_28_behavioral
+description: Reference coverage case for T28 supply variation.
+source:
+  benchmark: reference_28
+  netlist: benchmark/reference_28/common_drain_resistive_load_amplifier.cir
+performance_targets:
+  pvt_vout_variation:
+    max: 5.0
+    unit: V
+  pvt_power_variation:
+    max: 1.0
+    unit: W
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_frequency: 1000.0
+ports:
+  input:
+  - in
+  output:
+  - out
+  supply_positive:
+  - vdd
+verification:
+  include_tests:
+  - T28
+  auto_select: false
+test_categories:
+- dc
+- pvt
+test_requirements: {}
+process_corners:
+- tt
+- ff
+temperature_range: commercial
+supply_variation: 0.1
+operating_conditions:
+  nominal_temperature: 27
+  nominal_supply: 5.0
+  process_corner: tt
+pvt_config:
+  corners:
+  - tt
+  - ff
+  temperature_range: commercial
+  supply_variation: 0.1

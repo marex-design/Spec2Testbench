@@ -1,0 +1,45 @@
+name: reference_28_t16_differentiator_impulse
+case_id: reference_28_t16_differentiator_impulse
+circuit_type: opamp_differentiator
+technology: reference_28_behavioral
+description: Reference coverage case for T16 differentiator impulse.
+source:
+  benchmark: reference_28
+  netlist: benchmark/reference_28/opamp_differentiator.cir
+performance_targets:
+  differentiator_peak:
+    min: 0.0
+    unit: V
+  differentiator_pulse_width:
+    min: 0.0
+    unit: s
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_frequency: 1000.0
+ports:
+  input:
+  - in
+  output:
+  - out
+verification:
+  include_tests:
+  - T16
+  auto_select: false
+test_categories:
+- transient
+test_requirements: {}
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+operating_conditions:
+  nominal_temperature: 27
+  nominal_supply: 5.0
+  process_corner: tt
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.1

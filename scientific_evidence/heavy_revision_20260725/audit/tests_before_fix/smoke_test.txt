@@ -1,0 +1,3 @@
+﻿LABEL: smoke_test COMMAND: python -m pytest tests/integration/test_real_pipeline_ngspice.py -k "family_smoke and p10_lowpass" -q EXIT_CODE: 0 STDOUT: .                                                                        [100%]
+1 passed, 10 deselected in 2.75s
+ STDERR: 

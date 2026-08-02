@@ -34,7 +34,7 @@ GROUND_TRUTH_MANIFEST = ROOT / "experiments/ground_truth/ground_truth_manifest.y
 RESULTS_DIR = ROOT / "results/llm_deepseek"
 REPORTS_DIR = ROOT / "reports/llm_deepseek"
 ARTIFACTS_DIR = ROOT / "artifacts/llm_deepseek"
-FROZEN_V3_RESULTS = ROOT / "results/frozen_pilot_results_v3.csv"
+FROZEN_V3_RESULTS = ROOT / "experiments/frozen_pilot_v3/reference_results.csv"
 
 
 def json_sha256(payload: Any) -> str:

@@ -4,6 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from ...domain.entities.specification import Specification
 from ...domain.entities.testbench import AnalysisConfig, AnalysisType, Measurement, Stimulus, TestBench
 from ...domain.entities.testbench_plan import (
@@ -12,6 +14,7 @@ from ...domain.entities.testbench_plan import (
     TestbenchPlan,
 )
 from ...infrastructure.simulator.pyspice_simulator import PySpiceSimulator
+from .benchmark_deck_normalizer import BenchmarkDeckNormalizer
 from .llm_metric_registry import get_metric_definition
 
 
@@ -32,14 +35,17 @@ class TestbenchPlanCompiler:
         primary_input = specification.input_nodes[0] if specification.input_nodes else "vin"
         primary_output = specification.output_nodes[0] if specification.output_nodes else "vout"
         output_threshold = float((specification.vdd + specification.vss) / 2.0)
+        signal_defaults = self._load_signal_defaults(specification)
 
         stimuli = [
-            self._compile_stimulus(stimulus, primary_input, specification)
+            self._compile_stimulus(stimulus, primary_input, specification, signal_defaults)
             for stimulus in plan.stimuli
         ]
         analyses = [self._compile_analysis(plan)]
         measurements = []
         measurement_requests = []
+        input_ac_magnitude = self._infer_input_ac_magnitude(stimuli, primary_input)
+        reference_frequency_hz = self._infer_reference_frequency_hz(plan)
 
         for measurement_plan in plan.measurements:
             definition = get_metric_definition(measurement_plan.metric_name)
@@ -60,6 +66,8 @@ class TestbenchPlanCompiler:
                     primary_input=measurement_plan.input_node or primary_input,
                     primary_output=measurement_plan.output_node or primary_output,
                     output_threshold=output_threshold,
+                    input_ac_magnitude=input_ac_magnitude,
+                    reference_frequency_hz=reference_frequency_hz,
                 )
             )
 
@@ -75,6 +83,8 @@ class TestbenchPlanCompiler:
                 "input_node": primary_input,
                 "output_node": primary_output,
                 "output_threshold": output_threshold,
+                "input_ac_magnitude": input_ac_magnitude,
+                "reference_frequency_hz": reference_frequency_hz,
             },
             "measurement_requests": measurement_requests,
             "llm_testbench_plan": plan.model_dump(mode="json"),
@@ -126,12 +136,20 @@ class TestbenchPlanCompiler:
         stimulus_plan,
         primary_input: str,
         specification: Specification,
+        signal_defaults: dict[str, dict[str, Any]],
     ) -> Stimulus:
         parameters = dict(stimulus_plan.parameters)
         stimulus_type = stimulus_plan.stimulus_type.value.lower()
+        signal_default = self._resolve_signal_default(signal_defaults, stimulus_plan)
+        default_dc_value = signal_default.get("dc_value")
         if stimulus_type == "triangle":
             amplitude = float(parameters.get("amplitude", 1.0))
-            offset = float(parameters.get("offset", specification.common_mode_voltage))
+            offset = float(
+                parameters.get(
+                    "offset",
+                    default_dc_value if default_dc_value is not None else specification.common_mode_voltage,
+                )
+            )
             period = parameters.get("period", "1u")
             parameters = {
                 "points": [
@@ -143,6 +161,10 @@ class TestbenchPlanCompiler:
                 "period": period,
             }
             stimulus_type = "pwl"
+        if default_dc_value is not None and stimulus_type in {"ac", "pulse", "sin", "pwl"}:
+            parameters.setdefault("dc_value", default_dc_value)
+        if stimulus_type == "sin" and default_dc_value is not None:
+            parameters.setdefault("offset", default_dc_value)
         return Stimulus(
             name=stimulus_plan.source_name,
             type=stimulus_type,
@@ -218,6 +240,8 @@ class TestbenchPlanCompiler:
         primary_input: str,
         primary_output: str,
         output_threshold: float,
+        input_ac_magnitude: float | None,
+        reference_frequency_hz: float | None,
     ) -> dict[str, Any]:
         request = {
             "name": measurement_plan.metric_name,
@@ -241,6 +265,8 @@ class TestbenchPlanCompiler:
             request.setdefault("in_imag_column", 2)
             request.setdefault("out_real_column", 3)
             request.setdefault("out_imag_column", 4)
+            request.setdefault("input_ac_magnitude", input_ac_magnitude)
+            request.setdefault("reference_frequency_hz", reference_frequency_hz)
         elif measurement_plan.metric_name in {"frequency_hz", "oscillator_frequency", "startup_amplitude"}:
             request.setdefault("time_column", 0)
             request.setdefault("value_column", 1)
@@ -249,3 +275,88 @@ class TestbenchPlanCompiler:
             request.setdefault("vin_column", 1)
             request.setdefault("vout_column", 2)
         return request
+
+    def _load_signal_defaults(self, specification: Specification) -> dict[str, dict[str, Any]]:
+        netlist_path = self._resolve_spec_netlist_path(specification)
+        if netlist_path is None:
+            return {}
+        try:
+            result = BenchmarkDeckNormalizer().normalize(
+                netlist_path,
+                case_id=specification.case_id or specification.name,
+            )
+        except Exception:
+            return {}
+
+        defaults: dict[str, dict[str, Any]] = {}
+        for source in result.sources:
+            if source.role != "SIGNAL_SOURCE":
+                continue
+            payload = {
+                "dc_value": source.original_dc_value,
+                "ac_magnitude": source.original_ac_magnitude,
+                "definition": source.original_definition,
+            }
+            defaults[source.name.strip().lower()] = payload
+            defaults[source.positive_node.strip().lower()] = payload
+        return defaults
+
+    @staticmethod
+    def _resolve_signal_default(
+        signal_defaults: dict[str, dict[str, Any]],
+        stimulus_plan,
+    ) -> dict[str, Any]:
+        for key in (
+            str(getattr(stimulus_plan, "source_name", "")).strip().lower(),
+            str(getattr(stimulus_plan, "target_node", "")).strip().lower(),
+        ):
+            if key and key in signal_defaults:
+                return signal_defaults[key]
+        return {}
+
+    @staticmethod
+    def _resolve_spec_netlist_path(specification: Specification) -> Path | None:
+        raw_specs = specification.raw_specs or ""
+        if not raw_specs.strip():
+            return None
+        try:
+            payload = yaml.safe_load(raw_specs) or {}
+        except yaml.YAMLError:
+            return None
+        source = payload.get("source", {})
+        if not isinstance(source, dict):
+            return None
+        netlist_hint = source.get("netlist")
+        if not netlist_hint:
+            return None
+        netlist_path = Path(str(netlist_hint))
+        if netlist_path.exists():
+            return netlist_path
+        candidate = Path.cwd() / netlist_path
+        return candidate if candidate.exists() else None
+
+    @staticmethod
+    def _infer_input_ac_magnitude(stimuli: list[Stimulus], primary_input: str) -> float | None:
+        for stimulus in stimuli:
+            if stimulus.node_positive != primary_input:
+                continue
+            if stimulus.type == "ac":
+                try:
+                    return float(stimulus.parameters.get("magnitude", 1.0))
+                except (TypeError, ValueError):
+                    return None
+            if stimulus.parameters.get("ac_magnitude") is not None:
+                try:
+                    return float(stimulus.parameters["ac_magnitude"])
+                except (TypeError, ValueError):
+                    return None
+        return None
+
+    @staticmethod
+    def _infer_reference_frequency_hz(plan: TestbenchPlan) -> float | None:
+        if plan.analysis_type != PlanAnalysisType.AC:
+            return None
+        try:
+            return float(plan.simulation_parameters.frequency_start_hz)
+        except (TypeError, ValueError):
+            return None

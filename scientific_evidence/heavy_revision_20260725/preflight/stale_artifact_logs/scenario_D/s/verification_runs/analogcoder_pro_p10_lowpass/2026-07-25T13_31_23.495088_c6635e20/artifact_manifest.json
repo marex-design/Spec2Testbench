@@ -1,0 +1,16 @@
+{
+  "circuit_name": "analogcoder_pro_p10_lowpass",
+  "case_id": "analogcoder_pro_p10_lowpass",
+  "run_id": "c6635e20-3fd1-4ad3-8ceb-879180ff3156",
+  "timestamp": "2026-07-25T13:31:23.495088",
+  "output_root": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_31_23.495088_c6635e20",
+  "simulation_dir": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_31_23.495088_c6635e20\\simulation",
+  "figures_dir": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_31_23.495088_c6635e20\\figures",
+  "report_markdown": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\\reports\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_31_23.495088_c6635e20.md",
+  "report_json": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\\reports\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_31_23.495088_c6635e20.json",
+  "result_summary": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\\results\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_31_23.495088_c6635e20.json",
+  "figures": {
+    "transient_plot": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_31_23.495088_c6635e20\\figures\\transient_20260725_133124.png",
+    "bode_plot": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_31_23.495088_c6635e20\\figures\\ac_response_20260725_133124.png"
+  }
+}

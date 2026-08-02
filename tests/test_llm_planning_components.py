@@ -16,12 +16,21 @@ from spec2testbench.domain.entities.testbench_plan import TestbenchPlan as PlanM
 
 P10_SPEC = Path("examples/benchmark_specs/p10_lowpass.yaml")
 P10_NETLIST = Path("benchmark/analogcoder_pro/p10_lowpass.cir")
+P01_SPEC = Path("examples/benchmark_specs/p01_amplifier.yaml")
+P01_NETLIST = Path("benchmark/analogcoder_pro/p01_amplifier.cir")
 
 
 def load_lowpass_spec() -> Specification:
     specification = Specification.from_yaml(P10_SPEC)
     specification.case_id = "test_p10_lowpass"
     specification.parent_circuit_id = "p10_lowpass"
+    return specification
+
+
+def load_amplifier_spec() -> Specification:
+    specification = Specification.from_yaml(P01_SPEC)
+    specification.case_id = "test_p01_amplifier"
+    specification.parent_circuit_id = "p01_amplifier"
     return specification
 
 
@@ -189,6 +198,50 @@ def test_testbench_plan_compiler_generates_backend_requests():
     compiled = TestbenchPlanCompiler().compile(plan, specification=specification)
     assert compiled.testbench.metadata["measurement_context"]["input_node"] == "Vin"
     assert compiled.measurement_requests[0]["preferred_backend"] == "NGSPICE_WRDATA"
+
+
+def test_testbench_plan_compiler_recovers_original_ac_dc_bias_from_canonical_netlist():
+    specification = load_amplifier_spec()
+    plan = PlanModel.model_validate(
+        {
+            "case_id": specification.case_id,
+            "analysis_type": "AC",
+            "stimuli": [
+                {
+                    "source_name": "vin",
+                    "target_node": "Vin",
+                    "stimulus_type": "AC",
+                    "parameters": {"magnitude": 1.0},
+                }
+            ],
+            "observed_nodes": ["Vout"],
+            "measurements": [
+                {
+                    "metric_name": "dc_gain_db",
+                    "analysis_type": "AC",
+                    "input_node": "Vin",
+                    "output_node": "Vout",
+                    "expected_unit": "dB",
+                    "backend_preference": "NGSPICE_WRDATA",
+                    "measurement_parameters": {},
+                }
+            ],
+            "simulation_parameters": {
+                "frequency_start_hz": 1.0,
+                "frequency_stop_hz": 1_000_000_000.0,
+                "points_per_decade": 10,
+            },
+            "concise_rationale": "Recover the benchmark AC bias from the canonical source metadata.",
+        }
+    )
+
+    compiled = TestbenchPlanCompiler().compile(plan, specification=specification)
+
+    assert compiled.testbench.stimuli[0].parameters["dc_value"] == 1.0
+    assert compiled.testbench.metadata["measurement_context"]["input_ac_magnitude"] == 1.0
+    assert compiled.testbench.metadata["measurement_context"]["reference_frequency_hz"] == 1.0
+    assert compiled.measurement_requests[0]["input_ac_magnitude"] == 1.0
+    assert compiled.measurement_requests[0]["reference_frequency_hz"] == 1.0
 
 
 def test_llm_cache_round_trip(tmp_path):

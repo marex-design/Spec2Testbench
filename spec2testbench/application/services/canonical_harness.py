@@ -1,22 +1,24 @@
 from __future__ import annotations
 
+import csv
 import json
 import re
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
-
-import yaml
 
 from ...domain.entities.analysis_harness import AnalysisHarnessPolicy, SourceOverridePolicy
 from ...domain.entities.specification import Specification
 from ...domain.entities.testbench import AnalysisConfig, AnalysisType, Measurement, Stimulus, TestBench
 from ...infrastructure.testbench.testbench_generator import TestBenchGenerator
+from .benchmark_deck_normalizer import BenchmarkDeckNormalizer
 from .llm_metric_registry import get_metric_definition
 
 
 ROOT = Path(__file__).resolve().parents[3]
-NORMALIZED_DIR = ROOT / "benchmarks_normalized" / "analogcoder_pro"
+BENCHMARK_DIR = ROOT / "benchmark" / "analogcoder_pro"
+MANIFEST_PATH = BENCHMARK_DIR / "manifest.csv"
 
 DC_METRICS = {"operating_point", "vout_dc", "quiescent_current", "idd", "power"}
 AC_METRICS = {"dc_gain", "dc_gain_db", "bandwidth", "cutoff_frequency_hz", "unity_gain_frequency", "ugbw", "phase_margin"}
@@ -56,19 +58,50 @@ def short_case_id(case_id: str) -> str:
     return match.group(1)
 
 
+@lru_cache(maxsize=1)
+def _manifest_rows() -> dict[str, dict[str, str]]:
+    with MANIFEST_PATH.open(encoding="utf-8", newline="") as handle:
+        rows = list(csv.DictReader(handle))
+    return {Path(row["netlist"]).stem: row for row in rows}
+
+
+def _resolve_manifest_case(case_id: str) -> tuple[str, dict[str, str]]:
+    manifest_rows = _manifest_rows()
+    if case_id in manifest_rows:
+        return case_id, manifest_rows[case_id]
+    short_id = short_case_id(case_id)
+    matches = [(name, row) for name, row in manifest_rows.items() if name.lower().startswith(f"{short_id}_")]
+    if len(matches) != 1:
+        raise FileNotFoundError(f"Canonical benchmark netlist missing for {case_id}")
+    return matches[0]
+
+
+@lru_cache(maxsize=None)
+def _normalize_manifest_case(resolved_case_id: str) -> tuple[Path, Any]:
+    row = _manifest_rows()[resolved_case_id]
+    netlist_path = BENCHMARK_DIR / row["netlist"]
+    result = BenchmarkDeckNormalizer().normalize(
+        netlist_path,
+        case_id=resolved_case_id,
+        declared_type=row["type"],
+        declared_topology=row["description"],
+        description=row["description"],
+    )
+    return netlist_path, result
+
+
 def load_normalized_harness_context(case_id: str) -> NormalizedHarnessContext:
     short_id = short_case_id(case_id)
-    case_dir = NORMALIZED_DIR / short_id
-    if not case_dir.exists():
-        raise FileNotFoundError(f"Normalized harness metadata missing for {case_id}")
+    resolved_case_id, _ = _resolve_manifest_case(case_id)
+    netlist_path, result = _normalize_manifest_case(resolved_case_id)
     return NormalizedHarnessContext(
         case_id=case_id,
         short_case_id=short_id,
-        harness_metadata=_load_yaml(case_dir / "harness_metadata.yaml"),
-        circuit_metadata=_load_yaml(case_dir / "circuit_metadata.yaml"),
-        original_analysis_metadata=_load_yaml(case_dir / "original_analyses.yaml") or [],
-        canonical_dut_path=case_dir / "canonical_dut.ckt",
-        original_deck_path=case_dir / "original_deck.ckt",
+        harness_metadata=result.harness_metadata,
+        circuit_metadata=result.circuit_metadata,
+        original_analysis_metadata=list(result.original_analysis_metadata),
+        canonical_dut_path=netlist_path,
+        original_deck_path=netlist_path,
     )
 
 
@@ -667,10 +700,6 @@ def _primary_output_node(specification: Specification, context: NormalizedHarnes
     if specification.output_nodes:
         return specification.output_nodes[0]
     return "vout"
-
-
-def _load_yaml(path: Path) -> Any:
-    return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
 def _coerce_optional_float(value: Any) -> float | None:

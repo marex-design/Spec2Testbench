@@ -1,0 +1,13 @@
+﻿Date: 2026-07-25
+Worktree: E:\my_organisation\Memoire Maruba\code\Spec2Testbench-scientific-clean
+
+Dependency-related files discovered:
+pyproject.toml
+setup.py
+
+Dependency-related files absent:
+setup.cfg
+requirements.txt
+requirements-dev.txt
+requirements-cli.txt
+requirements-test.txt

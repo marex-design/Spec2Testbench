@@ -113,7 +113,6 @@ FREEZE_SENSITIVE_ROOTS = (
     "tests/",
     "knowledge/",
     "benchmark/",
-    "benchmarks_normalized/",
     "experiments/frozen_pilot_v3/",
 )
 PLACEHOLDER_SECRET_WORDS = {
@@ -1508,7 +1507,7 @@ def classify_worktree_category(relative_path: str) -> str:
         return "SOURCE_CODE"
     if path.startswith("knowledge/"):
         return "CONFIGURATION"
-    if path.startswith("benchmark/") or path.startswith("benchmarks_normalized/"):
+    if path.startswith("benchmark/"):
         return "SOURCE_CODE"
     if path.startswith("reports/") or path.startswith("results/") or path.startswith("artifacts/"):
         return "CACHE"
@@ -1529,7 +1528,7 @@ def freeze_invalidation_reason(relative_path: str) -> str | None:
         return "PROMPT"
     if path.startswith("knowledge/"):
         return "KNOWLEDGE"
-    if path.startswith("benchmark/") or path.startswith("benchmarks_normalized/"):
+    if path.startswith("benchmark/"):
         return "BENCHMARK"
     if path.endswith("canonical_harness_policies.yaml"):
         return "HARNESS_POLICY"
@@ -1788,8 +1787,7 @@ def collect_git_state() -> dict[str, Any]:
     knowledge_modified = any(path.startswith("knowledge/") for path in modified_paths)
     frozen_v3_modified = any(
         path.startswith("experiments/frozen_pilot_v3/")
-        or path == "results/frozen_pilot_results_v3.csv"
-        or path == "reports/frozen_pilot_results_v3.md"
+        or path == "experiments/frozen_pilot_v3/reference_results.csv"
         for path in modified_paths
     )
     scientific_dirty_paths = sorted(path for path in modified_paths if invalidates_source_freeze(path))

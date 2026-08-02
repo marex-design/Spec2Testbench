@@ -1,0 +1,44 @@
+name: reference_28_t09_psrr
+case_id: reference_28_t09_psrr
+circuit_type: opamp
+technology: reference_28_behavioral
+description: Reference coverage case for T09 PSRR.
+source:
+  benchmark: reference_28
+  netlist: benchmark/reference_28/common_source_resistive_load_opamp.cir
+performance_targets:
+  psrr:
+    min: 0.0
+    unit: dB
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_frequency: 1000.0
+ports:
+  input:
+  - inp
+  output:
+  - outn
+  supply_positive:
+  - vdd
+verification:
+  include_tests:
+  - T09
+  auto_select: false
+test_categories:
+- ac
+test_requirements: {}
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+operating_conditions:
+  nominal_temperature: 27
+  nominal_supply: 5.0
+  process_corner: tt
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.1

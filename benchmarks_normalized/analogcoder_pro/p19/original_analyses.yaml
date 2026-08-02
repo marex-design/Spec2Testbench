@@ -1,4 +1,0 @@
-- line_number: 25
-  directive: .TRAN
-  raw_line: .TRAN 1U 20M
-  inside_subcircuit: false

@@ -1,0 +1,49 @@
+name: reference_28_t01_dc_operating_point
+case_id: reference_28_t01_dc_operating_point
+circuit_type: amplifier
+technology: reference_28_behavioral
+description: Reference coverage case for T01 DC operating point.
+source:
+  benchmark: reference_28
+  netlist: benchmark/reference_28/common_source_resistive_load_amplifier.cir
+performance_targets:
+  operating_point:
+    min: 0.5
+    max: 4.5
+    unit: V
+  vout_dc:
+    min: 0.5
+    max: 4.5
+    unit: V
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_frequency: 1000.0
+ports:
+  input:
+  - in
+  output:
+  - out
+  supply_positive:
+  - vdd
+verification:
+  include_tests:
+  - T01
+  auto_select: false
+test_categories:
+- dc
+test_requirements: {}
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+operating_conditions:
+  nominal_temperature: 27
+  nominal_supply: 5.0
+  process_corner: tt
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.1

@@ -1,9 +1,10 @@
+* Canonical DUT generated from benchmark/analogcoder_pro/p22_oscillator.cir
+* Embedded analyses and output directives were externalized into metadata.
 * AnalogCoder-Pro p22: An RC phase-shift oscillator
 * Source: analogcoder\AnalogCoderPro-master\sample_design\p22\p22.py
 * AnalogCoder-Pro type: Oscillator
 * Inputs: -
 * Outputs: Vout
-
 * Opamp subcircuit imported from AnalogCoder-Pro opamp.py
 .SUBCKT Opamp Vinp Vinn Vout
 .MODEL nmos_model NMOS (LEVEL=1 KP=0.0001 VTO=0.5)
@@ -16,7 +17,6 @@ M3 Source3 Vbias 0 0 nmos_model W=0.0001 L=1e-06
 M4 Voutp Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06
 M5 Vout Voutp Vdd Vdd pmos_model W=0.0001 L=1e-06
 .ENDS Opamp
-
 Vdd Vdd 0 5
 Vref Vref 0 2.5
 R1 Vout N1 10k
@@ -28,6 +28,5 @@ C3 N3 Vref 10n
 Rf Vout Vinn 330k
 Rin N3 Vinn 1
 X1 Vref Vinn Vout Opamp
-
-.TRAN 10U 20M
+* original analysis: .TRAN 10U 20M
 .END

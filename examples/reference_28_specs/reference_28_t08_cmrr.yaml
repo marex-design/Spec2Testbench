@@ -1,0 +1,47 @@
+name: reference_28_t08_cmrr
+case_id: reference_28_t08_cmrr
+circuit_type: opamp
+technology: reference_28_behavioral
+description: Reference coverage case for T08 CMRR.
+source:
+  benchmark: reference_28
+  netlist: benchmark/reference_28/opamp_active_current_mirror_loads.cir
+performance_targets:
+  cmrr:
+    min: 0.0
+    unit: dB
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_frequency: 1000.0
+ports:
+  differential_positive:
+  - inp
+  differential_negative:
+  - inn
+  output:
+  - out
+  supply_positive:
+  - vdd
+verification:
+  include_tests:
+  - T08
+  auto_select: false
+test_categories:
+- ac
+- differential
+test_requirements: {}
+process_corners:
+- tt
+temperature_range: commercial
+supply_variation: 0.1
+operating_conditions:
+  nominal_temperature: 27
+  nominal_supply: 5.0
+  process_corner: tt
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.1

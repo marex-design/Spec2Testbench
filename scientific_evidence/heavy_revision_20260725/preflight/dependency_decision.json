@@ -1,0 +1,17 @@
+{
+  "date": "2026-07-25",
+  "branch": "codex/scientific-evidence-clean-20260725",
+  "base_commit": "2678818e33972ae8612aa395f329501e85a3f98d",
+  "authoritative_dependency_file": "setup.py",
+  "typer_classification": "mandatory_runtime_dependency",
+  "typer_constraint_declared": ">=0.9",
+  "rich_constraint_declared": ">=13.0",
+  "dependency_file_change_required": false,
+  "environment_install_required": true,
+  "install_method": "python -m pip install -e .",
+  "resolved_typer_version": "0.27.0",
+  "resolved_rich_available": true,
+  "public_cli_installed": true,
+  "root_cause": "environment_not_installed_from_authoritative_package_metadata",
+  "decision": "install_environment_only_no_dependency_metadata_change"
+}

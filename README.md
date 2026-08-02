@@ -10,7 +10,7 @@ The framework supports a deterministic generation path for reproducible campaign
 - `tests/`: unit, integration, ngspice, and evidence-integrity tests.
 - `benchmark/analogcoder_pro/`: 28 pedagogical benchmark-aligned netlists.
 - `examples/benchmark_specs/`: YAML specifications used by the ACP-28 campaign.
-- `experiments/`: controlled-violation manifests and frozen experiment definitions.
+- `experiments/`: curated manifests and reference fixtures for optional benchmark and LLM evaluation campaigns.
 - `artifacts/`: generated run artifacts and evidence bundles.
 - `scripts/`: campaign, validation, import, and reporting utilities.
 

@@ -1,0 +1,23 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * testbench: analogcoder_pro_p10_lowpass_full_testbench
+
+Doing analysis at TEMP = 27.000000 and TNOM = 27.000000
+
+
+No. of Data Rows : 91
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vin                                       1.25
+vout                                      1.25
+vin#branch                                   0
+
+
+No. of Data Rows : 50040
+ngspice-41 done

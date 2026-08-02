@@ -1,8 +1,0 @@
-- line_number: 16
-  directive: .OP
-  raw_line: .OP
-  inside_subcircuit: false
-- line_number: 17
-  directive: .AC
-  raw_line: .AC DEC 100 1 1G
-  inside_subcircuit: false

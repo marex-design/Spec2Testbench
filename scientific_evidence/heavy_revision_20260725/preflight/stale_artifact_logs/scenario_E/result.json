@@ -1,0 +1,18 @@
+{
+  "scenario_id": "E",
+  "expected_behavior": "Explicit replay of an artifact declared as coming from another commit must be rejected.",
+  "observed_behavior": "execution_status=ERROR, validation_status=GIT_COMMIT_MISMATCH, accepted=False",
+  "pass": true,
+  "artifact_used": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\smoke_real_cli\\run_output\\results\\verification_runs\\analogcoder_pro_p10_lowpass\\2026-07-25T13_31_23.495088_c6635e20.json",
+  "rejection_reason": "GIT_COMMIT_MISMATCH",
+  "test_path": "VerificationPipeline.verify",
+  "log_path": "E:\\my_organisation\\Memoire Maruba\\code\\Spec2Testbench\\scientific_evidence\\heavy_revision_20260725\\preflight\\stale_artifact_logs\\scenario_E\\result.json",
+  "details": {
+    "report_run_id": "e315707c-6c86-4db9-8e46-332ade962df8",
+    "report_timestamp": "2026-07-25T13:49:21.093263",
+    "errors": [],
+    "simulation_errors": [
+      "Artifact validation failed: GIT_COMMIT_MISMATCH"
+    ]
+  }
+}

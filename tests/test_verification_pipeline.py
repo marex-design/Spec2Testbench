@@ -1,6 +1,8 @@
 import json
+from pathlib import Path
 
 from spec2testbench.application.usecases.run_verification import VerificationPipeline, VerificationReport
+from spec2testbench.config.settings import settings
 from spec2testbench.domain.entities.specification import Specification
 from spec2testbench.domain.entities.testbench import AnalysisConfig, AnalysisType, Stimulus, TestBench
 from spec2testbench.domain.value_objects.circuit_type import CircuitType
@@ -477,6 +479,91 @@ def test_mock_explicitly_allowed_is_not_scientifically_eligible():
     assert report.simulation_mode == SimulationMode.MOCK
     assert report.execution_status == ExecutionStatus.SUCCESS
     assert report.scientifically_eligible is False
+
+
+def test_verification_persists_visual_artifacts_and_reports_for_oscillator(tmp_path):
+    original_output_dir = settings.output.output_dir
+    original_waveform_dir = settings.output.waveform_dir
+    original_report_dir = settings.output.report_dir
+    original_results_dir = settings.output.results_dir
+    try:
+        settings.output.output_dir = tmp_path / "output"
+        settings.output.waveform_dir = tmp_path / "output" / "waveforms"
+        settings.output.report_dir = tmp_path / "reports"
+        settings.output.results_dir = tmp_path / "results"
+        for directory in (
+            settings.output.output_dir,
+            settings.output.waveform_dir,
+            settings.output.report_dir,
+            settings.output.results_dir,
+        ):
+            directory.mkdir(parents=True, exist_ok=True)
+
+        specification = Specification(
+            name="p23_persist_case",
+            case_id="p23_persist_case",
+            circuit_type=CircuitType.OSCILLATOR,
+            performance_targets={
+                "oscillator_frequency": {"min": 1e6, "max": 2e7, "unit": "Hz"},
+                "startup_amplitude": {"min": 0.1, "unit": "V"},
+                "thd_percent": {"max": 5.0, "unit": "%"},
+            },
+            input_conditions={"vdd": 1.8, "vss": 0.0, "output_nodes": "Vout"},
+            test_categories=["transient", "spectral"],
+        )
+
+        report = VerificationPipeline(use_llm=False, allow_mock=True, persist_artifacts=True).verify(specification)
+        bundle = report.provenance["artifact_bundle"]
+
+        assert Path(bundle["output_root"]).exists()
+        assert Path(bundle["simulation_dir"]).exists()
+        assert Path(bundle["report_markdown"]).exists()
+        assert Path(bundle["report_json"]).exists()
+        assert Path(bundle["result_summary"]).exists()
+        assert Path(bundle["figures"]["transient_plot"]).exists()
+        assert Path(bundle["figures"]["fft_plot"]).exists()
+    finally:
+        settings.output.output_dir = original_output_dir
+        settings.output.waveform_dir = original_waveform_dir
+        settings.output.report_dir = original_report_dir
+        settings.output.results_dir = original_results_dir
+
+
+def test_ac_plot_data_can_be_reconstructed_from_wrdata(tmp_path):
+    vectors_path = tmp_path / "vectors.dat"
+    vectors_path.write_text(
+        "\n".join(
+            [
+                "1 1 0 10 0",
+                "10 1 0 7.0710678118654755 -7.0710678118654755",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    pipeline = VerificationPipeline(use_llm=False)
+    plot_data = pipeline._derive_ac_plot_data(
+        {
+            "ac": {},
+            "measurement_source": str(vectors_path),
+            "measurement_backend": "NGSPICE_WRDATA",
+            "measurement_requests": [
+                {
+                    "name": "dc_gain_db",
+                    "in_real_column": 1,
+                    "in_imag_column": 2,
+                    "out_real_column": 3,
+                    "out_imag_column": 4,
+                }
+            ],
+        }
+    )
+
+    assert plot_data is not None
+    frequency, magnitude, phase = plot_data
+    assert list(frequency) == [1.0, 10.0]
+    assert round(float(magnitude[0]), 6) == 10.0
+    assert round(float(phase[1]), 6) == -45.0
 
 
 def test_mock_forbidden_without_netlist_is_skipped():
