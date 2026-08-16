@@ -325,6 +325,63 @@ def compute_cutoff_frequency(parsed: dict[str, np.ndarray], request: dict[str, A
     return float(lower_cutoff)
 
 
+def _transfer_db_series(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> np.ndarray:
+    ratio = np.abs(_transfer_series(parsed, request))
+    if ratio.size < 2 or not np.any(np.isfinite(ratio)):
+        raise ValueError("INSUFFICIENT_AC_DATA")
+    return 20.0 * np.log10(np.maximum(ratio, 1e-30))
+
+
+def compute_lowpass_attenuation_db(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    db = _transfer_db_series(parsed, request)
+    return float(db[0] - db[-1])
+
+
+def compute_lowpass_monotonicity_percent(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    db = _transfer_db_series(parsed, request)
+    if db.size < 3:
+        raise ValueError("INSUFFICIENT_AC_DATA")
+    return float(100.0 * np.mean(np.diff(db) <= 0.5))
+
+
+def compute_highpass_attenuation_db(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    db = _transfer_db_series(parsed, request)
+    return float(db[-1] - db[0])
+
+
+def compute_highpass_monotonicity_percent(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    db = _transfer_db_series(parsed, request)
+    if db.size < 3:
+        raise ValueError("INSUFFICIENT_AC_DATA")
+    return float(100.0 * np.mean(np.diff(db) >= -0.5))
+
+
+def compute_bandpass_peak_separation_db(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    db = _transfer_db_series(parsed, request)
+    if db.size < 5:
+        raise ValueError("INSUFFICIENT_AC_DATA")
+    peak_index = int(np.nanargmax(db))
+    if peak_index == 0 or peak_index == db.size - 1:
+        raise ValueError("BANDPASS_PEAK_NOT_INTERIOR")
+    left_avg = float(np.mean(db[:peak_index]))
+    right_avg = float(np.mean(db[peak_index + 1:]))
+    peak = float(db[peak_index])
+    return float(min(peak - left_avg, peak - right_avg))
+
+
+def compute_bandstop_notch_depth_db(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
+    db = _transfer_db_series(parsed, request)
+    if db.size < 5:
+        raise ValueError("INSUFFICIENT_AC_DATA")
+    notch_index = int(np.nanargmin(db))
+    if notch_index == 0 or notch_index == db.size - 1:
+        raise ValueError("BANDSTOP_NOTCH_NOT_INTERIOR")
+    left_avg = float(np.mean(db[:notch_index]))
+    right_avg = float(np.mean(db[notch_index + 1:]))
+    notch = float(db[notch_index])
+    return float(min(left_avg - notch, right_avg - notch))
+
+
 def compute_unity_gain_frequency(parsed: dict[str, np.ndarray], request: dict[str, Any]) -> float:
     data = parsed["data"]
     freq = data[:, 0]
@@ -523,6 +580,12 @@ WRDATA_EXTRACTORS = {
     "unity_gain_frequency": compute_unity_gain_frequency,
     "ugbw": compute_unity_gain_frequency,
     "phase_margin": compute_phase_margin,
+    "lowpass_attenuation_db": compute_lowpass_attenuation_db,
+    "lowpass_monotonicity_percent": compute_lowpass_monotonicity_percent,
+    "highpass_attenuation_db": compute_highpass_attenuation_db,
+    "highpass_monotonicity_percent": compute_highpass_monotonicity_percent,
+    "bandpass_peak_separation_db": compute_bandpass_peak_separation_db,
+    "bandstop_notch_depth_db": compute_bandstop_notch_depth_db,
     "fundamental_frequency": compute_fundamental_frequency,
     "thd": compute_thd_percent,
     "thd_percent": compute_thd_percent,

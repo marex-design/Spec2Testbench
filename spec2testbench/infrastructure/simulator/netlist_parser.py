@@ -146,6 +146,26 @@ class NetlistParser:
         
         name = parts[0]
         comp_type = name[0]
+
+        # MOS instances have a fixed SPICE grammar:
+        # Mname drain gate source bulk model [key=value ...]
+        # Numeric node names such as ground (0) are electrical terminals, not
+        # scalar values. Parse MOS devices before the generic value heuristic.
+        if comp_type.upper() == "M" and len(parts) >= 6:
+            params = {}
+            for token in parts[6:]:
+                if "=" in token:
+                    key, val = token.split("=", 1)
+                    if key:
+                        params[key.upper()] = val
+            return Component(
+                name=name,
+                type=comp_type,
+                nodes=parts[1:5],
+                value=None,
+                parameters=params,
+                model=parts[5],
+            )
         
         # Extract nodes (until a value is found)
         nodes = []
@@ -157,8 +177,13 @@ class NetlistParser:
             part = parts[i]
             if part.startswith('+'):
                 continue
-            if part.startswith('='):
-                # Parameter
+            if '=' in part:
+                # SPICE instance parameter (for example W=10u or L=1u).
+                # Parameters are not electrical nodes and must never enter the
+                # LLM capability/validator node whitelist.
+                key, val = part.split('=', 1)
+                if key:
+                    params[key.upper()] = val
                 continue
             if part.upper() in ['DC', 'AC', 'PULSE', 'SIN', 'PWL', 'EXP', 'SFFM']:
                 # Source function

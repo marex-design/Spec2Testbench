@@ -975,6 +975,23 @@ class PySpiceSimulator(ICircuitSimulator):
         if data.ndim != 2 or data.shape[1] < 2:
             return
 
+        if AnalysisType.AC in analysis_types and not results.get("ac") and data.shape[1] >= 5:
+            frequency = data[:, 0]
+            vin = data[:, 1] + 1j * data[:, 2]
+            vout = data[:, 3] + 1j * data[:, 4]
+            vin_mag = np.abs(vin)
+            transfer = np.divide(
+                vout,
+                vin,
+                out=np.full_like(vout, np.nan + 0j, dtype=np.complex128),
+                where=vin_mag > 0,
+            )
+            results["ac"] = {
+                "frequency": frequency.tolist(),
+                "magnitude": np.abs(transfer).tolist(),
+                "phase": np.degrees(np.angle(transfer)).tolist(),
+            }
+
         if (
             AnalysisType.TRANSIENT in analysis_types
             and AnalysisType.AC not in analysis_types

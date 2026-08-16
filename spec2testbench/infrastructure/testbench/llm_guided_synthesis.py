@@ -171,9 +171,16 @@ class NetlistInspector:
 
     @classmethod
     def inspect_text(cls, text: str, path: Optional[str] = None) -> NetlistInspectionResult:
+        # Inspect active SPICE statements only. Canonical ACP DUTs intentionally
+        # preserve upstream analyses as comments for provenance; those comments
+        # must never be mistaken for executable .OP/.AC/.TRAN/.DC directives.
+        active_text = "\n".join(
+            line for line in text.splitlines()
+            if line.strip() and not line.lstrip().startswith("*")
+        )
         sources: List[SourceRecord] = []
         supply_nodes: List[str] = []
-        for match in cls.SOURCE_PATTERN.finditer(text):
+        for match in cls.SOURCE_PATTERN.finditer(active_text):
             raw_name = match.group("name").strip()
             name = raw_name[1:] if raw_name.lower().startswith("v") else raw_name
             pos = match.group("pos").strip()
@@ -193,8 +200,9 @@ class NetlistInspector:
             if pos.lower().startswith("vdd") and pos not in supply_nodes:
                 supply_nodes.append(pos)
         analyses = []
+        active_lower = active_text.lower()
         for token, label in ((".op", "op"), (".ac", "ac"), (".tran", "tran"), (".dc", "dc"), (".four", "fourier")):
-            if token in text.lower():
+            if token in active_lower:
                 analyses.append(label)
         return NetlistInspectionResult(
             path=path,
@@ -483,15 +491,18 @@ Hard rules:
     @staticmethod
     def _analysis_for_measurement(name: str, analyses: List[AnalysisConfig]) -> str:
         lower = name.lower()
-        if any(token in lower for token in ("gain", "bandwidth", "ugbw", "phase", "cmrr", "psrr")):
-            return "ac"
-        if any(token in lower for token in ("slew", "settling", "delay", "frequency", "startup", "hysteresis")):
-            return "tran"
-        if "thd" in lower or "sfdr" in lower:
-            return "fourier"
         available = {analysis.type.value for analysis in analyses}
-        if "dc" in available:
-            return "op"
+        if any(token in lower for token in ("gain", "bandwidth", "ugbw", "phase", "cmrr", "psrr")) and "ac" in available:
+            return "ac"
+        if any(token in lower for token in ("slew", "settling", "delay", "frequency", "startup", "hysteresis")) and "tran" in available:
+            return "tran"
+        if ("thd" in lower or "sfdr" in lower) and "fourier" in available:
+            return "fourier"
+        # AnalysisType.DC represents both .OP and real .DC sweeps in the legacy
+        # TestBench entity. Distinguish them using the rendered directive.
+        for analysis in analyses:
+            if analysis.type.value == "dc":
+                return "op" if analysis.to_spice().strip().upper() == ".OP" else "dc"
         return next(iter(available), "op")
 
 

@@ -23,11 +23,11 @@ from spec2testbench.infrastructure.testbench.testbench_generator import TestBenc
 @pytest.mark.parametrize(
     ("spec_path", "netlist_path", "required_metric"),
         [
-            ("benchmark/analogcoder_pro/specs/p07_inverter.yaml", "benchmark/analogcoder_pro/p07_inverter.cir", "operating_point"),
+            ("benchmark/analogcoder_pro/specs/p07_inverter.yaml", "benchmark/analogcoder_pro/p07_inverter.cir", "inverter_low_input_output_v"),
             ("benchmark/analogcoder_pro/specs/p01_amplifier.yaml", "benchmark/analogcoder_pro/p01_amplifier.cir", "dc_gain_db"),
-            ("benchmark/analogcoder_pro/specs/p10_lowpass.yaml", "benchmark/analogcoder_pro/p10_lowpass.cir", "cutoff_frequency_hz"),
-            ("benchmark/analogcoder_pro/specs/p09_comparator.yaml", "benchmark/analogcoder_pro/p09_comparator.cir", "propagation_delay"),
-            ("benchmark/analogcoder_pro/specs/p22_oscillator.yaml", "benchmark/analogcoder_pro/p22_oscillator.cir", "oscillator_frequency"),
+            ("benchmark/analogcoder_pro/specs/p10_lowpass.yaml", "benchmark/analogcoder_pro/p10_lowpass.cir", "lowpass_attenuation_db"),
+            ("benchmark/analogcoder_pro/specs/p09_comparator.yaml", "benchmark/analogcoder_pro/p09_comparator.cir", "comparator_output_separation_v"),
+            ("benchmark/analogcoder_pro/specs/p22_oscillator.yaml", "benchmark/analogcoder_pro/p22_oscillator.cir", "oscillation_cycle_count"),
             ("benchmark/analogcoder_pro/specs/p28_schmitt.yaml", "benchmark/analogcoder_pro/p28_schmitt.cir", "hysteresis_width"),
         ],
     )
@@ -36,9 +36,8 @@ def test_llm_stub_runs_real_ngspice(spec_path, netlist_path, required_metric):
         pytest.skip("ngspice executable is not available")
     specification = Specification.from_yaml(Path(spec_path))
     specification.case_id = Path(spec_path).stem
-    specification.performance_targets = {
-        required_metric: specification.performance_targets[required_metric]
-    }
+    specification = specification.project_verification_metrics([required_metric])
+    assert specification.verification_metric_names() == [required_metric]
     deterministic_tb = FrameworkGenerator(use_llm=False).generate(specification, netlist_path=Path(netlist_path))
 
     outcome = LLMGenerationService(DeterministicStubProvider()).generate_plan(

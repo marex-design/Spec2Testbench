@@ -260,7 +260,18 @@ class TestbenchPlanCompiler:
             request.setdefault("measurement_expression_id", definition.measurement_expression_id)
             request.setdefault("semantic_guards", sorted(definition.required_semantic_guards.keys()))
 
-        if measurement_plan.metric_name in {"dc_gain", "dc_gain_db", "cutoff_frequency_hz", "bandwidth"}:
+        if measurement_plan.metric_name in {
+            "dc_gain",
+            "dc_gain_db",
+            "cutoff_frequency_hz",
+            "bandwidth",
+            "lowpass_attenuation_db",
+            "lowpass_monotonicity_percent",
+            "highpass_attenuation_db",
+            "highpass_monotonicity_percent",
+            "bandpass_peak_separation_db",
+            "bandstop_notch_depth_db",
+        }:
             request.setdefault("in_real_column", 1)
             request.setdefault("in_imag_column", 2)
             request.setdefault("out_real_column", 3)
