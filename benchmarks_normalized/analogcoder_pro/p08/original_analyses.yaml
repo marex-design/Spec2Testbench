@@ -1,8 +1,0 @@
-- line_number: 14
-  directive: .OP
-  raw_line: .OP
-  inside_subcircuit: false
-- line_number: 15
-  directive: .DC
-  raw_line: .DC Vdd 0 5 0.1
-  inside_subcircuit: false

@@ -1,8 +1,0 @@
-* TestBench: analogcoder_pro_p17_currentmirror_full_testbench
-* Category: full
-* Circuit: analogcoder_pro_p17_currentmirror
-
-analogcoder_pro_p17_currentmirror
-.INCLUDE E:\my_organisation\Memoire Maruba\code\Spec2Testbench\benchmark\analogcoder_pro\p17_currentmirror.cir
-.DC vdd 5.0 5.0 0.05
-.END

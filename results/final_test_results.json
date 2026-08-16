@@ -1,7 +1,0 @@
-{
-  "unique_tests": 66,
-  "normal": {"passed": 66, "failed": 0, "skipped": 0, "warnings": 1, "duration_seconds": 38.29},
-  "pyspice_disabled": {"passed": 66, "failed": 0, "skipped": 0, "warnings": 1, "duration_seconds": 22.28},
-  "ngspice_version": "ngspice-41 : Circuit level simulation program",
-  "mock_results_included": false
-}

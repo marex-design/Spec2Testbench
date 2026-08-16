@@ -1,9 +1,0 @@
-* TestBench: analogcoder_pro_p27_subtractor_full_testbench
-* Category: full
-* Circuit: analogcoder_pro_p27_subtractor
-
-analogcoder_pro_p27_subtractor
-.INCLUDE E:\my_organisation\Memoire Maruba\code\Spec2Testbench\benchmark\analogcoder_pro\p27_subtractor.cir
-Vvin Vin1 0 2.5
-.OP
-.END

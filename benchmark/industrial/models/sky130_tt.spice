@@ -1,5 +1,0 @@
-* SKY130 model bridge for nominal TT corner
-* Replace the path below with a valid local SKY130 model library path.
-* Example:
-* .lib "E:/pdks/sky130A/libs.tech/ngspice/sky130.lib.spice" tt
-.lib "__REPLACE_WITH_LOCAL_SKY130_LIB__" tt
