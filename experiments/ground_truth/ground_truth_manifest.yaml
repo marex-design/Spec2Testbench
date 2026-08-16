@@ -1,0 +1,33 @@
+schema_version: "2.0"
+purpose: "Primary independent oracle for TP/TN/FP/FN and false-accept/false-reject measurements."
+oracle_policy:
+  independent_of_framework_verdict: true
+  labels_frozen_before_spec2testbench_execution: true
+  analytical_equation: "fc = 1/(2*pi*R*C)"
+  manual_reference_decks: "experiments/manual_oracle_subset/decks"
+  noncompliance_is_positive_class: true
+cases:
+  - case_id: p10_lowpass_nominal_gt
+    parent_circuit_id: p10_lowpass
+    ground_truth_label: GROUND_TRUTH_COMPLIANT
+    specification_file: benchmark/analogcoder_pro/specs/p10_lowpass.yaml
+    netlist_file: benchmark/analogcoder_pro/p10_lowpass.cir
+    oracle_reference: experiments/manual_oracle_subset/verdicts/p10_lowpass_nominal_gt.json
+  - case_id: cv_001_p10_c_huge
+    parent_circuit_id: p10_lowpass
+    ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+    specification_file: experiments/controlled_violations/cases/cv_001_p10_c_huge/specification.yaml
+    netlist_file: experiments/controlled_violations/cases/cv_001_p10_c_huge/mutated_netlist.cir
+    oracle_reference: experiments/manual_oracle_subset/verdicts/cv_001_p10_c_huge.json
+  - case_id: p11_highpass_nominal_gt
+    parent_circuit_id: p11_highpass
+    ground_truth_label: GROUND_TRUTH_COMPLIANT
+    specification_file: benchmark/analogcoder_pro/specs/p11_highpass.yaml
+    netlist_file: benchmark/analogcoder_pro/p11_highpass.cir
+    oracle_reference: experiments/manual_oracle_subset/verdicts/p11_highpass_nominal_gt.json
+  - case_id: cv_003_p11_c_huge
+    parent_circuit_id: p11_highpass
+    ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+    specification_file: experiments/controlled_violations/cases/cv_003_p11_c_huge/specification.yaml
+    netlist_file: experiments/controlled_violations/cases/cv_003_p11_c_huge/mutated_netlist.cir
+    oracle_reference: experiments/manual_oracle_subset/verdicts/cv_003_p11_c_huge.json

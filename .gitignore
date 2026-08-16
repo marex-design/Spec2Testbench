@@ -1,0 +1,64 @@
+# Environment
+.env
+.env.*
+venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.pyo
+
+# Build and packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# Generated output
+output/
+output_*.*
+reports/
+results/
+waveforms/
+test_waveforms/
+waveforms_test/
+t/
+*.log
+*.out
+*.raw
+*.tmp
+
+# Large local campaign workspaces
+artifacts/*
+
+# Local agent and dependency workspaces
+.agents/
+.recovery/
+.external/
+experiments/controlled_violations/generated_cases/
+
+# Ignore generated images but keep source examples and sheets
+# Use explicit source directories for .png or .svg if needed
+# Example: allow diagram assets if placed in a committed docs or examples folder
+
+# IDE / editor
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python environment files
+*.env
+*.venv
+.venv
+
+# Local runtime
+local_settings.py
+
+
+# Local copyrighted references
+references/local/*.pdf

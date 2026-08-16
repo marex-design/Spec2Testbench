@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_019_p22_vdd_low",
+  "parent_circuit_id": "p22_oscillator",
+  "mutation_type": "amplitude_oscillation",
+  "target_component": "Vdd",
+  "target_metric": "startup_amplitude",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Vdd Vdd 0 5",
+  "line_after": "Vdd Vdd 0 0.1",
+  "rationale": "Op-amp supply starvation prevents normal oscillation amplitude buildup.",
+  "active_anchor_match_count": 2,
+  "original_sha256": "462c4424265453d6a43a1c03506f7b345dd37b253e467acc6e69e08dcefcebe8",
+  "mutated_sha256": "5277c05752e703662f1802116bd9879aec36f3178b9f9909eb865d68428a5138",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p22_oscillator.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_019_p22_vdd_low/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_019_p22_vdd_low/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

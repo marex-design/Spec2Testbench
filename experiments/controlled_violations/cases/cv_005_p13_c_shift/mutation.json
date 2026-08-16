@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_005_p13_c_shift",
+  "parent_circuit_id": "p13_bandstop",
+  "mutation_type": "frequency_bandwidth",
+  "target_component": "C1",
+  "target_metric": "center_frequency",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "C1 N1 0 10n",
+  "line_after": "C1 N1 0 1",
+  "rationale": "Large capacitance shifts the notch frequency by orders of magnitude.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "e66d15e3cb3038943281398b9526c70c9f670415397632da5b5a877e4863d801",
+  "mutated_sha256": "72df48b92a9699841d4c654104f06a4992da9a22f7eb11f9ec98a6dd7002582f",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p13_bandstop.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_005_p13_c_shift/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_005_p13_c_shift/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

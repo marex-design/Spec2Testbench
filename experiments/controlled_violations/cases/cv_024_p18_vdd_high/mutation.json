@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_024_p18_vdd_high",
+  "parent_circuit_id": "p18_opamp",
+  "mutation_type": "power_consumption",
+  "target_component": "Vdd",
+  "target_metric": "power",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Vdd Vdd 0 5",
+  "line_after": "Vdd Vdd 0 50",
+  "rationale": "Supply is increased tenfold, invalidating the intended power/operating regime.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "2128948237f695b83033aef989a04240569a741021d43e23df6804c8303cbdc3",
+  "mutated_sha256": "81bfaf01947d87e3fb2aecf348bee8abc8c62b02a296a6735dc2f6e13c979c47",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p18_opamp.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_024_p18_vdd_high/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_024_p18_vdd_high/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

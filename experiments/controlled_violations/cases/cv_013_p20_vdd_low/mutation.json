@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_013_p20_vdd_low",
+  "parent_circuit_id": "p20_opamp",
+  "mutation_type": "dc_voltage_current",
+  "target_component": "Vdd",
+  "target_metric": "operating_point",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Vdd Vdd 0 5",
+  "line_after": "Vdd Vdd 0 0.2",
+  "rationale": "Insufficient supply headroom prevents nominal bias and swing.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "5431c988ec1ca8562025ebaa73bd0ef9059e4d9c0a48a5056813e923f90e89cd",
+  "mutated_sha256": "da05cd2756aff797a210c8366b15aa613350e778c8f1d3ca8fc5dbe6efb42b35",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p20_opamp.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_013_p20_vdd_low/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_013_p20_vdd_low/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

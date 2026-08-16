@@ -1,0 +1,118 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: NGSPICE_WRDATA_AC_EXPORTS_COMPLEX_COMPONENTS
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: wrdata
+  title: AC WRDATA exports real and imaginary components explicitly
+  description: Spec2Testbench exports AC complex vectors as explicit real and imaginary columns for both Vin and Vout.
+  applies_to:
+    analyses:
+    - AC
+    metrics:
+    - dc_gain_db
+    - cutoff_frequency_hz
+    - bandwidth
+    circuit_families:
+    - amplifier
+    - filter
+    - opamp
+    backends:
+    - NGSPICE_WRDATA
+  requires:
+    evidence:
+    - VIN_COMPLEX_VECTOR
+    - VOUT_COMPLEX_VECTOR
+  forbids:
+  - AC_WRDATA_WITH_MAGNITUDE_ONLY_FOR_TRANSFER_GAIN
+  source:
+    source_type: NGSPICE_INSTALLED_MICROTEST
+    document_path: results/knowledge_stub_v1/ngspice_microtest_results.csv
+    section: null
+    page: null
+  dialect_scope:
+  - NGSPICE_INSTALLED
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: false
+    compiler_enforced: false
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_NGSPICE_INSTALLED
+    positive_test_ids:
+    - MT_WRDATA_AC_COMPLEX_COLUMNS
+    - test_complex_wrdata_column_mapping_uses_vin_then_vout
+    negative_test_ids: []
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_AC_WRDATA_NEEDS_COMPLEX_COLUMNS
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Chapter 5
+    section: 5.2 AC Frequency Sweep
+    page: 149
+    classification: EXTENDS_EXISTING_RULE
+    implementation_scope: NGSPICE_CONFIRMED
+  book_chapter: Chapter 5
+  book_section: 5.2 AC Frequency Sweep
+  book_page: 149
+  ngspice_confirmed: true
+  project_enforced: true
+- rule_id: NGSPICE_WRDATA_DC_EXPORTS_OUTPUT_AND_SUPPLY_CURRENT
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: wrdata
+  title: DC WRDATA exports output voltage and supply current
+  description: The installed ngspice can export a DC/OP scale column together with output voltage and supply current, enabling WRDATA fallback for operating-point current and power.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    metrics:
+    - operating_point
+    - quiescent_current
+    - power
+    circuit_families:
+    - amplifier
+    - current_mirror
+    - opamp
+    backends:
+    - NGSPICE_WRDATA
+  requires:
+    evidence:
+    - OUTPUT_VALUE_COLUMN
+    - SUPPLY_CURRENT_COLUMN
+  forbids:
+  - DC_WRDATA_WITH_OUTPUT_ONLY_WHEN_CURRENT_IS_REQUIRED
+  source:
+    source_type: NGSPICE_INSTALLED_MICROTEST
+    document_path: results/knowledge_stub_v1/ngspice_microtest_results.csv
+    section: null
+    page: null
+  dialect_scope:
+  - NGSPICE_INSTALLED
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: false
+    compiler_enforced: false
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_NGSPICE_INSTALLED
+    positive_test_ids:
+    - MT_WRDATA_DC_OUTPUT_AND_CURRENT
+    - test_wrdata_can_extract_dc_operating_point
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: true
+  project_enforced: true

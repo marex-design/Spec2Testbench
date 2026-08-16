@@ -1,0 +1,14 @@
+{
+  "case_id": "p10_lowpass_nominal_gt",
+  "parent_circuit_id": "p10_lowpass",
+  "manual_deck": "decks/p10_lowpass_nominal_manual.ckt",
+  "independent_reference": {
+    "method": "analytical_first_order_rc",
+    "R_ohm": 10000.0,
+    "C_farad": 1e-08,
+    "expected_cutoff_frequency_hz": 1591.5494309189535
+  },
+  "expected_ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+  "expected_manual_verdict": "PASS",
+  "uses_spec2testbench_verdict": false
+}

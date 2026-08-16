@@ -1,0 +1,203 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: SUPPLY_SOURCE_PRESERVED
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: sources
+  title: Supply sources are preserved
+  description: Canonical harness and stub plans must not replace supply sources unless a dedicated variation campaign authorizes it.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    node_roles:
+    - SUPPLY_SOURCE
+  forbids:
+  - UNAUTHORIZED_SUPPLY_OVERRIDE
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/application/services/canonical_harness.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_supply_source_is_not_replaceable
+    - test_stub_plan_cannot_replace_supply
+    negative_test_ids: []
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_BIAS_AND_SIGNAL_SOURCE_ROLES_DIFFER
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Chapter 2
+    section: 2.2.6 Independent Bias and Signal Sources
+    page: 46
+    classification: EXTENDS_EXISTING_RULE
+    implementation_scope: SPEC2TESTBENCH_POLICY
+  book_chapter: Chapter 2
+  book_section: 2.2.6 Independent Bias and Signal Sources
+  book_page: 46
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: BIAS_SOURCE_PRESERVED
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: sources
+  title: Bias sources are preserved
+  description: Bias sources remain protected from arbitrary replacement in canonical and stub planning.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    node_roles:
+    - BIAS_SOURCE
+  forbids:
+  - UNAUTHORIZED_BIAS_OVERRIDE
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/application/services/canonical_harness.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_bias_source_is_not_replaceable
+    - test_stub_plan_cannot_replace_bias
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: INTERNAL_BIAS_SOURCE_PROTECTED
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: sources
+  title: Internal bias sources are protected
+  description: Internal bias sources are neither repurposed as inputs nor rewritten as stimuli.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    node_roles:
+    - INTERNAL_BIAS_SOURCE
+  forbids:
+  - INTERNAL_BIAS_AS_SIGNAL_SOURCE
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/application/services/canonical_harness.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_internal_bias_source_is_not_replaceable
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: SIGNAL_DC_OVERRIDE_REQUIRES_AUTHORITY
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: sources
+  title: Signal DC override requires explicit authority
+  description: Signal-source DC overrides must come from a validated authority such as the original harness or normalized specification.
+  applies_to:
+    analyses:
+    - AC
+    - TRAN
+    metrics:
+    - dc_gain_db
+    - propagation_delay
+    - hysteresis_width
+    circuit_families:
+    - amplifier
+    - comparator
+    - schmitt_trigger
+    backends: []
+  requires:
+    node_roles:
+    - SIGNAL_INPUT
+  forbids:
+  - DC_MIDPOINT_INFERENCE_WITHOUT_AUTHORITY
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/application/services/canonical_harness.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_signal_dc_override_requires_authority
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true

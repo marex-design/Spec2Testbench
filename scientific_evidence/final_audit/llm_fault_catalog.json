@@ -1,0 +1,304 @@
+{
+  "campaign_type": "CONTROLLED_LLM_LIKE_FAULT_INJECTION",
+  "scientific_llm_evidence": false,
+  "note": "This validates guard coverage; it is not a measurement of spontaneous live-model hallucination rate.",
+  "case_count": 10,
+  "detected_count": 10,
+  "detection_rate": 1.0,
+  "rows": [
+    {
+      "fault": "invented_node",
+      "expected_any_status": [
+        "UNKNOWN_NODE"
+      ],
+      "primary_status": "MISSING_REQUIRED_METRIC",
+      "all_statuses": [
+        "EXTRA_UNREQUESTED_METRIC",
+        "MISSING_REQUIRED_METRIC",
+        "ROLE_MISMATCH",
+        "UNKNOWN_NODE"
+      ],
+      "detected": true,
+      "issues": [
+        {
+          "status": "MISSING_REQUIRED_METRIC",
+          "field": "measurements",
+          "message": "Missing requested metrics: lowpass_attenuation_db, lowpass_monotonicity_percent"
+        },
+        {
+          "status": "EXTRA_UNREQUESTED_METRIC",
+          "field": "measurements",
+          "message": "Unexpected metrics: cutoff_frequency_hz"
+        },
+        {
+          "status": "UNKNOWN_NODE",
+          "field": "measurements.cutoff_frequency_hz.output_node",
+          "message": "Unknown node Vghost"
+        },
+        {
+          "status": "ROLE_MISMATCH",
+          "field": "measurements.cutoff_frequency_hz.output_node",
+          "message": "Node Vghost is not a declared output-role node; allowed: ['Vout']"
+        }
+      ]
+    },
+    {
+      "fault": "wrong_output_role",
+      "expected_any_status": [
+        "ROLE_MISMATCH"
+      ],
+      "primary_status": "MISSING_REQUIRED_METRIC",
+      "all_statuses": [
+        "EXTRA_UNREQUESTED_METRIC",
+        "MISSING_REQUIRED_METRIC",
+        "ROLE_MISMATCH"
+      ],
+      "detected": true,
+      "issues": [
+        {
+          "status": "MISSING_REQUIRED_METRIC",
+          "field": "measurements",
+          "message": "Missing requested metrics: lowpass_attenuation_db, lowpass_monotonicity_percent"
+        },
+        {
+          "status": "EXTRA_UNREQUESTED_METRIC",
+          "field": "measurements",
+          "message": "Unexpected metrics: cutoff_frequency_hz"
+        },
+        {
+          "status": "ROLE_MISMATCH",
+          "field": "measurements.cutoff_frequency_hz.output_node",
+          "message": "Node Vin is not a declared output-role node; allowed: ['Vout']"
+        }
+      ]
+    },
+    {
+      "fault": "wrong_stimulus_role",
+      "expected_any_status": [
+        "ROLE_MISMATCH"
+      ],
+      "primary_status": "ROLE_MISMATCH",
+      "all_statuses": [
+        "EXTRA_UNREQUESTED_METRIC",
+        "MISSING_REQUIRED_METRIC",
+        "ROLE_MISMATCH"
+      ],
+      "detected": true,
+      "issues": [
+        {
+          "status": "ROLE_MISMATCH",
+          "field": "stimuli.vin.target_node",
+          "message": "Stimulus target Vout is not a declared input-role node; allowed input nodes: ['Vin']"
+        },
+        {
+          "status": "MISSING_REQUIRED_METRIC",
+          "field": "measurements",
+          "message": "Missing requested metrics: lowpass_attenuation_db, lowpass_monotonicity_percent"
+        },
+        {
+          "status": "EXTRA_UNREQUESTED_METRIC",
+          "field": "measurements",
+          "message": "Unexpected metrics: cutoff_frequency_hz"
+        }
+      ]
+    },
+    {
+      "fault": "wrong_analysis",
+      "expected_any_status": [
+        "ANALYSIS_MISMATCH"
+      ],
+      "primary_status": "MISSING_REQUIRED_METRIC",
+      "all_statuses": [
+        "ANALYSIS_MISMATCH",
+        "EXTRA_UNREQUESTED_METRIC",
+        "MISSING_REQUIRED_METRIC"
+      ],
+      "detected": true,
+      "issues": [
+        {
+          "status": "MISSING_REQUIRED_METRIC",
+          "field": "measurements",
+          "message": "Missing requested metrics: lowpass_attenuation_db, lowpass_monotonicity_percent"
+        },
+        {
+          "status": "EXTRA_UNREQUESTED_METRIC",
+          "field": "measurements",
+          "message": "Unexpected metrics: cutoff_frequency_hz"
+        },
+        {
+          "status": "ANALYSIS_MISMATCH",
+          "field": "measurements.cutoff_frequency_hz.analysis_type",
+          "message": "Measurement analysis TRAN does not match the executable plan analysis AC"
+        },
+        {
+          "status": "ANALYSIS_MISMATCH",
+          "field": "measurements.cutoff_frequency_hz.analysis_type",
+          "message": "Metric cutoff_frequency_hz is incompatible with TRAN"
+        }
+      ]
+    },
+    {
+      "fault": "wrong_unit",
+      "expected_any_status": [
+        "UNIT_MISMATCH"
+      ],
+      "primary_status": "MISSING_REQUIRED_METRIC",
+      "all_statuses": [
+        "EXTRA_UNREQUESTED_METRIC",
+        "MISSING_REQUIRED_METRIC",
+        "UNIT_MISMATCH"
+      ],
+      "detected": true,
+      "issues": [
+        {
+          "status": "MISSING_REQUIRED_METRIC",
+          "field": "measurements",
+          "message": "Missing requested metrics: lowpass_attenuation_db, lowpass_monotonicity_percent"
+        },
+        {
+          "status": "EXTRA_UNREQUESTED_METRIC",
+          "field": "measurements",
+          "message": "Unexpected metrics: cutoff_frequency_hz"
+        },
+        {
+          "status": "UNIT_MISMATCH",
+          "field": "measurements.cutoff_frequency_hz.expected_unit",
+          "message": "Expected unit Hz, got V"
+        }
+      ]
+    },
+    {
+      "fault": "invalid_measure_backend",
+      "expected_any_status": [
+        "UNSUPPORTED_BACKEND"
+      ],
+      "primary_status": "MISSING_REQUIRED_METRIC",
+      "all_statuses": [
+        "EXTRA_UNREQUESTED_METRIC",
+        "MISSING_REQUIRED_METRIC",
+        "UNSUPPORTED_BACKEND"
+      ],
+      "detected": true,
+      "issues": [
+        {
+          "status": "MISSING_REQUIRED_METRIC",
+          "field": "measurements",
+          "message": "Missing requested metrics: lowpass_attenuation_db, lowpass_monotonicity_percent"
+        },
+        {
+          "status": "EXTRA_UNREQUESTED_METRIC",
+          "field": "measurements",
+          "message": "Unexpected metrics: cutoff_frequency_hz"
+        },
+        {
+          "status": "UNSUPPORTED_BACKEND",
+          "field": "measurements.cutoff_frequency_hz.backend_preference",
+          "message": "Metric cutoff_frequency_hz prefers NGSPICE_WRDATA, got NGSPICE_MEASURE"
+        }
+      ]
+    },
+    {
+      "fault": "verdict_leakage",
+      "expected_any_status": [
+        "VERDICT_LEAKAGE"
+      ],
+      "primary_status": "MISSING_REQUIRED_METRIC",
+      "all_statuses": [
+        "EXTRA_UNREQUESTED_METRIC",
+        "MISSING_REQUIRED_METRIC",
+        "VERDICT_LEAKAGE"
+      ],
+      "detected": true,
+      "issues": [
+        {
+          "status": "MISSING_REQUIRED_METRIC",
+          "field": "measurements",
+          "message": "Missing requested metrics: lowpass_attenuation_db, lowpass_monotonicity_percent"
+        },
+        {
+          "status": "EXTRA_UNREQUESTED_METRIC",
+          "field": "measurements",
+          "message": "Unexpected metrics: cutoff_frequency_hz"
+        },
+        {
+          "status": "VERDICT_LEAKAGE",
+          "field": "concise_rationale",
+          "message": "Verdict leakage token(s): PASS"
+        }
+      ]
+    },
+    {
+      "fault": "missing_measurement",
+      "expected_any_status": [
+        "SCHEMA_ERROR"
+      ],
+      "primary_status": "SCHEMA_ERROR",
+      "all_statuses": [
+        "SCHEMA_ERROR"
+      ],
+      "detected": true,
+      "issues": [
+        {
+          "status": "SCHEMA_ERROR",
+          "field": "measurements",
+          "message": "Value error, measurements must not be empty"
+        }
+      ]
+    },
+    {
+      "fault": "threshold_override_attempt",
+      "expected_any_status": [
+        "SCHEMA_ERROR"
+      ],
+      "primary_status": "SCHEMA_ERROR",
+      "all_statuses": [
+        "SCHEMA_ERROR"
+      ],
+      "detected": true,
+      "issues": [
+        {
+          "status": "SCHEMA_ERROR",
+          "field": "threshold_override",
+          "message": "Extra inputs are not permitted"
+        }
+      ]
+    },
+    {
+      "fault": "nonexistent_source",
+      "expected_any_status": [
+        "ANALYSIS_MISMATCH",
+        "INVALID_STIMULUS"
+      ],
+      "primary_status": "MISSING_REQUIRED_METRIC",
+      "all_statuses": [
+        "ANALYSIS_MISMATCH",
+        "EXTRA_UNREQUESTED_METRIC",
+        "INVALID_STIMULUS",
+        "MISSING_REQUIRED_METRIC"
+      ],
+      "detected": true,
+      "issues": [
+        {
+          "status": "MISSING_REQUIRED_METRIC",
+          "field": "measurements",
+          "message": "Missing requested metrics: lowpass_attenuation_db, lowpass_monotonicity_percent"
+        },
+        {
+          "status": "EXTRA_UNREQUESTED_METRIC",
+          "field": "measurements",
+          "message": "Unexpected metrics: cutoff_frequency_hz"
+        },
+        {
+          "status": "ANALYSIS_MISMATCH",
+          "field": "measurements.cutoff_frequency_hz.analysis_type",
+          "message": "Metric cutoff_frequency_hz is incompatible with DC"
+        },
+        {
+          "status": "INVALID_STIMULUS",
+          "field": "simulation_parameters.dc_source",
+          "message": "Unknown DC sweep source: VDOESNOTEXIST"
+        }
+      ]
+    }
+  ]
+}

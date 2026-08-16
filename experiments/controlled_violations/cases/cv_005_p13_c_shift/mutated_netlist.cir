@@ -1,0 +1,14 @@
+* Canonical DUT generated from benchmark/analogcoder_pro/p13_bandstop.cir
+* Embedded analyses and output directives were externalized into metadata.
+* AnalogCoder-Pro p13: a passive band-stop filter
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p13\p13.py
+* AnalogCoder-Pro type: BandStop
+* Inputs: Vin
+* Outputs: Vout
+* original signal source: Vin Vin 0 1
+Vin Vin 0 0
+R1 Vin Vout 1k
+L1 Vout N1 10m
+C1 N1 0 1
+* original analysis: .AC DEC 100 1 1G
+.END

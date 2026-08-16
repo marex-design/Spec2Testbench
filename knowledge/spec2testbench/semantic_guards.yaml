@@ -1,0 +1,354 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: guards
+entries:
+- guard_id: input_vector_finite
+  metric_name: absolute_input_dbv
+  description: Scientific guard input_vector_finite is required for absolute_input_dbv.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: output_vector_finite
+  metric_name: absolute_output_dbv
+  description: Scientific guard output_vector_finite is required for absolute_output_dbv.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_ac_sweep
+  metric_name: bandwidth
+  description: Scientific guard requires_ac_sweep is required for bandwidth.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_ac_sweep
+  metric_name: cutoff_frequency_hz
+  description: Scientific guard requires_ac_sweep is required for cutoff_frequency_hz.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: ac_input_exists
+  metric_name: dc_gain
+  description: Scientific guard ac_input_exists is required for dc_gain.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: ac_input_nonzero
+  metric_name: dc_gain
+  description: Scientific guard ac_input_nonzero is required for dc_gain.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: complex_transfer_ratio_valid
+  metric_name: dc_gain
+  description: Scientific guard complex_transfer_ratio_valid is required for dc_gain.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: input_output_vectors_finite
+  metric_name: dc_gain
+  description: Scientific guard input_output_vectors_finite is required for dc_gain.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: ac_input_exists
+  metric_name: dc_gain_db
+  description: Scientific guard ac_input_exists is required for dc_gain_db.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: ac_input_nonzero
+  metric_name: dc_gain_db
+  description: Scientific guard ac_input_nonzero is required for dc_gain_db.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: complex_transfer_ratio_valid
+  metric_name: dc_gain_db
+  description: Scientific guard complex_transfer_ratio_valid is required for dc_gain_db.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: input_output_vectors_finite
+  metric_name: dc_gain_db
+  description: Scientific guard input_output_vectors_finite is required for dc_gain_db.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_valid_oscillation
+  metric_name: frequency_hz
+  description: Scientific guard requires_valid_oscillation is required for frequency_hz.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_input_and_output_waveforms
+  metric_name: hysteresis_width
+  description: Scientific guard requires_input_and_output_waveforms is required for hysteresis_width.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_valid_oscillation
+  metric_name: oscillator_frequency
+  description: Scientific guard requires_valid_oscillation is required for oscillator_frequency.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_ac_sweep
+  metric_name: phase_margin
+  description: Scientific guard requires_ac_sweep is required for phase_margin.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_input_and_output_waveforms
+  metric_name: propagation_delay
+  description: Scientific guard requires_input_and_output_waveforms is required for propagation_delay.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_input_and_output_waveforms
+  metric_name: propagation_delay_s
+  description: Scientific guard requires_input_and_output_waveforms is required for propagation_delay_s.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_output_waveform
+  metric_name: settling_time
+  description: Scientific guard requires_output_waveform is required for settling_time.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_output_waveform
+  metric_name: slew_rate
+  description: Scientific guard requires_output_waveform is required for slew_rate.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_output_waveform
+  metric_name: startup_amplitude
+  description: Scientific guard requires_output_waveform is required for startup_amplitude.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_output_waveform
+  metric_name: thd
+  description: Scientific guard requires_output_waveform is required for thd.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_output_waveform
+  metric_name: thd_percent
+  description: Scientific guard requires_output_waveform is required for thd_percent.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: ac_input_exists
+  metric_name: transfer_magnitude_linear
+  description: Scientific guard ac_input_exists is required for transfer_magnitude_linear.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: ac_input_nonzero
+  metric_name: transfer_magnitude_linear
+  description: Scientific guard ac_input_nonzero is required for transfer_magnitude_linear.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: complex_transfer_ratio_valid
+  metric_name: transfer_magnitude_linear
+  description: Scientific guard complex_transfer_ratio_valid is required for transfer_magnitude_linear.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: input_output_vectors_finite
+  metric_name: transfer_magnitude_linear
+  description: Scientific guard input_output_vectors_finite is required for transfer_magnitude_linear.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: ac_input_exists
+  metric_name: transfer_phase_deg
+  description: Scientific guard ac_input_exists is required for transfer_phase_deg.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: ac_input_nonzero
+  metric_name: transfer_phase_deg
+  description: Scientific guard ac_input_nonzero is required for transfer_phase_deg.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: complex_transfer_ratio_valid
+  metric_name: transfer_phase_deg
+  description: Scientific guard complex_transfer_ratio_valid is required for transfer_phase_deg.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: input_output_vectors_finite
+  metric_name: transfer_phase_deg
+  description: Scientific guard input_output_vectors_finite is required for transfer_phase_deg.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_ac_sweep
+  metric_name: ugbw
+  description: Scientific guard requires_ac_sweep is required for ugbw.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_ac_sweep
+  metric_name: unity_gain_frequency
+  description: Scientific guard requires_ac_sweep is required for unity_gain_frequency.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_input_and_output_waveforms
+  metric_name: v_t_minus
+  description: Scientific guard requires_input_and_output_waveforms is required for v_t_minus.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit
+- guard_id: requires_input_and_output_waveforms
+  metric_name: v_t_plus
+  description: Scientific guard requires_input_and_output_waveforms is required for v_t_plus.
+  enforced_by:
+  - spec2testbench/infrastructure/simulator/result_backends.py
+  - spec2testbench/infrastructure/simulator/pyspice_simulator.py
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  positive_tests:
+  - test_semantic_guard_rejection_is_not_parser_failure
+  - test_stub_physical_absence_is_explicit

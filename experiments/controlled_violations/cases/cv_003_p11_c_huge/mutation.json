@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_003_p11_c_huge",
+  "parent_circuit_id": "p11_highpass",
+  "mutation_type": "frequency_bandwidth",
+  "target_component": "C1",
+  "target_metric": "cutoff_frequency_hz",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "C1 Vin Vout 10n",
+  "line_after": "C1 Vin Vout 1",
+  "rationale": "High-pass corner moves far below the accepted band.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "7f167212fb021b084e56c93e62e9008b7d1d6c4a159daba63070cd94c29853fd",
+  "mutated_sha256": "2e1712dffb3cc5a4d5cb68012d4d0c0c707b6b83bdffa3f36450071be9f36b18",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p11_highpass.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_003_p11_c_huge/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_003_p11_c_huge/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

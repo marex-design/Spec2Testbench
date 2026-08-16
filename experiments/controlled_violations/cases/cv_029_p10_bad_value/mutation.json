@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_029_p10_bad_value",
+  "parent_circuit_id": "p10_lowpass",
+  "mutation_type": "non_simulable",
+  "target_component": "C1",
+  "target_metric": "cutoff_frequency_hz",
+  "ground_truth_label": "GROUND_TRUTH_NON_SIMULABLE",
+  "line_before": "C1 Vout 0 10n",
+  "line_after": "C1 Vout 0 BAD_VALUE",
+  "rationale": "An invalid numeric value must cause a simulator/parser error.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "ca85e90bea89d974035d3d52fb12f7f645ae68b585362fcc81e1b5e668ea817a",
+  "mutated_sha256": "e49adb8d24ceca42f1e630b6ba6c18817e8ed1680a45142d27b368d6d1ee99cf",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p10_lowpass.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_029_p10_bad_value/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_029_p10_bad_value/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

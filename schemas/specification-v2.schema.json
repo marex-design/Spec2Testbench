@@ -1,0 +1,750 @@
+{
+  "$defs": {
+    "AnalysisSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "OP",
+            "DC",
+            "AC",
+            "TRAN",
+            "FFT"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": true,
+          "title": "Parameters",
+          "type": "object"
+        },
+        "purpose": {
+          "title": "Purpose",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "purpose"
+      ],
+      "title": "AnalysisSpec",
+      "type": "object"
+    },
+    "DutProvenance": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "sha256": {
+          "maxLength": 64,
+          "minLength": 64,
+          "pattern": "^[0-9a-fA-F]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "canonicalization": {
+          "title": "Canonicalization",
+          "type": "string"
+        },
+        "topology_and_values_preserved": {
+          "default": true,
+          "title": "Topology And Values Preserved",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path",
+        "sha256",
+        "canonicalization"
+      ],
+      "title": "DutProvenance",
+      "type": "object"
+    },
+    "FunctionalRequirement": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "metric": {
+          "title": "Metric",
+          "type": "string"
+        },
+        "analysis": {
+          "title": "Analysis",
+          "type": "string"
+        },
+        "operator": {
+          "enum": [
+            ">",
+            ">=",
+            "<",
+            "<=",
+            "==",
+            "between"
+          ],
+          "title": "Operator",
+          "type": "string"
+        },
+        "threshold": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Threshold"
+        },
+        "minimum": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Minimum"
+        },
+        "maximum": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        },
+        "mandatory": {
+          "default": true,
+          "title": "Mandatory",
+          "type": "boolean"
+        },
+        "criterion_source": {
+          "enum": [
+            "official_checker",
+            "task_description",
+            "derived_semantic"
+          ],
+          "title": "Criterion Source",
+          "type": "string"
+        },
+        "equivalence": {
+          "enum": [
+            "exact",
+            "semantic",
+            "partial",
+            "diagnostic"
+          ],
+          "title": "Equivalence",
+          "type": "string"
+        },
+        "implementation_status": {
+          "enum": [
+            "executable",
+            "metadata_only"
+          ],
+          "title": "Implementation Status",
+          "type": "string"
+        },
+        "executable_metric": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Executable Metric"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "required": [
+        "id",
+        "description",
+        "metric",
+        "analysis",
+        "operator",
+        "unit",
+        "criterion_source",
+        "equivalence",
+        "implementation_status"
+      ],
+      "title": "FunctionalRequirement",
+      "type": "object"
+    },
+    "MeasurementPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "backend": {
+          "default": "AUTO",
+          "enum": [
+            "AUTO",
+            "NGSPICE_MEASURE",
+            "NGSPICE_WRDATA"
+          ],
+          "title": "Backend",
+          "type": "string"
+        },
+        "allow_fallback": {
+          "default": true,
+          "title": "Allow Fallback",
+          "type": "boolean"
+        }
+      },
+      "title": "MeasurementPolicy",
+      "type": "object"
+    },
+    "MetricTarget": {
+      "additionalProperties": false,
+      "properties": {
+        "min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        },
+        "typ": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Typ"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        },
+        "diagnostic_only": {
+          "default": false,
+          "title": "Diagnostic Only",
+          "type": "boolean"
+        },
+        "requirement_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Requirement Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "unit"
+      ],
+      "title": "MetricTarget",
+      "type": "object"
+    },
+    "OperatingConditions": {
+      "additionalProperties": false,
+      "properties": {
+        "nominal_temperature": {
+          "default": 27.0,
+          "title": "Nominal Temperature",
+          "type": "number"
+        },
+        "nominal_supply": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Nominal Supply"
+        },
+        "process_corner": {
+          "default": "tt",
+          "title": "Process Corner",
+          "type": "string"
+        }
+      },
+      "title": "OperatingConditions",
+      "type": "object"
+    },
+    "Ports": {
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Input",
+          "type": "array"
+        },
+        "output": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Output",
+          "type": "array"
+        },
+        "differential_positive": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Differential Positive",
+          "type": "array"
+        },
+        "differential_negative": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Differential Negative",
+          "type": "array"
+        },
+        "common_mode": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Common Mode",
+          "type": "array"
+        },
+        "supply_positive": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supply Positive",
+          "type": "array"
+        },
+        "supply_negative": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supply Negative",
+          "type": "array"
+        },
+        "bias": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Bias",
+          "type": "array"
+        },
+        "reference": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reference",
+          "type": "array"
+        },
+        "loop_break": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Loop Break",
+          "type": "array"
+        },
+        "loop_injection": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Loop Injection",
+          "type": "array"
+        },
+        "current_probe": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Current Probe",
+          "type": "array"
+        }
+      },
+      "title": "Ports",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "properties": {
+        "benchmark": {
+          "title": "Benchmark",
+          "type": "string"
+        },
+        "benchmark_subset": {
+          "title": "Benchmark Subset",
+          "type": "string"
+        },
+        "upstream_repository": {
+          "title": "Upstream Repository",
+          "type": "string"
+        },
+        "upstream_task_id": {
+          "minimum": 1,
+          "title": "Upstream Task Id",
+          "type": "integer"
+        },
+        "upstream_level": {
+          "title": "Upstream Level",
+          "type": "string"
+        },
+        "upstream_type": {
+          "title": "Upstream Type",
+          "type": "string"
+        },
+        "upstream_submodule_name": {
+          "title": "Upstream Submodule Name",
+          "type": "string"
+        },
+        "upstream_task_description": {
+          "title": "Upstream Task Description",
+          "type": "string"
+        },
+        "upstream_testbench_description": {
+          "title": "Upstream Testbench Description",
+          "type": "string"
+        },
+        "official_checker": {
+          "$ref": "#/$defs/UpstreamChecker"
+        },
+        "dut": {
+          "$ref": "#/$defs/DutProvenance"
+        }
+      },
+      "required": [
+        "benchmark",
+        "benchmark_subset",
+        "upstream_repository",
+        "upstream_task_id",
+        "upstream_level",
+        "upstream_type",
+        "upstream_submodule_name",
+        "upstream_task_description",
+        "upstream_testbench_description",
+        "official_checker",
+        "dut"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "StimulusSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "DC",
+            "AC",
+            "PULSE",
+            "SIN",
+            "PWL",
+            "TRIANGLE",
+            "NONE"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "source": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source"
+        },
+        "node_positive": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Node Positive"
+        },
+        "node_negative": {
+          "default": "0",
+          "title": "Node Negative",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": true,
+          "title": "Parameters",
+          "type": "object"
+        },
+        "purpose": {
+          "title": "Purpose",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "purpose"
+      ],
+      "title": "StimulusSpec",
+      "type": "object"
+    },
+    "UpstreamChecker": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "criterion_summary": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Criterion Summary",
+          "type": "array"
+        },
+        "upstream_mutates_dut": {
+          "default": false,
+          "title": "Upstream Mutates Dut",
+          "type": "boolean"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Notes"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "UpstreamChecker",
+      "type": "object"
+    },
+    "VerificationPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "auto_select": {
+          "default": true,
+          "title": "Auto Select",
+          "type": "boolean"
+        },
+        "include_tests": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Include Tests",
+          "type": "array"
+        },
+        "exclude_tests": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclude Tests",
+          "type": "array"
+        },
+        "required_policy": {
+          "default": "all",
+          "enum": [
+            "all",
+            "any"
+          ],
+          "title": "Required Policy",
+          "type": "string"
+        },
+        "immutable_dut": {
+          "default": true,
+          "title": "Immutable Dut",
+          "type": "boolean"
+        },
+        "not_evaluated_on_missing_mandatory_metric": {
+          "default": true,
+          "title": "Not Evaluated On Missing Mandatory Metric",
+          "type": "boolean"
+        },
+        "require_full_contract_for_compliance": {
+          "default": true,
+          "title": "Require Full Contract For Compliance",
+          "type": "boolean"
+        }
+      },
+      "title": "VerificationPolicy",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "2.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "case_id": {
+      "title": "Case Id",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "circuit_type": {
+      "title": "Circuit Type",
+      "type": "string"
+    },
+    "technology": {
+      "title": "Technology",
+      "type": "string"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "ports": {
+      "$ref": "#/$defs/Ports"
+    },
+    "operating_conditions": {
+      "$ref": "#/$defs/OperatingConditions"
+    },
+    "stimuli": {
+      "items": {
+        "$ref": "#/$defs/StimulusSpec"
+      },
+      "title": "Stimuli",
+      "type": "array"
+    },
+    "analyses": {
+      "items": {
+        "$ref": "#/$defs/AnalysisSpec"
+      },
+      "title": "Analyses",
+      "type": "array"
+    },
+    "functional_requirements": {
+      "items": {
+        "$ref": "#/$defs/FunctionalRequirement"
+      },
+      "title": "Functional Requirements",
+      "type": "array"
+    },
+    "performance_targets": {
+      "additionalProperties": {
+        "$ref": "#/$defs/MetricTarget"
+      },
+      "title": "Performance Targets",
+      "type": "object"
+    },
+    "input_conditions": {
+      "additionalProperties": true,
+      "title": "Input Conditions",
+      "type": "object"
+    },
+    "measurement": {
+      "$ref": "#/$defs/MeasurementPolicy"
+    },
+    "verification": {
+      "$ref": "#/$defs/VerificationPolicy"
+    },
+    "test_requirements": {
+      "additionalProperties": true,
+      "title": "Test Requirements",
+      "type": "object"
+    },
+    "test_categories": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Test Categories",
+      "type": "array"
+    },
+    "pvt_config": {
+      "additionalProperties": true,
+      "title": "Pvt Config",
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "case_id",
+    "name",
+    "circuit_type",
+    "technology",
+    "description",
+    "provenance",
+    "ports",
+    "operating_conditions",
+    "stimuli",
+    "analyses",
+    "functional_requirements",
+    "performance_targets",
+    "input_conditions",
+    "measurement",
+    "verification",
+    "test_categories"
+  ],
+  "title": "ACPYamlV2",
+  "type": "object"
+}

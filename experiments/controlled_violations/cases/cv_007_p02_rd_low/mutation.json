@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_007_p02_rd_low",
+  "parent_circuit_id": "p02_amplifier",
+  "mutation_type": "gain",
+  "target_component": "R3",
+  "target_metric": "dc_gain_db",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "R3 Vout Vdd 10000",
+  "line_after": "R3 Vout Vdd 1",
+  "rationale": "Drain load collapse suppresses voltage gain.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "d66021b2a6a52b805becfbff61f5ce15c0fa3141354eaea8d943caaed9b66e3e",
+  "mutated_sha256": "1caaeb2bd74e95b1ecf14ca31c6d74f7c2a7c5be379aee13316b55a5c3d3a14d",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p02_amplifier.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_007_p02_rd_low/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_007_p02_rd_low/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

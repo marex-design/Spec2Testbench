@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_015_p24_c_large",
+  "parent_circuit_id": "p24_integrator",
+  "mutation_type": "timing",
+  "target_component": "Cf",
+  "target_metric": "settling_time",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Cf Vout Vinn 100n",
+  "line_after": "Cf Vout Vinn 1",
+  "rationale": "Integration time constant is increased by seven orders of magnitude.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "675f9c3cd053d69dc5f5c6aa4072d7ab5002f08e2f4439c553ba96acb8bc17ee",
+  "mutated_sha256": "d5cd791fc51ec2347ea54358cd40278daf554110196d002acc06dd7029995bae",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p24_integrator.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_015_p24_c_large/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_015_p24_c_large/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

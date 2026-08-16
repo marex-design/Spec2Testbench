@@ -1,0 +1,51 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: NGSPICE_WINDOWS_CONSOLE_EXECUTABLE_SUPPORTED
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: windows
+  title: Windows console ngspice executable is supported
+  description: The installed Windows console executable ngspice_con.exe is a validated execution target for the canonical and stub paths.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    evidence:
+    - NGSPICE_VERSION_OUTPUT
+  forbids:
+  - GUI_ONLY_NGSPICE_REQUIREMENT
+  source:
+    source_type: NGSPICE_INSTALLED_MICROTEST
+    document_path: results/knowledge_stub_v1/ngspice_environment.json
+    section: null
+    page: null
+  dialect_scope:
+  - NGSPICE_INSTALLED
+  - WINDOWS
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: false
+    compiler_enforced: false
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_NGSPICE_INSTALLED
+    positive_test_ids:
+    - MT_NGSPICE_VERSION_AVAILABLE
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: true
+  project_enforced: true

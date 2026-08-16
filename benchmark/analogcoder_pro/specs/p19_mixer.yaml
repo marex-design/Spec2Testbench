@@ -1,0 +1,194 @@
+schema_version: '2.0'
+case_id: acp28-p19
+name: analogcoder_pro_p19_mixer
+circuit_type: mixer
+technology: AnalogCoder-Pro generic Level-1 benchmark models
+description: A Gilbert cell mixer to make Voutp - Voutn ∝ (Vrfp - Vrfn) × (Vlop - Vlon)
+provenance:
+  benchmark: AnalogCoder-Pro
+  benchmark_subset: ACP-28
+  upstream_repository: https://github.com/laiyao1/AnalogCoderPro
+  upstream_task_id: 19
+  upstream_level: Hard
+  upstream_type: Mixer
+  upstream_submodule_name: Unknown
+  upstream_task_description: A Gilbert cell mixer to make Voutp - Voutn ∝ (Vrfp - Vrfn) × (Vlop - Vlon)
+  upstream_testbench_description: 'The testbench provides two sets of differential input signals to the Gilbert
+    Cell mixer: 1.2kHz LO signals (Vlop-Vlon) and 1kHz RF signals (Vrfp-Vrfn).'
+  official_checker:
+    path: problem_check/Mixer.py
+    criterion_summary:
+    - A 200 Hz down-conversion product must exceed 1 mV.
+    - A 2.2 kHz up-conversion product must exceed 1 mV.
+    upstream_mutates_dut: false
+    notes: Checker semantics summarized from the pinned upstream repository; source code is not vendored.
+  dut:
+    path: benchmark/analogcoder_pro/p19_mixer.cir
+    sha256: 1b862535fc210f950c7ab8dd9035c318b07b2fe22db54c4f6ff9998058ef1ba7
+    canonicalization: Embedded analyses/output directives externalized; generated topology and device/component
+      values preserved.
+    topology_and_values_preserved: true
+ports:
+  input: &id001
+  - Vrfp
+  - Vrfn
+  - Vlop
+  - Vlon
+  output: &id002
+  - Voutp
+  - Voutn
+  differential_positive:
+  - Vrfp
+  - Vlop
+  differential_negative:
+  - Vrfn
+  - Vlon
+  common_mode: []
+  supply_positive:
+  - Vdd
+  supply_negative:
+  - '0'
+  bias: []
+  reference: []
+  loop_break: []
+  loop_injection: []
+  current_probe: []
+operating_conditions:
+  nominal_temperature: 25.0
+  nominal_supply: 5.0
+  process_corner: tt
+stimuli:
+- id: rfp
+  kind: SIN
+  source: Vrfp
+  node_positive: Vrfp
+  node_negative: '0'
+  parameters:
+    offset: 2.0
+    amplitude: 0.1
+    frequency: 1000.0
+  purpose: RF+
+- id: rfn
+  kind: SIN
+  source: Vrfn
+  node_positive: Vrfn
+  node_negative: '0'
+  parameters:
+    offset: 2.0
+    amplitude: 0.1
+    frequency: 1000.0
+    phase_deg: 180
+  purpose: RF-
+- id: lop
+  kind: SIN
+  source: Vlop
+  node_positive: Vlop
+  node_negative: '0'
+  parameters:
+    amplitude: 0.1
+    frequency: 1200.0
+  purpose: LO+
+- id: lon
+  kind: SIN
+  source: Vlon
+  node_positive: Vlon
+  node_negative: '0'
+  parameters:
+    amplitude: 0.1
+    frequency: 1200.0
+    phase_deg: 180
+  purpose: LO-
+analyses:
+- id: dc_bias
+  type: DC
+  parameters:
+    source: Vlop
+    start: 0.0
+    stop: 5.0
+    step: 0.1
+  purpose: Find LO bias near mid-supply output.
+- id: tran_mix
+  type: TRAN
+  parameters:
+    step_time: 4.1666666666666665e-05
+    end_time: 0.02
+    start_time: 0
+  purpose: Observe RF/LO mixing products.
+- id: fft_mix
+  type: FFT
+  parameters:
+    rf_hz: 1000.0
+    lo_hz: 1200.0
+  purpose: Detect 200 Hz and 2.2 kHz mixing products.
+functional_requirements:
+- id: ACP_MIX_IF_DOWN
+  description: A 200 Hz down-conversion product must exceed 1 mV.
+  metric: mixer_if_down_magnitude_v
+  analysis: fft_mix
+  operator: '>'
+  threshold: 0.001
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: metadata_only
+  executable_metric: null
+  notes: null
+- id: ACP_MIX_IF_UP
+  description: A 2.2 kHz up-conversion product must exceed 1 mV.
+  metric: mixer_if_up_magnitude_v
+  analysis: fft_mix
+  operator: '>'
+  threshold: 0.001
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: metadata_only
+  executable_metric: null
+  notes: null
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+    diagnostic_only: true
+    requirement_ids: []
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: *id001
+  output_nodes: *id002
+  temperature: 25.0
+  original_source_dc_values:
+    vrfp: 2.5
+    vrfn: 2.5
+    vlop: 3.0
+    vlon: 2.0
+measurement:
+  backend: AUTO
+  allow_fallback: true
+verification:
+  auto_select: true
+  include_tests: []
+  exclude_tests: []
+  required_policy: all
+  immutable_dut: true
+  not_evaluated_on_missing_mandatory_metric: true
+  require_full_contract_for_compliance: true
+test_requirements:
+  dc_sweep_step_v: 0.01
+test_categories:
+- dc
+- transient
+- spectral
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.0

@@ -1,0 +1,14 @@
+{
+  "case_id": "cv_003_p11_c_huge",
+  "parent_circuit_id": "p11_highpass",
+  "manual_deck": "decks/cv_003_p11_c_huge_manual.ckt",
+  "independent_reference": {
+    "method": "analytical_first_order_rc",
+    "R_ohm": 10000.0,
+    "C_farad": 1.0,
+    "expected_cutoff_frequency_hz": 1.5915494309189534e-05
+  },
+  "expected_ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "expected_manual_verdict": "FAIL",
+  "uses_spec2testbench_verdict": false
+}

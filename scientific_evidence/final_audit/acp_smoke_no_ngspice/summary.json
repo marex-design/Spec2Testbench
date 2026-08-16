@@ -1,0 +1,78 @@
+{
+  "circuits_total": 1,
+  "simulation_success": 0,
+  "evaluated": 0,
+  "compliant": 0,
+  "noncompliant": 0,
+  "not_evaluated": 1,
+  "contract_complete": 0,
+  "contract_incomplete": 1,
+  "simulation_success_rate": 0.0,
+  "evaluation_rate": 0.0,
+  "compliance_rate_evaluated": 0.0,
+  "noncompliance_rate_evaluated": 0.0,
+  "verified_compliance_yield": 0.0,
+  "failure_to_evaluate_rate": 1.0,
+  "contract_completion_rate": 0.0,
+  "benchmark": "AnalogCoder-Pro",
+  "subset": "ACP-28",
+  "strict_contract": true,
+  "definition": {
+    "simulation_success_rate": "simulation_success / circuits_total",
+    "evaluation_rate": "(compliant + noncompliant) / circuits_total",
+    "compliance_rate_evaluated": "compliant / evaluated",
+    "noncompliance_rate_evaluated": "noncompliant / evaluated",
+    "verified_compliance_yield": "compliant / circuits_total",
+    "failure_to_evaluate_rate": "not_evaluated / circuits_total",
+    "pass_rule": "PASS only when every mandatory ACP contract criterion is evaluated and passes",
+    "fail_rule": "FAIL as soon as at least one mandatory ACP contract criterion is evaluated and fails",
+    "not_evaluated_rule": "No demonstrated failure, but at least one mandatory criterion lacks valid evidence"
+  },
+  "contract_criteria": {
+    "mandatory_total": 2,
+    "implemented": 1,
+    "evaluated": 0,
+    "passed": 0,
+    "failed": 0,
+    "implementation_coverage": 0.5,
+    "runtime_evidence_coverage": 0.0
+  },
+  "coverage": {
+    "Cov_circuits": 0.0,
+    "Cov_metrics": 0.0,
+    "Cov_analyses": 0.0,
+    "circuits_total": 1,
+    "circuits_with_runtime_evidence": 0,
+    "mandatory_metrics_total": 2,
+    "mandatory_metrics_evaluated": 0,
+    "analysis_types_requested": [
+      "AC_GAIN",
+      "OP_BIAS"
+    ],
+    "analysis_types_executed": []
+  },
+  "Cov_circuits": 0.0,
+  "Cov_metrics": 0.0,
+  "Cov_analyses": 0.0,
+  "by_type": {
+    "Amplifier": {
+      "circuits_total": 1,
+      "simulation_success": 0,
+      "evaluated": 0,
+      "compliant": 0,
+      "noncompliant": 0,
+      "not_evaluated": 1,
+      "contract_complete": 0,
+      "contract_incomplete": 1,
+      "simulation_success_rate": 0.0,
+      "evaluation_rate": 0.0,
+      "compliance_rate_evaluated": 0.0,
+      "noncompliance_rate_evaluated": 0.0,
+      "verified_compliance_yield": 0.0,
+      "failure_to_evaluate_rate": 1.0,
+      "contract_completion_rate": 0.0
+    }
+  },
+  "runs_file": "runs.csv",
+  "criteria_file": "criteria.csv"
+}

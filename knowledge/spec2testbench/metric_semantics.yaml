@@ -1,0 +1,144 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: metric_semantics
+entries:
+- metric_name: absolute_input_dbv
+  semantic_definition: Absolute input amplitude defined as 20*log10(abs(Vin)/1V).
+  expected_unit: dBV
+  measurement_expression_id: AC_ABSOLUTE_INPUT_DBV
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: absolute_output_dbv
+  semantic_definition: Absolute output amplitude defined as 20*log10(abs(Vout)/1V).
+  expected_unit: dBV
+  measurement_expression_id: AC_ABSOLUTE_OUTPUT_DBV
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: bandwidth
+  semantic_definition: Alias of the AC cutoff frequency for single-pole and comparable benchmark circuits.
+  expected_unit: Hz
+  measurement_expression_id: AC_CUTOFF_FREQUENCY_HZ
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: cutoff_frequency_hz
+  semantic_definition: Frequency where the output magnitude drops by 3 dB relative to the low-frequency gain.
+  expected_unit: Hz
+  measurement_expression_id: AC_CUTOFF_FREQUENCY_HZ
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: dc_gain
+  semantic_definition: Low-frequency voltage transfer gain defined as 20*log10(abs(Vout/Vin)).
+  expected_unit: dB
+  measurement_expression_id: AC_TRANSFER_GAIN_DB
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: dc_gain_db
+  semantic_definition: Low-frequency voltage transfer gain defined as 20*log10(abs(Vout/Vin)).
+  expected_unit: dB
+  measurement_expression_id: AC_TRANSFER_GAIN_DB
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: frequency_hz
+  semantic_definition: Oscillation frequency derived from a validated transient waveform.
+  expected_unit: Hz
+  measurement_expression_id: TRAN_OSCILLATOR_FREQUENCY
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: hysteresis_width
+  semantic_definition: Absolute difference between the rising and falling switching thresholds.
+  expected_unit: V
+  measurement_expression_id: TRAN_HYSTERESIS_WIDTH
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: idd
+  semantic_definition: Alias of the quiescent supply current.
+  expected_unit: A
+  measurement_expression_id: QUIESCENT_CURRENT
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: operating_point
+  semantic_definition: DC or operating-point output voltage at the observed output node.
+  expected_unit: V
+  measurement_expression_id: OPERATING_POINT_VOLTAGE
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: oscillator_frequency
+  semantic_definition: Alias of oscillator frequency derived from a validated transient waveform.
+  expected_unit: Hz
+  measurement_expression_id: TRAN_OSCILLATOR_FREQUENCY
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: phase_margin
+  semantic_definition: Phase margin measured near the unity-gain crossover.
+  expected_unit: deg
+  measurement_expression_id: AC_PHASE_MARGIN
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: power
+  semantic_definition: DC power inferred from supply voltage and supply current.
+  expected_unit: W
+  measurement_expression_id: POWER_FROM_SUPPLY_CURRENT
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: propagation_delay
+  semantic_definition: Delay between an input transition and the corresponding output threshold crossing.
+  expected_unit: s
+  measurement_expression_id: TRAN_PROPAGATION_DELAY
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: propagation_delay_s
+  semantic_definition: Alias of the propagation delay in seconds.
+  expected_unit: s
+  measurement_expression_id: TRAN_PROPAGATION_DELAY
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: quiescent_current
+  semantic_definition: Supply current measured at operating point.
+  expected_unit: A
+  measurement_expression_id: QUIESCENT_CURRENT
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: settling_time
+  semantic_definition: Time required for the output to stay within the specified band around its final value.
+  expected_unit: s
+  measurement_expression_id: TRAN_SETTLING_TIME
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: slew_rate
+  semantic_definition: Maximum absolute derivative of the output transient waveform.
+  expected_unit: V/s
+  measurement_expression_id: TRAN_SLEW_RATE
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: startup_amplitude
+  semantic_definition: Steady-state oscillation amplitude estimated from the transient waveform tail.
+  expected_unit: V
+  measurement_expression_id: TRAN_STARTUP_AMPLITUDE
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: thd
+  semantic_definition: Total harmonic distortion reported as a percentage.
+  expected_unit: '%'
+  measurement_expression_id: FOURIER_THD_PERCENT
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: thd_percent
+  semantic_definition: Alias of total harmonic distortion percentage.
+  expected_unit: '%'
+  measurement_expression_id: FOURIER_THD_PERCENT
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: transfer_magnitude_linear
+  semantic_definition: Low-frequency transfer magnitude defined as abs(Vout/Vin).
+  expected_unit: V/V
+  measurement_expression_id: AC_TRANSFER_MAGNITUDE_LINEAR
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: transfer_phase_deg
+  semantic_definition: Low-frequency transfer phase defined as angle(Vout/Vin) in degrees.
+  expected_unit: deg
+  measurement_expression_id: AC_TRANSFER_PHASE_DEG
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: ugbw
+  semantic_definition: Alias of the unity-gain frequency.
+  expected_unit: Hz
+  measurement_expression_id: AC_UNITY_GAIN_FREQUENCY
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: unity_gain_frequency
+  semantic_definition: Frequency where the magnitude of the transfer function reaches unity.
+  expected_unit: Hz
+  measurement_expression_id: AC_UNITY_GAIN_FREQUENCY
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: v_t_minus
+  semantic_definition: Input voltage at the falling output threshold crossing.
+  expected_unit: V
+  measurement_expression_id: TRAN_SWITCHING_THRESHOLD_FALLING
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: v_t_plus
+  semantic_definition: Input voltage at the rising output threshold crossing.
+  expected_unit: V
+  measurement_expression_id: TRAN_SWITCHING_THRESHOLD_RISING
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- metric_name: vout_dc
+  semantic_definition: Alias of the DC operating-point output voltage.
+  expected_unit: V
+  measurement_expression_id: OPERATING_POINT_VOLTAGE
+  verification_status: CONFIRMED_SPEC2TESTBENCH

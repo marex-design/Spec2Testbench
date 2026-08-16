@@ -1,0 +1,149 @@
+schema_version: '2.0'
+case_id: acp28-p28
+name: analogcoder_pro_p28_schmitt
+circuit_type: schmitt_trigger
+technology: AnalogCoder-Pro generic Level-1 benchmark models
+description: A non-inverting Schmitt trigger with positive feedback op-map
+provenance:
+  benchmark: AnalogCoder-Pro
+  benchmark_subset: ACP-28
+  upstream_repository: https://github.com/laiyao1/AnalogCoderPro
+  upstream_task_id: 28
+  upstream_level: Hard
+  upstream_type: Schmitt
+  upstream_submodule_name: Unknown
+  upstream_task_description: A non-inverting Schmitt trigger with positive feedback op-map
+  upstream_testbench_description: The testbench inputs a sine wave at Vin.
+  official_checker:
+    path: problem_check/Schmitt.py
+    criterion_summary:
+    - Hysteresis width must exceed 10 mV.
+    - Output swing must be at least 2.5 V.
+    upstream_mutates_dut: false
+    notes: Checker semantics summarized from the pinned upstream repository; source code is not vendored.
+  dut:
+    path: benchmark/analogcoder_pro/p28_schmitt.cir
+    sha256: 55c7766931947aeaed5dd87b069186706fe18adfe2d8e0d39b05a14157451346
+    canonicalization: Embedded analyses/output directives externalized; generated topology and device/component
+      values preserved.
+    topology_and_values_preserved: true
+ports:
+  input: &id001
+  - Vin
+  output: &id002
+  - Vout
+  differential_positive: []
+  differential_negative:
+  - Vin
+  common_mode: []
+  supply_positive:
+  - Vdd
+  supply_negative:
+  - '0'
+  bias: []
+  reference: []
+  loop_break: []
+  loop_injection: []
+  current_probe: []
+operating_conditions:
+  nominal_temperature: 25.0
+  nominal_supply: 5.0
+  process_corner: tt
+stimuli:
+- id: sine_input
+  kind: SIN
+  source: Vin
+  node_positive: Vin
+  node_negative: '0'
+  parameters:
+    offset: 2.5
+    amplitude: 0.8
+    frequency: 100.0
+  purpose: ACP Schmitt sine-wave excitation.
+analyses:
+- id: tran_hyst
+  type: TRAN
+  parameters:
+    step_time: 10u
+    end_time: 50m
+    start_time: 0
+  purpose: Extract rising and falling switching thresholds.
+functional_requirements:
+- id: ACP_SCH_HYST
+  description: Hysteresis width must exceed 10 mV.
+  metric: hysteresis_width
+  analysis: tran_hyst
+  operator: '>'
+  threshold: 0.01
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: executable
+  executable_metric: hysteresis_width
+  notes: null
+- id: ACP_SCH_SWING
+  description: Output swing must be at least 2.5 V.
+  metric: output_swing_v
+  analysis: tran_hyst
+  operator: '>='
+  threshold: 2.5
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: executable
+  executable_metric: output_swing_v
+  notes: null
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+    diagnostic_only: true
+    requirement_ids: []
+  hysteresis_width:
+    unit: V
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_SCH_HYST
+    min: 0.01
+  output_swing_v:
+    unit: V
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_SCH_SWING
+    min: 2.5
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.7
+  input_nodes: *id001
+  output_nodes: *id002
+  temperature: 25.0
+  original_source_dc_values:
+    vin: 2.7
+measurement:
+  backend: AUTO
+  allow_fallback: true
+verification:
+  auto_select: true
+  include_tests: []
+  exclude_tests: []
+  required_policy: all
+  immutable_dut: true
+  not_evaluated_on_missing_mandatory_metric: true
+  require_full_contract_for_compliance: true
+test_requirements:
+  dc_sweep_step_v: 0.01
+test_categories:
+- transient
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.0

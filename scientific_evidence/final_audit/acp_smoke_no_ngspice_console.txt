@@ -1,0 +1,22 @@
+
+Spec2Testbench - ACP-28 deterministic compliance
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━┓
+┃ Measure                   ┃ Value ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━┩
+│ Circuits                  │     1 │
+│ Simulation SUCCESS        │     0 │
+│ COMPLIANT                 │     0 │
+│ NONCOMPLIANT              │     0 │
+│ NOT_EVALUATED             │     1 │
+│ Evaluation rate           │ 0.00% │
+│ Compliance / evaluated    │ 0.00% │
+│ Verified Compliance Yield │ 0.00% │
+│ Cov_circuits              │ 0.00% │
+│ Cov_metrics               │ 0.00% │
+│ Cov_analyses              │ 0.00% │
+└───────────────────────────┴───────┘
+
+Results written to 
+/mnt/data/Spec2Testbench-v0.5.0-final-clean/scientific_evidence/final_audit/acp_
+smoke_no_ngspice

@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_011_p17_iref_low",
+  "parent_circuit_id": "p17_currentmirror",
+  "mutation_type": "dc_voltage_current",
+  "target_component": "Iref",
+  "target_metric": "quiescent_current",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Iref Vdd Iref 100u",
+  "line_after": "Iref Vdd Iref 1n",
+  "rationale": "Reference current is reduced by five orders of magnitude.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "82bb8a9f6a352dab12c2d503503bcff5cf7eceab22a2c0d2bf514e27ba0555f2",
+  "mutated_sha256": "f9df9a90d3d66ab164d958302004eb1da3867df44538484422441e01a7cc528c",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p17_currentmirror.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_011_p17_iref_low/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_011_p17_iref_low/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_023_p05_vdd_high",
+  "parent_circuit_id": "p05_amplifier",
+  "mutation_type": "power_consumption",
+  "target_component": "Vdd",
+  "target_metric": "power",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Vdd Vdd 0 5",
+  "line_after": "Vdd Vdd 0 50",
+  "rationale": "Supply is increased tenfold, invalidating the intended power/operating regime.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "568821107ca6b6f2f7f83cebdb2d25627c2f153839782cceda4021b003677246",
+  "mutated_sha256": "e20b1c3e8d49f4b914289c10e1a6803fa32ee764ada6e3d1c4680e86d377bb2b",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p05_amplifier.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_023_p05_vdd_high/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_023_p05_vdd_high/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

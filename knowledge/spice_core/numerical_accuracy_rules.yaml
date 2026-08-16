@@ -1,0 +1,53 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: MISSING_METRIC_IS_NOT_ZERO
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: numerical_accuracy
+  title: A missing metric is never coerced to zero
+  description: Missing or invalid metrics remain explicitly NOT_EVALUATED instead of being replaced by zero-valued placeholders.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends:
+    - NGSPICE_MEASURE
+    - NGSPICE_WRDATA
+  requires:
+    evidence:
+    - EXPLICIT_NOT_EVALUATED_PATH
+  forbids:
+  - SYNTHETIC_ZERO_FOR_MISSING_METRIC
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: reports/metric_coverage_reconciliation_v1/metric_coverage_audit.md
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: false
+    compiler_enforced: false
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_parse_measure_empty_file_is_not_a_zero
+    - test_stub_missing_metric_is_not_zero
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true

@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_010_p08_iref_low",
+  "parent_circuit_id": "p08_currentmirror",
+  "mutation_type": "dc_voltage_current",
+  "target_component": "Rload",
+  "target_metric": "quiescent_current",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Rload Vout Vdd 10000",
+  "line_after": "Rload Vout Vdd 1",
+  "rationale": "Severe output load mutation moves the mirror outside its intended load regime.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "bc5839799fe72854d9c8ece93fb24c4fecc20fba456979b41a1f0c8732d8e1c3",
+  "mutated_sha256": "f10f0b6151a7a01aadf6f4f721e8bb5cc6cbcbbc453a1d5281641789f995f301",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p08_currentmirror.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_010_p08_iref_low/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_010_p08_iref_low/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

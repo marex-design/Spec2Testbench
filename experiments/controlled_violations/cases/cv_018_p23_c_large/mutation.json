@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_018_p23_c_large",
+  "parent_circuit_id": "p23_oscillator",
+  "mutation_type": "amplitude_oscillation",
+  "target_component": "C1",
+  "target_metric": "oscillator_frequency",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "C1 N1 N2 10n",
+  "line_after": "C1 N1 N2 1",
+  "rationale": "Ring/RC timing is shifted by orders of magnitude.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "082b6d4cbfbe3bc22e88a18026225d3e45eb2af0ee8e3d052d11525db3aaae06",
+  "mutated_sha256": "aefad036d17a9237651c4290a10f58132cf2a74be3ea26dcdcea4ddf3ada85a9",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p23_oscillator.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_018_p23_c_large/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_018_p23_c_large/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

@@ -1,0 +1,57 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: MULTI_ANALYSIS_EVIDENCE_AGGREGATION_REQUIRED
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: aggregation
+  title: Metrics spanning multiple analyses require explicit evidence aggregation
+  description: Spec2Testbench aggregates per-analysis bundles before presenting metric evidence to the checker.
+  applies_to:
+    analyses:
+    - OP
+    - AC
+    - TRAN
+    metrics:
+    - operating_point
+    - dc_gain_db
+    - propagation_delay
+    circuit_families: []
+    backends:
+    - NGSPICE_MEASURE
+    - NGSPICE_WRDATA
+  requires:
+    evidence:
+    - ANALYSIS_EXECUTION_BUNDLE
+    - METRIC_EVIDENCE_BUNDLE
+  forbids:
+  - MULTI_ANALYSIS_METRIC_WITHOUT_AGGREGATION
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/domain/entities/metric_coverage.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_analysis_specific_results_are_aggregated
+    - test_checker_receives_aggregated_metric_bundle
+    - test_stub_multi_analysis_metrics_are_aggregated
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true

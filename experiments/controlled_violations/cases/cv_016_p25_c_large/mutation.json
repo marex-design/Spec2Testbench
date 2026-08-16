@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_016_p25_c_large",
+  "parent_circuit_id": "p25_differentiator",
+  "mutation_type": "timing",
+  "target_component": "C1",
+  "target_metric": "slew_rate",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "C1 Vin Ninv 10n",
+  "line_after": "C1 Vin Ninv 1",
+  "rationale": "Input time constant is increased by eight orders of magnitude.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "2d31f2907aa4ae3929d3b6e78dc1878e99fc47a5a20f8fbcd9453059db715496",
+  "mutated_sha256": "f6c9f0c7d4b6dc6960b83fe728e534dca42d83f70c45cbeb78c4279285f0b422",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p25_differentiator.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_016_p25_c_large/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_016_p25_c_large/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

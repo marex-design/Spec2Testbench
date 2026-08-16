@@ -1,0 +1,23 @@
+WARNING: The directory '/home/oai/.cache/pip' or its parent directory is not owned or is not writable by the current user. The cache has been disabled. Check the permissions and owner of that directory. If executing pip with sudo, you should use sudo's -H flag.
+Obtaining file:///mnt/data/Spec2Testbench-v0.5.0-final-clean
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: spec2testbench
+  Building editable for spec2testbench (pyproject.toml): started
+  Building editable for spec2testbench (pyproject.toml): finished with status 'done'
+  Created wheel for spec2testbench: filename=spec2testbench-0.5.0-0.editable-py3-none-any.whl size=6413 sha256=e06f3ab867e3193e328fb123acd71ae22d205bda737838a368cfed045fc271bd
+  Stored in directory: /tmp/pip-ephem-wheel-cache-schs9pgo/wheels/e2/80/43/1eb20bb4340eaf7072191950b25b466d854d68d335950ecbd0
+Successfully built spec2testbench
+Installing collected packages: spec2testbench
+Successfully installed spec2testbench-0.5.0
+
+--- command ---
+/opt/pyvenv/bin/spec2testbench
+Spec2Testbench v0.5.0
+From Specs to SPICE Testbenches: LLM-Assisted Analog Verification
+
+License: MIT
+
+Supported LLM Providers: OpenAI, DeepSeek, Groq, Gemini, Anthropic

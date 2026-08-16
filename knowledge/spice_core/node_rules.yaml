@@ -1,0 +1,208 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: SPICE_NODE_ZERO_IS_REFERENCE
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: nodes
+  title: Node zero is the reference node
+  description: Ground is represented by node 0 and is treated as the universal reference in the generated plans.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    node_roles:
+    - GROUND
+  forbids:
+  - ALTERNATE_GROUND_ALIAS_AS_PRIMARY_REFERENCE
+  source:
+    source_type: CODE_AND_TESTS
+    document_path: spec2testbench/domain/entities/testbench.py
+    section: null
+    page: null
+  dialect_scope:
+  - PORTABLE_SPICE
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: false
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_PORTABLE
+    positive_test_ids:
+    - test_plan_uses_only_existing_nodes
+    negative_test_ids:
+    - test_llm_validator_rejects_unknown_node
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_NODE_ZERO_IS_GLOBAL_REFERENCE
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Chapter 2
+    section: 2.1 Elements, Models, Nodes, and Conventions
+    page: 38
+    classification: DUPLICATE_EQUIVALENT
+    implementation_scope: PORTABLE_SPICE_CORE
+  book_chapter: Chapter 2
+  book_section: 2.1 Elements, Models, Nodes, and Conventions
+  book_page: 38
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: OBSERVED_NODE_MUST_EXIST
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: nodes
+  title: Observed nodes must exist
+  description: Measurement plans and observed node lists may only reference nodes present in the netlist or normalized specification.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    node_roles:
+    - OUTPUT
+  forbids:
+  - UNKNOWN_OUTPUT_NODE
+  source:
+    source_type: CODE_AND_TESTS
+    document_path: spec2testbench/application/services/llm_testbench_plan_validator.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: false
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_llm_validator_accepts_valid_json_plan
+    negative_test_ids:
+    - test_llm_validator_rejects_unknown_node
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: INPUT_NODE_ROLE_REQUIRED
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: nodes
+  title: Input-role nodes must be explicit when a metric depends on Vin
+  description: Transfer, delay, and hysteresis metrics require an explicit input-role node in the plan and recipes.
+  applies_to:
+    analyses:
+    - AC
+    - TRAN
+    metrics:
+    - dc_gain_db
+    - propagation_delay
+    - hysteresis_width
+    circuit_families:
+    - amplifier
+    - comparator
+    - schmitt_trigger
+    backends:
+    - NGSPICE_MEASURE
+    - NGSPICE_WRDATA
+  requires:
+    node_roles:
+    - SIGNAL_INPUT
+  forbids:
+  - IMPLICIT_INPUT_NODE_FOR_REQUIRED_METRIC
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/application/services/llm_metric_registry.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_stub_plan_uses_only_existing_nodes
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: OUTPUT_NODE_ROLE_REQUIRED
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: nodes
+  title: Output-role nodes must be explicit for scalar metrics
+  description: The planner and compiler require an explicit output node for operating-point, AC, transient, and oscillation metrics.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends:
+    - NGSPICE_MEASURE
+    - NGSPICE_WRDATA
+  requires:
+    node_roles:
+    - OUTPUT
+  forbids:
+  - MISSING_OUTPUT_ROLE
+  source:
+    source_type: SPEC2TESTBENCH_LOCAL_EVIDENCE
+    document_path: spec2testbench/application/services/llm_metric_registry.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_stub_plan_uses_only_existing_nodes
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true

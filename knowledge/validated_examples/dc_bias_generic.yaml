@@ -1,0 +1,32 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: examples
+entries:
+- example_id: EXAMPLE_DC_BIAS_GENERIC
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  use_case: UC_DC_BIAS
+  title: Generic DC bias example
+  summary: Use a single observed output node and a nominal OP analysis; if no sweepable signal source exists, keep .OP.
+  plan_shape:
+    analysis_type: OP
+    observed_nodes:
+    - <output>
+    measurements:
+    - operating_point
+  safe_circuit_families:
+  - inverter
+  - amplifier
+  - current_mirror
+  safe_metrics:
+  - operating_point
+  positive_tests:
+  - test_stub_use_case_smoke_contains_7_use_cases
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  retriever_visible: true
+  leakage_audit:
+    contains_ground_truth: false
+    contains_threshold: false
+    contains_historical_value: false
+    contains_mutation_identifier: false
+    contains_full_benchmark_netlist: false

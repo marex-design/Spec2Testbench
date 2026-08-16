@@ -1,0 +1,10 @@
+include README.md
+include LICENSE
+include .env.example
+recursive-include spec2testbench *.md *.py *.txt *.yaml *.json
+recursive-include benchmark *.cir *.ckt *.yaml *.yml *.tsv *.md
+recursive-include examples *.yaml *.yml
+recursive-include experiments *.yaml *.yml *.json *.ckt *.cir *.md
+recursive-include schemas *.json
+recursive-include knowledge *.yaml *.yml *.md *.json
+recursive-include docs *.md

@@ -1,0 +1,8 @@
+{
+  "python": "3.13.5",
+  "platform": "Linux-6.18.35-x86_64-with-glibc2.41",
+  "ngspice_path": null,
+  "deepseek_api_key_present": false,
+  "deepseek_model": null,
+  "note": "No API key value is stored. Live external experiments were not executed in this environment."
+}

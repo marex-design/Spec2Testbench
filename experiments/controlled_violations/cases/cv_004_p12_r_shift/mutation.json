@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_004_p12_r_shift",
+  "parent_circuit_id": "p12_bandpass",
+  "mutation_type": "frequency_bandwidth",
+  "target_component": "R1",
+  "target_metric": "center_frequency",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "R1 N1 0 10k",
+  "line_after": "R1 N1 0 100Meg",
+  "rationale": "Large resistance shifts the pole/zero network by orders of magnitude.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "2fae1f22f7d507f99a5b18bf8e6868a0bb91135ab1f6011ec3283f4228f27d99",
+  "mutated_sha256": "a334b7a171558957991e8155c04e7952af9ac6bc3bc4378c1cea3efc5026a9b3",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p12_bandpass.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_004_p12_r_shift/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_004_p12_r_shift/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

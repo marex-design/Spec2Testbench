@@ -1,0 +1,5 @@
+mutation_id,base_case_id,target_metric,reference_corrected_gain_db,mutated_corrected_gain_db,operator,threshold,reference_compliance,mutated_compliance,status,execution_status,artifact_dir
+cv_006_p01_rd_low,p01_amplifier,dc_gain_db,,,>=,-700.0,PASS,PASS,INEFFECTIVE_MUTATION,SUCCESS,
+cv_007_p02_rd_low,p02_amplifier,dc_gain_db,,,>=,-700.0,PASS,PASS,INEFFECTIVE_MUTATION,SUCCESS,
+cv_008_p03_rd_low,p03_amplifier,dc_gain_db,,,>=,-700.0,PASS,PASS,INEFFECTIVE_MUTATION,SUCCESS,
+cv_009_p14_rd_low,p14_amplifier,dc_gain_db,,,>=,-700.0,PASS,PASS,INEFFECTIVE_MUTATION,SUCCESS,

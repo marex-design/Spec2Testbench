@@ -1,0 +1,640 @@
+{
+  "provider": "stub",
+  "model": "deepseek-stub-v1",
+  "temperature": 0.0,
+  "top_p": 1.0,
+  "max_tokens": 4096,
+  "max_retries": 3,
+  "provider_transport_retries": 3,
+  "model_release": null,
+  "trials": 1,
+  "scientific_llm_evidence": false,
+  "run_started_utc": "2026-08-16T05:51:48.173944+00:00",
+  "sampling": {
+    "temperature": 0.0,
+    "top_p": 1.0
+  },
+  "system_prompt_file": "spec2testbench/infrastructure/llm/prompts/deepseek_testbench_planner_v1.txt",
+  "raw_llm_policy": "DIAGNOSTIC_ONLY_NO_EXECUTION",
+  "modes": {
+    "deterministic": {
+      "coverage": {
+        "cov_circuits": 0.0,
+        "cov_metrics": 0.0,
+        "cov_analyses": 0.0,
+        "circuits_total": 4,
+        "circuits_covered": 0,
+        "metrics_total": 12,
+        "metrics_evaluated": 0,
+        "analyses_total": 4,
+        "analyses_executed": 0
+      },
+      "confusion": {
+        "TP": 0,
+        "TN": 0,
+        "FP": 0,
+        "FN": 0,
+        "eligible_total": 0,
+        "excluded": 4,
+        "accuracy": 0.0,
+        "accuracy_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_accept_rate": 0.0,
+        "false_accept_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_reject_rate": 0.0,
+        "false_reject_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        }
+      },
+      "confusion_run_level": {
+        "TP": 0,
+        "TN": 0,
+        "FP": 0,
+        "FN": 0,
+        "eligible_total": 0,
+        "excluded": 4,
+        "accuracy": 0.0,
+        "accuracy_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_accept_rate": 0.0,
+        "false_accept_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_reject_rate": 0.0,
+        "false_reject_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        }
+      },
+      "confusion_case_level_majority": {
+        "TP": 0,
+        "TN": 0,
+        "FP": 0,
+        "FN": 0,
+        "eligible_total": 0,
+        "excluded": 4,
+        "accuracy": 0.0,
+        "accuracy_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_accept_rate": 0.0,
+        "false_accept_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_reject_rate": 0.0,
+        "false_reject_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        }
+      },
+      "case_level_majority_rows": [
+        {
+          "case_id": "cv_001_p10_c_huge",
+          "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        },
+        {
+          "case_id": "cv_003_p11_c_huge",
+          "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        },
+        {
+          "case_id": "p10_lowpass_nominal_gt",
+          "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        },
+        {
+          "case_id": "p11_highpass_nominal_gt",
+          "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        }
+      ],
+      "llm_quality": {
+        "runs": 4,
+        "json_valid_rate": 1.0,
+        "plan_rejection_rate": 0.0,
+        "final_plan_rejection_rate": 0.0,
+        "executable_plan_rate": 0.0,
+        "unknown_node_rate": 0.0,
+        "role_mismatch_rate": 0.0,
+        "analysis_mismatch_rate": 0.0,
+        "invalid_stimulus_rate": 0.0,
+        "invalid_measurement_rate": 0.0,
+        "feedback_recovery_rate": 0.0,
+        "mean_llm_calls": 0.0,
+        "mean_tokens": 0.0,
+        "mean_latency_seconds": 0.0,
+        "total_tokens": 0,
+        "total_latency_seconds": 0.0,
+        "provider_transport_retry_count": 0
+      }
+    },
+    "hybrid": {
+      "coverage": {
+        "cov_circuits": 0.0,
+        "cov_metrics": 0.0,
+        "cov_analyses": 0.0,
+        "circuits_total": 4,
+        "circuits_covered": 0,
+        "metrics_total": 8,
+        "metrics_evaluated": 0,
+        "analyses_total": 4,
+        "analyses_executed": 0
+      },
+      "confusion": {
+        "TP": 0,
+        "TN": 0,
+        "FP": 0,
+        "FN": 0,
+        "eligible_total": 0,
+        "excluded": 4,
+        "accuracy": 0.0,
+        "accuracy_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_accept_rate": 0.0,
+        "false_accept_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_reject_rate": 0.0,
+        "false_reject_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        }
+      },
+      "confusion_run_level": {
+        "TP": 0,
+        "TN": 0,
+        "FP": 0,
+        "FN": 0,
+        "eligible_total": 0,
+        "excluded": 4,
+        "accuracy": 0.0,
+        "accuracy_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_accept_rate": 0.0,
+        "false_accept_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_reject_rate": 0.0,
+        "false_reject_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        }
+      },
+      "confusion_case_level_majority": {
+        "TP": 0,
+        "TN": 0,
+        "FP": 0,
+        "FN": 0,
+        "eligible_total": 0,
+        "excluded": 4,
+        "accuracy": 0.0,
+        "accuracy_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_accept_rate": 0.0,
+        "false_accept_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_reject_rate": 0.0,
+        "false_reject_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        }
+      },
+      "case_level_majority_rows": [
+        {
+          "case_id": "cv_001_p10_c_huge",
+          "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        },
+        {
+          "case_id": "cv_003_p11_c_huge",
+          "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        },
+        {
+          "case_id": "p10_lowpass_nominal_gt",
+          "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        },
+        {
+          "case_id": "p11_highpass_nominal_gt",
+          "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        }
+      ],
+      "llm_quality": {
+        "runs": 4,
+        "json_valid_rate": 1.0,
+        "plan_rejection_rate": 0.0,
+        "final_plan_rejection_rate": 0.0,
+        "executable_plan_rate": 0.0,
+        "unknown_node_rate": 0.0,
+        "role_mismatch_rate": 0.0,
+        "analysis_mismatch_rate": 0.0,
+        "invalid_stimulus_rate": 0.0,
+        "invalid_measurement_rate": 0.0,
+        "feedback_recovery_rate": 0.0,
+        "mean_llm_calls": 1.0,
+        "mean_tokens": 0.0,
+        "mean_latency_seconds": 0.00017510775001028378,
+        "total_tokens": 0,
+        "total_latency_seconds": 0.0007004310000411351,
+        "provider_transport_retry_count": 0
+      }
+    },
+    "llm_one_shot": {
+      "coverage": {
+        "cov_circuits": 0.0,
+        "cov_metrics": 0.0,
+        "cov_analyses": 0.0,
+        "circuits_total": 4,
+        "circuits_covered": 0,
+        "metrics_total": 8,
+        "metrics_evaluated": 0,
+        "analyses_total": 4,
+        "analyses_executed": 0
+      },
+      "confusion": {
+        "TP": 0,
+        "TN": 0,
+        "FP": 0,
+        "FN": 0,
+        "eligible_total": 0,
+        "excluded": 4,
+        "accuracy": 0.0,
+        "accuracy_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_accept_rate": 0.0,
+        "false_accept_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_reject_rate": 0.0,
+        "false_reject_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        }
+      },
+      "confusion_run_level": {
+        "TP": 0,
+        "TN": 0,
+        "FP": 0,
+        "FN": 0,
+        "eligible_total": 0,
+        "excluded": 4,
+        "accuracy": 0.0,
+        "accuracy_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_accept_rate": 0.0,
+        "false_accept_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_reject_rate": 0.0,
+        "false_reject_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        }
+      },
+      "confusion_case_level_majority": {
+        "TP": 0,
+        "TN": 0,
+        "FP": 0,
+        "FN": 0,
+        "eligible_total": 0,
+        "excluded": 4,
+        "accuracy": 0.0,
+        "accuracy_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_accept_rate": 0.0,
+        "false_accept_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_reject_rate": 0.0,
+        "false_reject_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        }
+      },
+      "case_level_majority_rows": [
+        {
+          "case_id": "cv_001_p10_c_huge",
+          "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        },
+        {
+          "case_id": "cv_003_p11_c_huge",
+          "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        },
+        {
+          "case_id": "p10_lowpass_nominal_gt",
+          "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        },
+        {
+          "case_id": "p11_highpass_nominal_gt",
+          "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        }
+      ],
+      "llm_quality": {
+        "runs": 4,
+        "json_valid_rate": 1.0,
+        "plan_rejection_rate": 0.0,
+        "final_plan_rejection_rate": 0.0,
+        "executable_plan_rate": 0.0,
+        "unknown_node_rate": 0.0,
+        "role_mismatch_rate": 0.0,
+        "analysis_mismatch_rate": 0.0,
+        "invalid_stimulus_rate": 0.0,
+        "invalid_measurement_rate": 0.0,
+        "feedback_recovery_rate": 0.0,
+        "mean_llm_calls": 1.0,
+        "mean_tokens": 0.0,
+        "mean_latency_seconds": 0.0001518804997431289,
+        "total_tokens": 0,
+        "total_latency_seconds": 0.0006075219989725156,
+        "provider_transport_retry_count": 0
+      }
+    },
+    "llm_raw_diagnostic": {
+      "coverage": {
+        "cov_circuits": 0.0,
+        "cov_metrics": 0.0,
+        "cov_analyses": 0.0,
+        "circuits_total": 4,
+        "circuits_covered": 0,
+        "metrics_total": 8,
+        "metrics_evaluated": 0,
+        "analyses_total": 4,
+        "analyses_executed": 0
+      },
+      "confusion": {
+        "TP": 0,
+        "TN": 0,
+        "FP": 0,
+        "FN": 0,
+        "eligible_total": 0,
+        "excluded": 4,
+        "accuracy": 0.0,
+        "accuracy_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_accept_rate": 0.0,
+        "false_accept_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_reject_rate": 0.0,
+        "false_reject_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        }
+      },
+      "confusion_run_level": {
+        "TP": 0,
+        "TN": 0,
+        "FP": 0,
+        "FN": 0,
+        "eligible_total": 0,
+        "excluded": 4,
+        "accuracy": 0.0,
+        "accuracy_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_accept_rate": 0.0,
+        "false_accept_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_reject_rate": 0.0,
+        "false_reject_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        }
+      },
+      "confusion_case_level_majority": {
+        "TP": 0,
+        "TN": 0,
+        "FP": 0,
+        "FN": 0,
+        "eligible_total": 0,
+        "excluded": 4,
+        "accuracy": 0.0,
+        "accuracy_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_accept_rate": 0.0,
+        "false_accept_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        },
+        "false_reject_rate": 0.0,
+        "false_reject_rate_ci95": {
+          "low": 0.0,
+          "high": 0.0
+        }
+      },
+      "case_level_majority_rows": [
+        {
+          "case_id": "cv_001_p10_c_huge",
+          "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        },
+        {
+          "case_id": "cv_003_p11_c_huge",
+          "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        },
+        {
+          "case_id": "p10_lowpass_nominal_gt",
+          "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        },
+        {
+          "case_id": "p11_highpass_nominal_gt",
+          "ground_truth_label": "GROUND_TRUTH_COMPLIANT",
+          "compliance_status": "NOT_EVALUATED",
+          "pass_votes": 0,
+          "fail_votes": 0,
+          "trial_count": 1,
+          "eligible_vote_count": 0
+        }
+      ],
+      "llm_quality": {
+        "runs": 4,
+        "json_valid_rate": 1.0,
+        "plan_rejection_rate": 0.0,
+        "final_plan_rejection_rate": 0.0,
+        "executable_plan_rate": 0.0,
+        "unknown_node_rate": 0.0,
+        "role_mismatch_rate": 0.0,
+        "analysis_mismatch_rate": 0.0,
+        "invalid_stimulus_rate": 0.0,
+        "invalid_measurement_rate": 0.0,
+        "feedback_recovery_rate": 0.0,
+        "mean_llm_calls": 1.0,
+        "mean_tokens": 0.0,
+        "mean_latency_seconds": 0.00018929149973700987,
+        "total_tokens": 0,
+        "total_latency_seconds": 0.0007571659989480395,
+        "provider_transport_retry_count": 0
+      }
+    }
+  },
+  "stability": [],
+  "stability_summary": {
+    "groups": 0,
+    "plan_valid_stability_rate": 0.0,
+    "analysis_stability_rate": 0.0,
+    "verdict_stability_rate": 0.0
+  },
+  "comparison_deltas": {
+    "hybrid_minus_llm_one_shot": {
+      "cov_circuits": 0.0,
+      "cov_metrics": 0.0,
+      "cov_analyses": 0.0,
+      "accuracy": 0.0,
+      "false_accept_rate": 0.0,
+      "false_reject_rate": 0.0,
+      "executable_plan_rate": 0.0,
+      "final_plan_rejection_rate": 0.0,
+      "mean_tokens": 0.0,
+      "mean_latency_seconds": 2.3227250267154886e-05
+    },
+    "hybrid_minus_deterministic": {
+      "cov_circuits": 0.0,
+      "cov_metrics": 0.0,
+      "cov_analyses": 0.0,
+      "accuracy": 0.0,
+      "false_accept_rate": 0.0,
+      "false_reject_rate": 0.0,
+      "executable_plan_rate": 0.0,
+      "final_plan_rejection_rate": 0.0,
+      "mean_tokens": 0.0,
+      "mean_latency_seconds": 0.00017510775001028378
+    },
+    "llm_one_shot_minus_llm_raw_diagnostic": {
+      "cov_circuits": 0.0,
+      "cov_metrics": 0.0,
+      "cov_analyses": 0.0,
+      "accuracy": 0.0,
+      "false_accept_rate": 0.0,
+      "false_reject_rate": 0.0,
+      "executable_plan_rate": 0.0,
+      "final_plan_rejection_rate": 0.0,
+      "mean_tokens": 0.0,
+      "mean_latency_seconds": -3.741099999388098e-05
+    }
+  },
+  "paired_significance": {
+    "deterministic_vs_hybrid": {
+      "paired_cases": 0,
+      "excluded_pairs": 4,
+      "left_correct_right_wrong": 0,
+      "left_wrong_right_correct": 0,
+      "discordant_pairs": 0,
+      "exact_two_sided_p_value": 1.0
+    },
+    "llm_one_shot_vs_hybrid": {
+      "paired_cases": 0,
+      "excluded_pairs": 4,
+      "left_correct_right_wrong": 0,
+      "left_wrong_right_correct": 0,
+      "discordant_pairs": 0,
+      "exact_two_sided_p_value": 1.0
+    }
+  }
+}

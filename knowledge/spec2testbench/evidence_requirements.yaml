@@ -1,0 +1,12 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: evidence_requirements
+entries:
+- evidence_id: VIN_COMPLEX_VECTOR
+  description: Complex input AC vector exported by WRDATA.
+- evidence_id: VOUT_COMPLEX_VECTOR
+  description: Complex output AC vector exported by WRDATA.
+- evidence_id: ANALYSIS_EXECUTION_BUNDLE
+  description: Per-analysis execution payload with deck hash and artifacts.
+- evidence_id: METRIC_EVIDENCE_BUNDLE
+  description: Per-metric evidence row presented to the checker.

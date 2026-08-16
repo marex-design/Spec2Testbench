@@ -1,0 +1,6 @@
+Spec2Testbench v0.5.0
+From Specs to SPICE Testbenches: LLM-Assisted Analog Verification
+
+License: MIT
+
+Supported LLM Providers: OpenAI, DeepSeek, Groq, Gemini, Anthropic

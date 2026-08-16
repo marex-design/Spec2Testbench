@@ -1,0 +1,55 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: MODEL_NAME_MUST_EXIST
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: model_subckt
+  title: Referenced device models must exist
+  description: When a device references a model name, the model declaration must be present in the effective deck.
+  applies_to:
+    analyses: []
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    evidence:
+    - MODEL_DECLARATION
+  forbids:
+  - UNKNOWN_MODEL_IS_ERROR
+  source:
+    source_type: CODE_AND_TESTS
+    document_path: benchmark/analogcoder_pro/p01_amplifier.cir
+    section: null
+    page: null
+  dialect_scope:
+  - PORTABLE_SPICE
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: false
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_PORTABLE
+    positive_test_ids:
+    - test_stub_frozen_v3_contains_16_cases
+    negative_test_ids: []
+  book_grounded: true
+  book_sources:
+  - extracted_rule_id: BOOK_MODEL_NAME_MUST_RESOLVE
+    document_title: The SPICE Book
+    author: Andrei Vladimirescu
+    publication_year: 1994
+    chapter: Appendix B
+    section: B.4 Element, Semiconductor-Device, and Model Errors
+    page: 393
+    classification: DUPLICATE_EQUIVALENT
+    implementation_scope: PORTABLE_SPICE_CORE
+  book_chapter: Appendix B
+  book_section: B.4 Element, Semiconductor-Device, and Model Errors
+  book_page: 393
+  ngspice_confirmed: false
+  project_enforced: true

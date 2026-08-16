@@ -1,0 +1,8 @@
+* Independent manual oracle — p11 high-pass controlled violation
+* C1 is intentionally 1 F. Authored independently of Spec2Testbench.
+Vin Vin 0 AC 1
+C1 Vin Vout 1
+R1 Vout 0 10k
+.ac dec 100 1e-8 1e9
+.meas ac cutoff_frequency_hz WHEN vdb(Vout)=-3 CROSS=1
+.end

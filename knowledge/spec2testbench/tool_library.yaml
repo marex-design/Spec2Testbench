@@ -1,0 +1,100 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: tools
+entries:
+- tool_id: COMPILER_TEMPLATE_OP
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  title: Compile a nominal operating-point deck
+  category: compiler_template
+  compiler_template_id: COMPILER_TEMPLATE_OP
+  implementation_ref: spec2testbench/application/services/testbench_plan_compiler.py
+  supported_analyses:
+  - OP
+  supported_metrics:
+  - operating_point
+  - quiescent_current
+  - power
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  retriever_visible: true
+- tool_id: COMPILER_TEMPLATE_DC_SWEEP
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  title: Compile a DC sweep deck
+  category: compiler_template
+  compiler_template_id: COMPILER_TEMPLATE_DC_SWEEP
+  implementation_ref: spec2testbench/application/services/testbench_plan_compiler.py
+  supported_analyses:
+  - DC
+  supported_metrics:
+  - operating_point
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  retriever_visible: true
+- tool_id: COMPILER_TEMPLATE_AC_SWEEP
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  title: Compile an AC sweep deck
+  category: compiler_template
+  compiler_template_id: COMPILER_TEMPLATE_AC_SWEEP
+  implementation_ref: spec2testbench/application/services/testbench_plan_compiler.py
+  supported_analyses:
+  - AC
+  supported_metrics:
+  - dc_gain_db
+  - cutoff_frequency_hz
+  - bandwidth
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  retriever_visible: true
+- tool_id: COMPILER_TEMPLATE_TRAN
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  title: Compile a transient deck
+  category: compiler_template
+  compiler_template_id: COMPILER_TEMPLATE_TRAN
+  implementation_ref: spec2testbench/application/services/testbench_plan_compiler.py
+  supported_analyses:
+  - TRAN
+  supported_metrics:
+  - propagation_delay
+  - oscillator_frequency
+  - hysteresis_width
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  retriever_visible: true
+- tool_id: BACKEND_NGSPICE_MEASURE
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  title: Native ngspice measure backend
+  category: backend
+  compiler_template_id: BACKEND_NGSPICE_MEASURE
+  implementation_ref: spec2testbench/infrastructure/simulator/result_backends.py
+  supported_analyses:
+  - OP
+  - DC
+  - AC
+  - TRAN
+  supported_metrics:
+  - operating_point
+  - quiescent_current
+  - power
+  - propagation_delay
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  retriever_visible: true
+- tool_id: BACKEND_NGSPICE_WRDATA
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  title: ASCII vector export backend
+  category: backend
+  compiler_template_id: BACKEND_NGSPICE_WRDATA
+  implementation_ref: spec2testbench/infrastructure/simulator/result_backends.py
+  supported_analyses:
+  - OP
+  - DC
+  - AC
+  - TRAN
+  supported_metrics:
+  - dc_gain_db
+  - cutoff_frequency_hz
+  - oscillator_frequency
+  - hysteresis_width
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+  retriever_visible: true

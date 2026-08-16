@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_017_p22_c_large",
+  "parent_circuit_id": "p22_oscillator",
+  "mutation_type": "amplitude_oscillation",
+  "target_component": "C1",
+  "target_metric": "oscillator_frequency",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "C1 N1 Vref 10n",
+  "line_after": "C1 N1 Vref 1",
+  "rationale": "RC oscillator frequency scales inversely with capacitance.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "462c4424265453d6a43a1c03506f7b345dd37b253e467acc6e69e08dcefcebe8",
+  "mutated_sha256": "7d2af0393723e303334172bf21bd5386255ca6a059ec5f306d370d6c447de037",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p22_oscillator.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_017_p22_c_large/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_017_p22_c_large/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

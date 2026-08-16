@@ -1,0 +1,164 @@
+schema_version: '2.0'
+case_id: acp28-p22
+name: analogcoder_pro_p22_oscillator
+circuit_type: oscillator
+technology: AnalogCoder-Pro generic Level-1 benchmark models
+description: An RC phase-shift oscillator
+provenance:
+  benchmark: AnalogCoder-Pro
+  benchmark_subset: ACP-28
+  upstream_repository: https://github.com/laiyao1/AnalogCoderPro
+  upstream_task_id: 22
+  upstream_level: Hard
+  upstream_type: Oscillator
+  upstream_submodule_name: Unknown
+  upstream_task_description: An RC phase-shift oscillator
+  upstream_testbench_description: The testbench initializes the op-amp non-inverting input (Vinp) to 2.51V and the
+    inverting input (Vinn) to 2.5V.
+  official_checker:
+    path: problem_check/Oscillator.py
+    criterion_summary:
+    - More than two steady-state peaks/cycles must be present.
+    - Steady-state peak-to-peak amplitude must exceed 5 uV.
+    - Coefficient of variation of periods must be below 0.2.
+    upstream_mutates_dut: false
+    notes: Checker semantics summarized from the pinned upstream repository; source code is not vendored.
+  dut:
+    path: benchmark/analogcoder_pro/p22_oscillator.cir
+    sha256: 462c4424265453d6a43a1c03506f7b345dd37b253e467acc6e69e08dcefcebe8
+    canonicalization: Embedded analyses/output directives externalized; generated topology and device/component
+      values preserved.
+    topology_and_values_preserved: true
+ports:
+  input: []
+  output: &id001
+  - Vout
+  differential_positive: []
+  differential_negative: []
+  common_mode: []
+  supply_positive:
+  - Vdd
+  supply_negative:
+  - '0'
+  bias: []
+  reference: []
+  loop_break: []
+  loop_injection: []
+  current_probe: []
+operating_conditions:
+  nominal_temperature: 25.0
+  nominal_supply: 5.0
+  process_corner: tt
+stimuli:
+- id: none
+  kind: NONE
+  parameters: {}
+  purpose: Autonomous oscillator; preserve DUT initialization/bias.
+analyses:
+- id: tran_osc
+  type: TRAN
+  parameters:
+    step_time: 100u
+    end_time: 525m
+    start_time: 500m
+  purpose: Steady-state oscillation validation.
+functional_requirements:
+- id: ACP_OSC_CYCLES
+  description: More than two steady-state peaks/cycles must be present.
+  metric: oscillation_cycle_count
+  analysis: tran_osc
+  operator: '>='
+  threshold: 3.0
+  minimum: null
+  maximum: null
+  unit: ''
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: semantic
+  implementation_status: executable
+  executable_metric: oscillation_cycle_count
+  notes: null
+- id: ACP_OSC_SWING
+  description: Steady-state peak-to-peak amplitude must exceed 5 uV.
+  metric: output_swing_v
+  analysis: tran_osc
+  operator: '>'
+  threshold: 5.0e-06
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: executable
+  executable_metric: output_swing_v
+  notes: null
+- id: ACP_OSC_PERIOD_CV
+  description: Coefficient of variation of periods must be below 0.2.
+  metric: oscillation_period_cv
+  analysis: tran_osc
+  operator: <
+  threshold: 0.2
+  minimum: null
+  maximum: null
+  unit: ''
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: executable
+  executable_metric: oscillation_period_cv
+  notes: null
+performance_targets:
+  oscillator_frequency:
+    min: 1.0
+    unit: Hz
+    diagnostic_only: true
+    requirement_ids: []
+  oscillation_cycle_count:
+    unit: ''
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_OSC_CYCLES
+    min: 3.0
+  output_swing_v:
+    unit: V
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_OSC_SWING
+    min: 5.0e-06
+  oscillation_period_cv:
+    unit: ''
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_OSC_PERIOD_CV
+    max: 0.2
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: []
+  output_nodes: *id001
+  temperature: 25.0
+  original_source_dc_values: {}
+measurement:
+  backend: AUTO
+  allow_fallback: true
+verification:
+  auto_select: true
+  include_tests: []
+  exclude_tests: []
+  required_policy: all
+  immutable_dut: true
+  not_evaluated_on_missing_mandatory_metric: true
+  require_full_contract_for_compliance: true
+test_requirements:
+  dc_sweep_step_v: 0.01
+  oscillation_minimum_cycles: 3
+  oscillation_max_period_cv: 0.2
+test_categories:
+- transient
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.0

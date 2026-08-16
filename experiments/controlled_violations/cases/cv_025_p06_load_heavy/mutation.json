@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_025_p06_load_heavy",
+  "parent_circuit_id": "p06_inverter",
+  "mutation_type": "dc_voltage_current",
+  "target_component": "Rload",
+  "target_metric": "inverter_output_swing_v",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Rload Vdd Vout 100k",
+  "line_after": "Rload Vdd Vout 1",
+  "rationale": "A one-ohm load prevents normal inverter output swing.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "0826928e1c8680f18591cac62dd1a74b2539e9d5c5de3797cbbc30b4ec4cfc33",
+  "mutated_sha256": "c94123b76be4a46d64b5ba438a037a97050d0fd45a73c37a368673c18ba565e7",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p06_inverter.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_025_p06_load_heavy/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_025_p06_load_heavy/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

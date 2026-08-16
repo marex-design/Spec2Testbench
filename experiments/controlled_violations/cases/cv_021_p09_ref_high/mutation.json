@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_021_p09_ref_high",
+  "parent_circuit_id": "p09_comparator",
+  "mutation_type": "switching_threshold",
+  "target_component": "Vref",
+  "target_metric": "comparator_output_separation_v",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Vref Vref 0 2.5",
+  "line_after": "Vref Vref 0 100",
+  "rationale": "Reference is placed far outside the usable input range.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "a70fb44f7efdbf4587cfb77bf0133b30c850670f91ff69a5a94c76cb1623b302",
+  "mutated_sha256": "adcb1109ee1fdf0ced1829bfcebab1ff867c4b4018765dec3d87c07afb2fded2",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p09_comparator.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_021_p09_ref_high/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_021_p09_ref_high/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

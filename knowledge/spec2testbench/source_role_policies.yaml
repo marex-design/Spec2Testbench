@@ -1,0 +1,16 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: policies
+entries:
+- policy_id: SOURCE_ROLE_SUPPLY_NON_REPLACEABLE
+  role: SUPPLY_SOURCE
+  retriever_visible: true
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- policy_id: SOURCE_ROLE_BIAS_NON_REPLACEABLE
+  role: BIAS_SOURCE
+  retriever_visible: true
+  verification_status: CONFIRMED_SPEC2TESTBENCH
+- policy_id: SOURCE_ROLE_SIGNAL_REPLACEABLE_WITH_AUTHORITY
+  role: SIGNAL_SOURCE
+  retriever_visible: true
+  verification_status: CONFIRMED_SPEC2TESTBENCH

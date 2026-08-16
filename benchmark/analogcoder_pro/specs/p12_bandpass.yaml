@@ -1,0 +1,128 @@
+schema_version: '2.0'
+case_id: acp28-p12
+name: analogcoder_pro_p12_bandpass
+circuit_type: band_pass_filter
+technology: AnalogCoder-Pro generic Level-1 benchmark models
+description: a passive band-pass filter
+provenance:
+  benchmark: AnalogCoder-Pro
+  benchmark_subset: ACP-28
+  upstream_repository: https://github.com/laiyao1/AnalogCoderPro
+  upstream_task_id: 12
+  upstream_level: Hard
+  upstream_type: BandPass
+  upstream_submodule_name: Unknown
+  upstream_task_description: a passive band-pass filter
+  upstream_testbench_description: The testbench applies a 1Hz-1GHz frequency sweep signal to Vin.
+  official_checker:
+    path: problem_check/BandPass.py
+    criterion_summary:
+    - Pass-band peak must exceed the mean response on both sides by at least 10 dB.
+    upstream_mutates_dut: false
+    notes: Checker semantics summarized from the pinned upstream repository; source code is not vendored.
+  dut:
+    path: benchmark/analogcoder_pro/p12_bandpass.cir
+    sha256: 2fae1f22f7d507f99a5b18bf8e6868a0bb91135ab1f6011ec3283f4228f27d99
+    canonicalization: Embedded analyses/output directives externalized; generated topology and device/component
+      values preserved.
+    topology_and_values_preserved: true
+ports:
+  input: &id001
+  - Vin
+  output: &id002
+  - Vout
+  differential_positive: []
+  differential_negative:
+  - Vin
+  common_mode: []
+  supply_positive:
+  - Vdd
+  supply_negative:
+  - '0'
+  bias: []
+  reference: []
+  loop_break: []
+  loop_injection: []
+  current_probe: []
+operating_conditions:
+  nominal_temperature: 25.0
+  nominal_supply: 5.0
+  process_corner: tt
+stimuli:
+- id: ac_input
+  kind: AC
+  source: Vin
+  node_positive: Vin
+  node_negative: '0'
+  parameters:
+    magnitude: 1.0
+    phase: 0
+    dc_value: 1.0
+  purpose: Unit AC excitation.
+analyses:
+- id: ac_response
+  type: AC
+  parameters:
+    sweep_type: dec
+    points_per_decade: 10
+    start_freq: 1.0
+    stop_freq: 1000000000.0
+  purpose: Official ACP 1 Hz-1 GHz frequency sweep.
+functional_requirements:
+- id: ACP_BP_PEAK
+  description: Pass-band peak must exceed the mean response on both sides by at least 10 dB.
+  metric: bandpass_peak_separation_db
+  analysis: ac_response
+  operator: '>='
+  threshold: 10.0
+  minimum: null
+  maximum: null
+  unit: dB
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: semantic
+  implementation_status: executable
+  executable_metric: bandpass_peak_separation_db
+  notes: null
+performance_targets:
+  cutoff_frequency_hz:
+    min: 1.0
+    max: 1000000000.0
+    unit: Hz
+    diagnostic_only: true
+    requirement_ids: []
+  bandpass_peak_separation_db:
+    unit: dB
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_BP_PEAK
+    min: 10.0
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 1.0
+  input_nodes: *id001
+  output_nodes: *id002
+  temperature: 25.0
+  original_source_dc_values:
+    vin: 1.0
+measurement:
+  backend: AUTO
+  allow_fallback: true
+verification:
+  auto_select: true
+  include_tests: []
+  exclude_tests: []
+  required_policy: all
+  immutable_dut: true
+  not_evaluated_on_missing_mandatory_metric: true
+  require_full_contract_for_compliance: true
+test_requirements:
+  dc_sweep_step_v: 0.01
+test_categories:
+- ac
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.0

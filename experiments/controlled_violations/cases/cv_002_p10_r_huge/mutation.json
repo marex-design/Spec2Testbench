@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_002_p10_r_huge",
+  "parent_circuit_id": "p10_lowpass",
+  "mutation_type": "frequency_bandwidth",
+  "target_component": "R1",
+  "target_metric": "cutoff_frequency_hz",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "R1 Vin Vout 10k",
+  "line_after": "R1 Vin Vout 1G",
+  "rationale": "First-order RC cutoff moves far below the accepted band.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "ca85e90bea89d974035d3d52fb12f7f645ae68b585362fcc81e1b5e668ea817a",
+  "mutated_sha256": "4e606f3c8dc6c36610181f9311393a55a39b82111a5d1868108924db732a923d",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p10_lowpass.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_002_p10_r_huge/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_002_p10_r_huge/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

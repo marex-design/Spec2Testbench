@@ -1,0 +1,56 @@
+oracle_policy:
+  independent_of_framework_verdict: true
+  manual_decks_are_not_generated_by_spec2testbench: true
+  metric: cutoff_frequency_hz
+  requirement:
+    min: 1.0
+    max: 1000000000.0
+    unit: Hz
+  analytical_equation: fc = 1/(2*pi*R*C)
+  notes: This subset is deliberately limited to first-order RC circuits where an independent
+    analytical oracle is unambiguous.
+cases:
+- case_id: p10_lowpass_nominal_gt
+  parent_circuit_id: p10_lowpass
+  manual_deck: decks/p10_lowpass_nominal_manual.ckt
+  independent_reference:
+    method: analytical_first_order_rc
+    R_ohm: 10000.0
+    C_farad: 1.0e-08
+    expected_cutoff_frequency_hz: 1591.5494309189535
+  expected_ground_truth_label: GROUND_TRUTH_COMPLIANT
+  expected_manual_verdict: PASS
+  uses_spec2testbench_verdict: false
+- case_id: cv_001_p10_c_huge
+  parent_circuit_id: p10_lowpass
+  manual_deck: decks/cv_001_p10_c_huge_manual.ckt
+  independent_reference:
+    method: analytical_first_order_rc
+    R_ohm: 10000.0
+    C_farad: 1.0
+    expected_cutoff_frequency_hz: 1.5915494309189534e-05
+  expected_ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  expected_manual_verdict: FAIL
+  uses_spec2testbench_verdict: false
+- case_id: p11_highpass_nominal_gt
+  parent_circuit_id: p11_highpass
+  manual_deck: decks/p11_highpass_nominal_manual.ckt
+  independent_reference:
+    method: analytical_first_order_rc
+    R_ohm: 10000.0
+    C_farad: 1.0e-08
+    expected_cutoff_frequency_hz: 1591.5494309189535
+  expected_ground_truth_label: GROUND_TRUTH_COMPLIANT
+  expected_manual_verdict: PASS
+  uses_spec2testbench_verdict: false
+- case_id: cv_003_p11_c_huge
+  parent_circuit_id: p11_highpass
+  manual_deck: decks/cv_003_p11_c_huge_manual.ckt
+  independent_reference:
+    method: analytical_first_order_rc
+    R_ohm: 10000.0
+    C_farad: 1.0
+    expected_cutoff_frequency_hz: 1.5915494309189534e-05
+  expected_ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  expected_manual_verdict: FAIL
+  uses_spec2testbench_verdict: false

@@ -1,0 +1,301 @@
+schema_version: '1.1'
+benchmark: AnalogCoder-Pro
+subset: ACP-28
+purpose: Deterministic compliance verification of 28 preserved AnalogCoder-Pro DUT netlists.
+upstream_snapshot:
+  repository: https://github.com/laiyao1/AnalogCoderPro
+  retrieved_on: '2026-08-16'
+  problem_set_path: benchmark/analogcoder_pro/upstream/problem_set.tsv
+  problem_set_sha256: 3d409c0dffe5f536f4076774b10dd7c72fd8e3f6146849811ae3a7783792fba7
+  included_generation_task_ids:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+  - 15
+  - 16
+  - 17
+  - 18
+  - 19
+  - 20
+  - 21
+  - 22
+  - 23
+  - 24
+  - 25
+  - 26
+  - 27
+  - 28
+  note: ACP-28 is the explicitly frozen p01-p28 subset; later upstream tasks are outside this corpus.
+strict_contract: true
+case_count: 28
+cases:
+- case_id: acp28-p01
+  task_id: 1
+  type: Amplifier
+  level: Easy
+  description: a single-stage common-source amplifier with resistive load R
+  spec: benchmark/analogcoder_pro/specs/p01_amplifier.yaml
+  netlist: benchmark/analogcoder_pro/p01_amplifier.cir
+  netlist_sha256: ef80f1bcd84bb2cb6c9f712b29265a8dadceb390bfb4eb54e82c1bd6859d8d69
+  official_checker: problem_check/Amplifier.py
+- case_id: acp28-p02
+  task_id: 2
+  type: Amplifier
+  level: Easy
+  description: A three-stage amplifier with single input and output (each stage is common-source with resistive
+    load)
+  spec: benchmark/analogcoder_pro/specs/p02_amplifier.yaml
+  netlist: benchmark/analogcoder_pro/p02_amplifier.cir
+  netlist_sha256: d66021b2a6a52b805becfbff61f5ce15c0fa3141354eaea8d943caaed9b66e3e
+  official_checker: problem_check/Amplifier.py
+- case_id: acp28-p03
+  task_id: 3
+  type: Amplifier
+  level: Easy
+  description: A common-drain amplifier (a.k.a. a source follower) with resistive load R (output Vout at the source)
+  spec: benchmark/analogcoder_pro/specs/p03_amplifier.yaml
+  netlist: benchmark/analogcoder_pro/p03_amplifier.cir
+  netlist_sha256: ab9daaf0f9cbd93e7990b970aef5785249dbce4486721579d5dee3462524c21d
+  official_checker: problem_check/Amplifier.py
+- case_id: acp28-p04
+  task_id: 4
+  type: Amplifier
+  level: Easy
+  description: A single-stage common-gate amplifier with resistive load R (input signal Vin must be applied at the
+    source terminal)
+  spec: benchmark/analogcoder_pro/specs/p04_amplifier.yaml
+  netlist: benchmark/analogcoder_pro/p04_amplifier.cir
+  netlist_sha256: b8ffe2ca206ff5470d3f23f67fa5016ebdc38c257ef77fc3d26462712e076fef
+  official_checker: problem_check/Amplifier.py
+- case_id: acp28-p05
+  task_id: 5
+  type: Amplifier
+  level: Easy
+  description: A single-stage cascode amplifier with two NMOS transistors provides a single-ended output through
+    a resistive load R
+  spec: benchmark/analogcoder_pro/specs/p05_amplifier.yaml
+  netlist: benchmark/analogcoder_pro/p05_amplifier.cir
+  netlist_sha256: 568821107ca6b6f2f7f83cebdb2d25627c2f153839782cceda4021b003677246
+  official_checker: problem_check/Amplifier.py
+- case_id: acp28-p06
+  task_id: 6
+  type: Inverter
+  level: Easy
+  description: A NMOS inverter with resistive load R
+  spec: benchmark/analogcoder_pro/specs/p06_inverter.yaml
+  netlist: benchmark/analogcoder_pro/p06_inverter.cir
+  netlist_sha256: 0826928e1c8680f18591cac62dd1a74b2539e9d5c5de3797cbbc30b4ec4cfc33
+  official_checker: problem_check/Inverter.py
+- case_id: acp28-p07
+  task_id: 7
+  type: Inverter
+  level: Easy
+  description: A logical inverter with 1 NMOS and 1 PMOS
+  spec: benchmark/analogcoder_pro/specs/p07_inverter.yaml
+  netlist: benchmark/analogcoder_pro/p07_inverter.cir
+  netlist_sha256: 5224bc7a9dc96afd6c3bdfd9a98ba4e059d08b2b6feb8a346903ac27894dda3f
+  official_checker: problem_check/Inverter.py
+- case_id: acp28-p08
+  task_id: 8
+  type: CurrentMirror
+  level: Easy
+  description: A simple NMOS constant current source with resistive load R
+  spec: benchmark/analogcoder_pro/specs/p08_currentmirror.yaml
+  netlist: benchmark/analogcoder_pro/p08_currentmirror.cir
+  netlist_sha256: bc5839799fe72854d9c8ece93fb24c4fecc20fba456979b41a1f0c8732d8e1c3
+  official_checker: problem_check/CurrentMirror.py
+- case_id: acp28-p09
+  task_id: 9
+  type: Comparator
+  level: Hard
+  description: an op-amp comparator to make the output high when Vin > Vref and low when Vin < Vref
+  spec: benchmark/analogcoder_pro/specs/p09_comparator.yaml
+  netlist: benchmark/analogcoder_pro/p09_comparator.cir
+  netlist_sha256: a70fb44f7efdbf4587cfb77bf0133b30c850670f91ff69a5a94c76cb1623b302
+  official_checker: problem_check/Comparator.py
+- case_id: acp28-p10
+  task_id: 10
+  type: LowPass
+  level: Hard
+  description: a passive low-pass filter
+  spec: benchmark/analogcoder_pro/specs/p10_lowpass.yaml
+  netlist: benchmark/analogcoder_pro/p10_lowpass.cir
+  netlist_sha256: ca85e90bea89d974035d3d52fb12f7f645ae68b585362fcc81e1b5e668ea817a
+  official_checker: problem_check/LowPass.py
+- case_id: acp28-p11
+  task_id: 11
+  type: HighPass
+  level: Hard
+  description: a passive high-pass filter
+  spec: benchmark/analogcoder_pro/specs/p11_highpass.yaml
+  netlist: benchmark/analogcoder_pro/p11_highpass.cir
+  netlist_sha256: 7f167212fb021b084e56c93e62e9008b7d1d6c4a159daba63070cd94c29853fd
+  official_checker: problem_check/HighPass.py
+- case_id: acp28-p12
+  task_id: 12
+  type: BandPass
+  level: Hard
+  description: a passive band-pass filter
+  spec: benchmark/analogcoder_pro/specs/p12_bandpass.yaml
+  netlist: benchmark/analogcoder_pro/p12_bandpass.cir
+  netlist_sha256: 2fae1f22f7d507f99a5b18bf8e6868a0bb91135ab1f6011ec3283f4228f27d99
+  official_checker: problem_check/BandPass.py
+- case_id: acp28-p13
+  task_id: 13
+  type: BandStop
+  level: Hard
+  description: a passive band-stop filter
+  spec: benchmark/analogcoder_pro/specs/p13_bandstop.yaml
+  netlist: benchmark/analogcoder_pro/p13_bandstop.cir
+  netlist_sha256: e66d15e3cb3038943281398b9526c70c9f670415397632da5b5a877e4863d801
+  official_checker: problem_check/BandStop.py
+- case_id: acp28-p14
+  task_id: 14
+  type: Amplifier
+  level: Medium
+  description: A two-stage amplifier with a Miller compensation capacitor
+  spec: benchmark/analogcoder_pro/specs/p14_amplifier.yaml
+  netlist: benchmark/analogcoder_pro/p14_amplifier.cir
+  netlist_sha256: 6e72a4d546e64a5c8600e03dc3b04ae267d660adf63461baacaa84ac37f13252
+  official_checker: problem_check/Amplifier.py
+- case_id: acp28-p15
+  task_id: 15
+  type: Amplifier
+  level: Medium
+  description: A single-stage amplifier (common-source with PMOS diode-connected load (gate and drain are shorted))
+  spec: benchmark/analogcoder_pro/specs/p15_amplifier.yaml
+  netlist: benchmark/analogcoder_pro/p15_amplifier.cir
+  netlist_sha256: 95311c92d96dac03325316936a067f9ecdb324f5173eac52e1a1a53745600f05
+  official_checker: problem_check/Amplifier.py
+- case_id: acp28-p16
+  task_id: 16
+  type: Opamp
+  level: Medium
+  description: A differential opamp with an active PMOS current mirror load, a tail current source, and two outputs
+  spec: benchmark/analogcoder_pro/specs/p16_opamp.yaml
+  netlist: benchmark/analogcoder_pro/p16_opamp.cir
+  netlist_sha256: 65f52cbd2d9d9d01e5d16ae6a9b72a8cac61fe0bdce25bc7be2557bfc756e225
+  official_checker: problem_check/Opamp.py
+- case_id: acp28-p17
+  task_id: 17
+  type: CurrentMirror
+  level: Medium
+  description: A cascode current mirror with 4 mosfets (2 stacked at input side with diode-connected, 2 stacked
+    at output side), reference current source input Iref (connected to Vdd) and resistive load R
+  spec: benchmark/analogcoder_pro/specs/p17_currentmirror.yaml
+  netlist: benchmark/analogcoder_pro/p17_currentmirror.cir
+  netlist_sha256: 82bb8a9f6a352dab12c2d503503bcff5cf7eceab22a2c0d2bf514e27ba0555f2
+  official_checker: problem_check/CurrentMirror.py
+- case_id: acp28-p18
+  task_id: 18
+  type: Opamp
+  level: Medium
+  description: A single-stage differential common-source opamp with dual resistive loads, tail current, and a single
+    output
+  spec: benchmark/analogcoder_pro/specs/p18_opamp.yaml
+  netlist: benchmark/analogcoder_pro/p18_opamp.cir
+  netlist_sha256: 2128948237f695b83033aef989a04240569a741021d43e23df6804c8303cbdc3
+  official_checker: problem_check/Opamp.py
+- case_id: acp28-p19
+  task_id: 19
+  type: Mixer
+  level: Hard
+  description: A Gilbert cell mixer to make Voutp - Voutn ∝ (Vrfp - Vrfn) × (Vlop - Vlon)
+  spec: benchmark/analogcoder_pro/specs/p19_mixer.yaml
+  netlist: benchmark/analogcoder_pro/p19_mixer.cir
+  netlist_sha256: 1b862535fc210f950c7ab8dd9035c318b07b2fe22db54c4f6ff9998058ef1ba7
+  official_checker: problem_check/Mixer.py
+- case_id: acp28-p20
+  task_id: 20
+  type: Opamp
+  level: Hard
+  description: 'A two-stage differential opamp (first stage: common-source with an active load and a tail current,
+    second stage: common-source with an active load)'
+  spec: benchmark/analogcoder_pro/specs/p20_opamp.yaml
+  netlist: benchmark/analogcoder_pro/p20_opamp.cir
+  netlist_sha256: 5431c988ec1ca8562025ebaa73bd0ef9059e4d9c0a48a5056813e923f90e89cd
+  official_checker: problem_check/Opamp.py
+- case_id: acp28-p21
+  task_id: 21
+  type: Opamp
+  level: Hard
+  description: A single-stage telescopic cascode opamp with two outputs (4 nmos as cascode input pair, 4 pmos as
+    cascode loads, and 1 tail current)
+  spec: benchmark/analogcoder_pro/specs/p21_opamp.yaml
+  netlist: benchmark/analogcoder_pro/p21_opamp.cir
+  netlist_sha256: 0485201da5526e1a3f9e7fc2344981e0a53c23429db53d377b982460cd7ffc3d
+  official_checker: problem_check/Opamp.py
+- case_id: acp28-p22
+  task_id: 22
+  type: Oscillator
+  level: Hard
+  description: An RC phase-shift oscillator
+  spec: benchmark/analogcoder_pro/specs/p22_oscillator.yaml
+  netlist: benchmark/analogcoder_pro/p22_oscillator.cir
+  netlist_sha256: 462c4424265453d6a43a1c03506f7b345dd37b253e467acc6e69e08dcefcebe8
+  official_checker: problem_check/Oscillator.py
+- case_id: acp28-p23
+  task_id: 23
+  type: Oscillator
+  level: Hard
+  description: A Wien Bridge oscillator
+  spec: benchmark/analogcoder_pro/specs/p23_oscillator.yaml
+  netlist: benchmark/analogcoder_pro/p23_oscillator.cir
+  netlist_sha256: 082b6d4cbfbe3bc22e88a18026225d3e45eb2af0ee8e3d052d11525db3aaae06
+  official_checker: problem_check/Oscillator.py
+- case_id: acp28-p24
+  task_id: 24
+  type: Integrator
+  level: Hard
+  description: An Opamp integrator with resistor R1 and capacitor Cf
+  spec: benchmark/analogcoder_pro/specs/p24_integrator.yaml
+  netlist: benchmark/analogcoder_pro/p24_integrator.cir
+  netlist_sha256: 675f9c3cd053d69dc5f5c6aa4072d7ab5002f08e2f4439c553ba96acb8bc17ee
+  official_checker: problem_check/Integrator.py
+- case_id: acp28-p25
+  task_id: 25
+  type: Differentiator
+  level: Hard
+  description: An Opamp differentiator with resistor Rf and capacitor C1
+  spec: benchmark/analogcoder_pro/specs/p25_differentiator.yaml
+  netlist: benchmark/analogcoder_pro/p25_differentiator.cir
+  netlist_sha256: 2d31f2907aa4ae3929d3b6e78dc1878e99fc47a5a20f8fbcd9453059db715496
+  official_checker: problem_check/Differentiator.py
+- case_id: acp28-p26
+  task_id: 26
+  type: Adder
+  level: Hard
+  description: An Opamp adder to make Vout=-(Vin1+Vin2)
+  spec: benchmark/analogcoder_pro/specs/p26_adder.yaml
+  netlist: benchmark/analogcoder_pro/p26_adder.cir
+  netlist_sha256: 3599824774997b267de7d5ccd2ce924f91a0c6c86048884efe14e41614f576e4
+  official_checker: problem_check/Adder.py
+- case_id: acp28-p27
+  task_id: 27
+  type: Subtractor
+  level: Hard
+  description: An Op-amp subtractor to make Vout=Vin2-Vin1
+  spec: benchmark/analogcoder_pro/specs/p27_subtractor.yaml
+  netlist: benchmark/analogcoder_pro/p27_subtractor.cir
+  netlist_sha256: 4c73101726481a9792f4421bcef24222228da04a6fa4ab8de590b7e5a6a71583
+  official_checker: problem_check/Subtractor.py
+- case_id: acp28-p28
+  task_id: 28
+  type: Schmitt
+  level: Hard
+  description: A non-inverting Schmitt trigger with positive feedback op-map
+  spec: benchmark/analogcoder_pro/specs/p28_schmitt.yaml
+  netlist: benchmark/analogcoder_pro/p28_schmitt.cir
+  netlist_sha256: 55c7766931947aeaed5dd87b069186706fe18adfe2d8e0d39b05a14157451346
+  official_checker: problem_check/Schmitt.py

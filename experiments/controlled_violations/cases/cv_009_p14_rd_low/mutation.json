@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_009_p14_rd_low",
+  "parent_circuit_id": "p14_amplifier",
+  "mutation_type": "gain",
+  "target_component": "Rload",
+  "target_metric": "dc_gain_db",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Rload Vout Vdd 10k",
+  "line_after": "Rload Vout Vdd 1",
+  "rationale": "Load collapse suppresses voltage gain.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "6e72a4d546e64a5c8600e03dc3b04ae267d660adf63461baacaa84ac37f13252",
+  "mutated_sha256": "2e23dc15dc352670222d8858c252b997df6ea4f07eed57bffb20692fea628702",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p14_amplifier.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_009_p14_rd_low/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_009_p14_rd_low/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

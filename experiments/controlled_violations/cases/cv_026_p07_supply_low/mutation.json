@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_026_p07_supply_low",
+  "parent_circuit_id": "p07_inverter",
+  "mutation_type": "dc_voltage_current",
+  "target_component": "Vdd",
+  "target_metric": "inverter_output_swing_v",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Vdd Vdd 0 5",
+  "line_after": "Vdd Vdd 0 0.1",
+  "rationale": "Supply starvation prevents nominal output swing.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "5224bc7a9dc96afd6c3bdfd9a98ba4e059d08b2b6feb8a346903ac27894dda3f",
+  "mutated_sha256": "a5dff3a80c4cd9eb8a8b3a961b36fb3a2a733d80b4b32b5ce625d7c34cc0ca8e",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p07_inverter.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_026_p07_supply_low/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_026_p07_supply_low/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

@@ -1,0 +1,157 @@
+schema_version: '2.0'
+case_id: cv_015_p24_c_large
+name: analogcoder_pro_p24_integrator
+circuit_type: integrator
+technology: AnalogCoder-Pro generic Level-1 benchmark models
+description: An Opamp integrator with resistor R1 and capacitor Cf
+provenance:
+  benchmark: AnalogCoder-Pro
+  benchmark_subset: ACP-28
+  upstream_repository: https://github.com/laiyao1/AnalogCoderPro
+  upstream_task_id: 24
+  upstream_level: Hard
+  upstream_type: Integrator
+  upstream_submodule_name: Unknown
+  upstream_task_description: An Opamp integrator with resistor R1 and capacitor Cf
+  upstream_testbench_description: The testbench inputs a square wave to Vin.
+  official_checker:
+    path: problem_check/Integrator.py
+    criterion_summary:
+    - Integrator output ramp must be strongly linear (R^2 >= 0.9).
+    - Ramp slope must match the RC-derived value for the immutable DUT within 30%.
+    upstream_mutates_dut: true
+    notes: Checker semantics summarized from the pinned upstream repository; source
+      code is not vendored.
+  dut:
+    path: experiments/controlled_violations/cases/cv_015_p24_c_large/mutated_netlist.cir
+    sha256: d5cd791fc51ec2347ea54358cd40278daf554110196d002acc06dd7029995bae
+    canonicalization: Embedded analyses/output directives externalized; generated
+      topology and device/component values preserved.; controlled active-line mutation
+      for ground-truth stress testing.
+    topology_and_values_preserved: true
+ports:
+  input: &id001
+  - Vin
+  output: &id002
+  - Vout
+  differential_positive: []
+  differential_negative:
+  - Vin
+  common_mode: []
+  supply_positive:
+  - Vdd
+  supply_negative:
+  - '0'
+  bias: []
+  reference: []
+  loop_break: []
+  loop_injection: []
+  current_probe: []
+operating_conditions:
+  nominal_temperature: 25.0
+  nominal_supply: 5.0
+  process_corner: tt
+stimuli:
+- id: square_input
+  kind: PULSE
+  source: Vin
+  node_positive: Vin
+  node_negative: '0'
+  parameters:
+    v1: 2.0
+    v2: 3.0
+    delay: 1u
+    rise: 1u
+    fall: 1u
+    width: 4m
+    period: 10m
+  purpose: DUT-preserving square-wave stimulus around 2.5 V.
+analyses:
+- id: tran_integrator
+  type: TRAN
+  parameters:
+    step_time: 1u
+    end_time: 20m
+    start_time: 0
+  purpose: Square-wave driven integration without modifying R1/Cf.
+functional_requirements:
+- id: ACP_INT_LINEAR
+  description: Integrator output ramp must be strongly linear (R^2 >= 0.9).
+  metric: integrator_linearity
+  analysis: tran_integrator
+  operator: '>='
+  threshold: 0.9
+  minimum: null
+  maximum: null
+  unit: ''
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: semantic
+  implementation_status: executable
+  executable_metric: integrator_linearity
+  notes: Upstream checker forces R=10k and C=3u; S2T never changes DUT values.
+- id: ACP_INT_SLOPE
+  description: Ramp slope must match the RC-derived value for the immutable DUT within
+    30%.
+  metric: integrator_ramp_slope
+  analysis: tran_integrator
+  operator: between
+  threshold: null
+  minimum: 350.0
+  maximum: 650.0
+  unit: V/s
+  mandatory: true
+  criterion_source: derived_semantic
+  equivalence: semantic
+  implementation_status: executable
+  executable_metric: integrator_ramp_slope
+  notes: For p24 R1=10k, Cf=100n and |Vin-Vref|=0.5 V, |dV/dt|=500 V/s.
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+    diagnostic_only: true
+    requirement_ids: []
+  integrator_linearity:
+    unit: ''
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_INT_LINEAR
+    min: 0.9
+  integrator_ramp_slope:
+    unit: V/s
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_INT_SLOPE
+    min: 350.0
+    max: 650.0
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 3.0
+  input_nodes: *id001
+  output_nodes: *id002
+  temperature: 25.0
+  original_source_dc_values:
+    vin: 3.0
+measurement:
+  backend: AUTO
+  allow_fallback: true
+verification:
+  auto_select: true
+  include_tests: []
+  exclude_tests: []
+  required_policy: all
+  immutable_dut: true
+  not_evaluated_on_missing_mandatory_metric: true
+  require_full_contract_for_compliance: true
+test_requirements:
+  dc_sweep_step_v: 0.01
+test_categories:
+- transient
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.0

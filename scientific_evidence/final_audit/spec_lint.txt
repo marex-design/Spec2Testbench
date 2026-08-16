@@ -1,0 +1,59 @@
+PASS benchmark/analogcoder_pro/specs/p01_amplifier.yaml  
+contract-implementation=50.0%
+PASS benchmark/analogcoder_pro/specs/p02_amplifier.yaml  
+contract-implementation=50.0%
+PASS benchmark/analogcoder_pro/specs/p03_amplifier.yaml  
+contract-implementation=50.0%
+PASS benchmark/analogcoder_pro/specs/p04_amplifier.yaml  
+contract-implementation=50.0%
+PASS benchmark/analogcoder_pro/specs/p05_amplifier.yaml  
+contract-implementation=50.0%
+PASS benchmark/analogcoder_pro/specs/p06_inverter.yaml  
+contract-implementation=100.0%
+PASS benchmark/analogcoder_pro/specs/p07_inverter.yaml  
+contract-implementation=100.0%
+PASS benchmark/analogcoder_pro/specs/p08_currentmirror.yaml  
+contract-implementation=100.0%
+PASS benchmark/analogcoder_pro/specs/p09_comparator.yaml  
+contract-implementation=100.0%
+PASS benchmark/analogcoder_pro/specs/p10_lowpass.yaml  
+contract-implementation=100.0%
+PASS benchmark/analogcoder_pro/specs/p11_highpass.yaml  
+contract-implementation=100.0%
+PASS benchmark/analogcoder_pro/specs/p12_bandpass.yaml  
+contract-implementation=100.0%
+PASS benchmark/analogcoder_pro/specs/p13_bandstop.yaml  
+contract-implementation=100.0%
+PASS benchmark/analogcoder_pro/specs/p14_amplifier.yaml  
+contract-implementation=50.0%
+PASS benchmark/analogcoder_pro/specs/p15_amplifier.yaml  
+contract-implementation=50.0%
+PASS benchmark/analogcoder_pro/specs/p16_opamp.yaml  
+contract-implementation=0.0%
+PASS benchmark/analogcoder_pro/specs/p17_currentmirror.yaml  
+contract-implementation=66.7%
+PASS benchmark/analogcoder_pro/specs/p18_opamp.yaml  
+contract-implementation=0.0%
+PASS benchmark/analogcoder_pro/specs/p19_mixer.yaml  
+contract-implementation=0.0%
+PASS benchmark/analogcoder_pro/specs/p20_opamp.yaml  
+contract-implementation=0.0%
+PASS benchmark/analogcoder_pro/specs/p21_opamp.yaml  
+contract-implementation=0.0%
+PASS benchmark/analogcoder_pro/specs/p22_oscillator.yaml  
+contract-implementation=100.0%
+PASS benchmark/analogcoder_pro/specs/p23_oscillator.yaml  
+contract-implementation=100.0%
+PASS benchmark/analogcoder_pro/specs/p24_integrator.yaml  
+contract-implementation=100.0%
+PASS benchmark/analogcoder_pro/specs/p25_differentiator.yaml  
+contract-implementation=50.0%
+PASS benchmark/analogcoder_pro/specs/p26_adder.yaml  
+contract-implementation=0.0%
+PASS benchmark/analogcoder_pro/specs/p27_subtractor.yaml  
+contract-implementation=0.0%
+PASS benchmark/analogcoder_pro/specs/p28_schmitt.yaml  
+contract-implementation=100.0%
+
+Validated 28/28 YAML files; mean mandatory-contract implementation 
+coverage=59.5%.

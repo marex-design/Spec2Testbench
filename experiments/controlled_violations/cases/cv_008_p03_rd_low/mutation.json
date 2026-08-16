@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_008_p03_rd_low",
+  "parent_circuit_id": "p03_amplifier",
+  "mutation_type": "gain",
+  "target_component": "Rload",
+  "target_metric": "dc_gain_db",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Rload Vout 0 10k",
+  "line_after": "Rload Vout 0 1",
+  "rationale": "Output load collapse suppresses voltage gain.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "ab9daaf0f9cbd93e7990b970aef5785249dbce4486721579d5dee3462524c21d",
+  "mutated_sha256": "263ffc36af62dc4ae2a23471c10cc26a41542f18d3ceb3be0df911035db5795f",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p03_amplifier.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_008_p03_rd_low/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_008_p03_rd_low/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

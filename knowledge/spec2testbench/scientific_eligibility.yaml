@@ -1,0 +1,96 @@
+schema_version: '1.0'
+knowledge_version: knowledge_book_v1
+kind: rules
+entries:
+- rule_id: STUB_PROVIDER_IS_NON_SCIENTIFIC
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: scientific_eligibility
+  title: Stub outputs are software-integration evidence only
+  description: Stub runs validate integration and determinism, but they are never scientific LLM evidence.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    evidence:
+    - PROVIDER_MODE_STUB
+  forbids:
+  - LABEL_STUB_AS_LLM_STABILITY
+  source:
+    source_type: CODE_AND_TESTS
+    document_path: spec2testbench/infrastructure/llm/stub_provider.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_stub_provider_is_marked_non_scientific
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true
+- rule_id: STUB_PROVIDER_MODE_EXPLICIT
+  schema_version: '1.0'
+  knowledge_version: knowledge_book_v1
+  category: scientific_eligibility
+  title: Stub plans must state provider_mode STUB explicitly
+  description: Stub plans carry explicit provider-mode metadata and scientific_llm_evidence false.
+  applies_to:
+    analyses:
+    - OP
+    - DC
+    - AC
+    - TRAN
+    metrics: []
+    circuit_families: []
+    backends: []
+  requires:
+    evidence:
+    - PLAN_PROVIDER_METADATA
+  forbids:
+  - MISSING_PROVIDER_MODE_FOR_STUB
+  source:
+    source_type: CODE_AND_TESTS
+    document_path: spec2testbench/infrastructure/llm/stub_provider.py
+    section: null
+    page: null
+  dialect_scope:
+  - SPEC2TESTBENCH
+  enforcement:
+    llm_visible: true
+    retriever_visible: true
+    validator_enforced: true
+    compiler_enforced: true
+    backend_enforced: true
+    checker_enforced: false
+  verification:
+    status: CONFIRMED_SPEC2TESTBENCH
+    positive_test_ids:
+    - test_stub_provider_is_marked_non_scientific
+    negative_test_ids: []
+  book_grounded: false
+  book_sources: []
+  book_chapter: ''
+  book_section: ''
+  book_page: ''
+  ngspice_confirmed: false
+  project_enforced: true

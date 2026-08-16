@@ -1,0 +1,482 @@
+schema_version: '1.0'
+purpose: Extended controlled-violation stress set; the independent primary oracle
+  is experiments/ground_truth/ground_truth_manifest.yaml.
+policy:
+  mutations_modify_active_dut_lines_only: true
+  provenance_comments_are_never_mutation_targets: true
+  hash_difference_required: true
+  labels_are_defined_before_framework_execution: true
+  live_ngspice_confirmation_required_before_reporting_detection_rates: true
+case_count: 26
+cases:
+- case_id: cv_001_p10_c_huge
+  parent_circuit_id: p10_lowpass
+  mutation_type: frequency_bandwidth
+  target_component: C1
+  target_metric: cutoff_frequency_hz
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: C1 Vout 0 10n
+  line_after: C1 Vout 0 1
+  rationale: First-order RC cutoff moves far below the accepted band.
+  active_anchor_match_count: 1
+  original_sha256: ca85e90bea89d974035d3d52fb12f7f645ae68b585362fcc81e1b5e668ea817a
+  mutated_sha256: 2f3794038dbcce10f3b3d3025050cec98c3f928014bf6b9650c845f094d59bfd
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p10_lowpass.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_001_p10_c_huge/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_001_p10_c_huge/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_002_p10_r_huge
+  parent_circuit_id: p10_lowpass
+  mutation_type: frequency_bandwidth
+  target_component: R1
+  target_metric: cutoff_frequency_hz
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: R1 Vin Vout 10k
+  line_after: R1 Vin Vout 1G
+  rationale: First-order RC cutoff moves far below the accepted band.
+  active_anchor_match_count: 1
+  original_sha256: ca85e90bea89d974035d3d52fb12f7f645ae68b585362fcc81e1b5e668ea817a
+  mutated_sha256: 4e606f3c8dc6c36610181f9311393a55a39b82111a5d1868108924db732a923d
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p10_lowpass.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_002_p10_r_huge/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_002_p10_r_huge/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_003_p11_c_huge
+  parent_circuit_id: p11_highpass
+  mutation_type: frequency_bandwidth
+  target_component: C1
+  target_metric: cutoff_frequency_hz
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: C1 Vin Vout 10n
+  line_after: C1 Vin Vout 1
+  rationale: High-pass corner moves far below the accepted band.
+  active_anchor_match_count: 1
+  original_sha256: 7f167212fb021b084e56c93e62e9008b7d1d6c4a159daba63070cd94c29853fd
+  mutated_sha256: 2e1712dffb3cc5a4d5cb68012d4d0c0c707b6b83bdffa3f36450071be9f36b18
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p11_highpass.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_003_p11_c_huge/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_003_p11_c_huge/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_004_p12_r_shift
+  parent_circuit_id: p12_bandpass
+  mutation_type: frequency_bandwidth
+  target_component: R1
+  target_metric: center_frequency
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: R1 N1 0 10k
+  line_after: R1 N1 0 100Meg
+  rationale: Large resistance shifts the pole/zero network by orders of magnitude.
+  active_anchor_match_count: 1
+  original_sha256: 2fae1f22f7d507f99a5b18bf8e6868a0bb91135ab1f6011ec3283f4228f27d99
+  mutated_sha256: a334b7a171558957991e8155c04e7952af9ac6bc3bc4378c1cea3efc5026a9b3
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p12_bandpass.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_004_p12_r_shift/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_004_p12_r_shift/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_005_p13_c_shift
+  parent_circuit_id: p13_bandstop
+  mutation_type: frequency_bandwidth
+  target_component: C1
+  target_metric: center_frequency
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: C1 N1 0 10n
+  line_after: C1 N1 0 1
+  rationale: Large capacitance shifts the notch frequency by orders of magnitude.
+  active_anchor_match_count: 1
+  original_sha256: e66d15e3cb3038943281398b9526c70c9f670415397632da5b5a877e4863d801
+  mutated_sha256: 72df48b92a9699841d4c654104f06a4992da9a22f7eb11f9ec98a6dd7002582f
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p13_bandstop.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_005_p13_c_shift/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_005_p13_c_shift/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_006_p01_rd_low
+  parent_circuit_id: p01_amplifier
+  mutation_type: gain
+  target_component: Rload
+  target_metric: dc_gain_db
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Rload Vout Vdd 10k
+  line_after: Rload Vout Vdd 1
+  rationale: Drain load collapse suppresses voltage gain.
+  active_anchor_match_count: 1
+  original_sha256: ef80f1bcd84bb2cb6c9f712b29265a8dadceb390bfb4eb54e82c1bd6859d8d69
+  mutated_sha256: fabd9180d1504a5cf35b6b093107c117df69954771197e401436246460c868cf
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p01_amplifier.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_006_p01_rd_low/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_006_p01_rd_low/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_007_p02_rd_low
+  parent_circuit_id: p02_amplifier
+  mutation_type: gain
+  target_component: R3
+  target_metric: dc_gain_db
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: R3 Vout Vdd 10000
+  line_after: R3 Vout Vdd 1
+  rationale: Drain load collapse suppresses voltage gain.
+  active_anchor_match_count: 1
+  original_sha256: d66021b2a6a52b805becfbff61f5ce15c0fa3141354eaea8d943caaed9b66e3e
+  mutated_sha256: 1caaeb2bd74e95b1ecf14ca31c6d74f7c2a7c5be379aee13316b55a5c3d3a14d
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p02_amplifier.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_007_p02_rd_low/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_007_p02_rd_low/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_008_p03_rd_low
+  parent_circuit_id: p03_amplifier
+  mutation_type: gain
+  target_component: Rload
+  target_metric: dc_gain_db
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Rload Vout 0 10k
+  line_after: Rload Vout 0 1
+  rationale: Output load collapse suppresses voltage gain.
+  active_anchor_match_count: 1
+  original_sha256: ab9daaf0f9cbd93e7990b970aef5785249dbce4486721579d5dee3462524c21d
+  mutated_sha256: 263ffc36af62dc4ae2a23471c10cc26a41542f18d3ceb3be0df911035db5795f
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p03_amplifier.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_008_p03_rd_low/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_008_p03_rd_low/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_009_p14_rd_low
+  parent_circuit_id: p14_amplifier
+  mutation_type: gain
+  target_component: Rload
+  target_metric: dc_gain_db
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Rload Vout Vdd 10k
+  line_after: Rload Vout Vdd 1
+  rationale: Load collapse suppresses voltage gain.
+  active_anchor_match_count: 1
+  original_sha256: 6e72a4d546e64a5c8600e03dc3b04ae267d660adf63461baacaa84ac37f13252
+  mutated_sha256: 2e23dc15dc352670222d8858c252b997df6ea4f07eed57bffb20692fea628702
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p14_amplifier.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_009_p14_rd_low/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_009_p14_rd_low/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_010_p08_iref_low
+  parent_circuit_id: p08_currentmirror
+  mutation_type: dc_voltage_current
+  target_component: Rload
+  target_metric: quiescent_current
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Rload Vout Vdd 10000
+  line_after: Rload Vout Vdd 1
+  rationale: Severe output load mutation moves the mirror outside its intended load
+    regime.
+  active_anchor_match_count: 1
+  original_sha256: bc5839799fe72854d9c8ece93fb24c4fecc20fba456979b41a1f0c8732d8e1c3
+  mutated_sha256: f10f0b6151a7a01aadf6f4f721e8bb5cc6cbcbbc453a1d5281641789f995f301
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p08_currentmirror.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_010_p08_iref_low/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_010_p08_iref_low/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_011_p17_iref_low
+  parent_circuit_id: p17_currentmirror
+  mutation_type: dc_voltage_current
+  target_component: Iref
+  target_metric: quiescent_current
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Iref Vdd Iref 100u
+  line_after: Iref Vdd Iref 1n
+  rationale: Reference current is reduced by five orders of magnitude.
+  active_anchor_match_count: 1
+  original_sha256: 82bb8a9f6a352dab12c2d503503bcff5cf7eceab22a2c0d2bf514e27ba0555f2
+  mutated_sha256: f9df9a90d3d66ab164d958302004eb1da3867df44538484422441e01a7cc528c
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p17_currentmirror.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_011_p17_iref_low/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_011_p17_iref_low/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_012_p16_vdd_low
+  parent_circuit_id: p16_opamp
+  mutation_type: dc_voltage_current
+  target_component: Vdd
+  target_metric: operating_point
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Vdd Vdd 0 5
+  line_after: Vdd Vdd 0 0.2
+  rationale: Insufficient supply headroom prevents nominal bias and swing.
+  active_anchor_match_count: 1
+  original_sha256: 65f52cbd2d9d9d01e5d16ae6a9b72a8cac61fe0bdce25bc7be2557bfc756e225
+  mutated_sha256: 88305869e5478a762f55a8f9ffc62950e3ef8ff03ddbc01bbf40cbd9c9c5741b
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p16_opamp.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_012_p16_vdd_low/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_012_p16_vdd_low/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_013_p20_vdd_low
+  parent_circuit_id: p20_opamp
+  mutation_type: dc_voltage_current
+  target_component: Vdd
+  target_metric: operating_point
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Vdd Vdd 0 5
+  line_after: Vdd Vdd 0 0.2
+  rationale: Insufficient supply headroom prevents nominal bias and swing.
+  active_anchor_match_count: 1
+  original_sha256: 5431c988ec1ca8562025ebaa73bd0ef9059e4d9c0a48a5056813e923f90e89cd
+  mutated_sha256: da05cd2756aff797a210c8366b15aa613350e778c8f1d3ca8fc5dbe6efb42b35
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p20_opamp.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_013_p20_vdd_low/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_013_p20_vdd_low/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_015_p24_c_large
+  parent_circuit_id: p24_integrator
+  mutation_type: timing
+  target_component: Cf
+  target_metric: settling_time
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Cf Vout Vinn 100n
+  line_after: Cf Vout Vinn 1
+  rationale: Integration time constant is increased by seven orders of magnitude.
+  active_anchor_match_count: 1
+  original_sha256: 675f9c3cd053d69dc5f5c6aa4072d7ab5002f08e2f4439c553ba96acb8bc17ee
+  mutated_sha256: d5cd791fc51ec2347ea54358cd40278daf554110196d002acc06dd7029995bae
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p24_integrator.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_015_p24_c_large/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_015_p24_c_large/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_016_p25_c_large
+  parent_circuit_id: p25_differentiator
+  mutation_type: timing
+  target_component: C1
+  target_metric: slew_rate
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: C1 Vin Ninv 10n
+  line_after: C1 Vin Ninv 1
+  rationale: Input time constant is increased by eight orders of magnitude.
+  active_anchor_match_count: 1
+  original_sha256: 2d31f2907aa4ae3929d3b6e78dc1878e99fc47a5a20f8fbcd9453059db715496
+  mutated_sha256: f6c9f0c7d4b6dc6960b83fe728e534dca42d83f70c45cbeb78c4279285f0b422
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p25_differentiator.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_016_p25_c_large/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_016_p25_c_large/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_017_p22_c_large
+  parent_circuit_id: p22_oscillator
+  mutation_type: amplitude_oscillation
+  target_component: C1
+  target_metric: oscillator_frequency
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: C1 N1 Vref 10n
+  line_after: C1 N1 Vref 1
+  rationale: RC oscillator frequency scales inversely with capacitance.
+  active_anchor_match_count: 1
+  original_sha256: 462c4424265453d6a43a1c03506f7b345dd37b253e467acc6e69e08dcefcebe8
+  mutated_sha256: 7d2af0393723e303334172bf21bd5386255ca6a059ec5f306d370d6c447de037
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p22_oscillator.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_017_p22_c_large/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_017_p22_c_large/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_018_p23_c_large
+  parent_circuit_id: p23_oscillator
+  mutation_type: amplitude_oscillation
+  target_component: C1
+  target_metric: oscillator_frequency
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: C1 N1 N2 10n
+  line_after: C1 N1 N2 1
+  rationale: Ring/RC timing is shifted by orders of magnitude.
+  active_anchor_match_count: 1
+  original_sha256: 082b6d4cbfbe3bc22e88a18026225d3e45eb2af0ee8e3d052d11525db3aaae06
+  mutated_sha256: aefad036d17a9237651c4290a10f58132cf2a74be3ea26dcdcea4ddf3ada85a9
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p23_oscillator.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_018_p23_c_large/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_018_p23_c_large/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_019_p22_vdd_low
+  parent_circuit_id: p22_oscillator
+  mutation_type: amplitude_oscillation
+  target_component: Vdd
+  target_metric: startup_amplitude
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Vdd Vdd 0 5
+  line_after: Vdd Vdd 0 0.1
+  rationale: Op-amp supply starvation prevents normal oscillation amplitude buildup.
+  active_anchor_match_count: 2
+  original_sha256: 462c4424265453d6a43a1c03506f7b345dd37b253e467acc6e69e08dcefcebe8
+  mutated_sha256: 5277c05752e703662f1802116bd9879aec36f3178b9f9909eb865d68428a5138
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p22_oscillator.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_019_p22_vdd_low/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_019_p22_vdd_low/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_020_p28_ref_high
+  parent_circuit_id: p28_schmitt
+  mutation_type: switching_threshold
+  target_component: Vref
+  target_metric: hysteresis_width
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Vref Vref 0 2.5
+  line_after: Vref Vref 0 100
+  rationale: Reference is placed far outside the usable input/output range.
+  active_anchor_match_count: 1
+  original_sha256: 55c7766931947aeaed5dd87b069186706fe18adfe2d8e0d39b05a14157451346
+  mutated_sha256: 70ea2725abc7bf8f6c3f96838a6632a53ec2fa206f613bac49df63709fe76805
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p28_schmitt.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_020_p28_ref_high/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_020_p28_ref_high/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_021_p09_ref_high
+  parent_circuit_id: p09_comparator
+  mutation_type: switching_threshold
+  target_component: Vref
+  target_metric: comparator_output_separation_v
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Vref Vref 0 2.5
+  line_after: Vref Vref 0 100
+  rationale: Reference is placed far outside the usable input range.
+  active_anchor_match_count: 1
+  original_sha256: a70fb44f7efdbf4587cfb77bf0133b30c850670f91ff69a5a94c76cb1623b302
+  mutated_sha256: adcb1109ee1fdf0ced1829bfcebab1ff867c4b4018765dec3d87c07afb2fded2
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p09_comparator.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_021_p09_ref_high/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_021_p09_ref_high/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_023_p05_vdd_high
+  parent_circuit_id: p05_amplifier
+  mutation_type: power_consumption
+  target_component: Vdd
+  target_metric: power
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Vdd Vdd 0 5
+  line_after: Vdd Vdd 0 50
+  rationale: Supply is increased tenfold, invalidating the intended power/operating
+    regime.
+  active_anchor_match_count: 1
+  original_sha256: 568821107ca6b6f2f7f83cebdb2d25627c2f153839782cceda4021b003677246
+  mutated_sha256: e20b1c3e8d49f4b914289c10e1a6803fa32ee764ada6e3d1c4680e86d377bb2b
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p05_amplifier.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_023_p05_vdd_high/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_023_p05_vdd_high/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_024_p18_vdd_high
+  parent_circuit_id: p18_opamp
+  mutation_type: power_consumption
+  target_component: Vdd
+  target_metric: power
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Vdd Vdd 0 5
+  line_after: Vdd Vdd 0 50
+  rationale: Supply is increased tenfold, invalidating the intended power/operating
+    regime.
+  active_anchor_match_count: 1
+  original_sha256: 2128948237f695b83033aef989a04240569a741021d43e23df6804c8303cbdc3
+  mutated_sha256: 81bfaf01947d87e3fb2aecf348bee8abc8c62b02a296a6735dc2f6e13c979c47
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p18_opamp.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_024_p18_vdd_high/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_024_p18_vdd_high/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_025_p06_load_heavy
+  parent_circuit_id: p06_inverter
+  mutation_type: dc_voltage_current
+  target_component: Rload
+  target_metric: inverter_output_swing_v
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Rload Vdd Vout 100k
+  line_after: Rload Vdd Vout 1
+  rationale: A one-ohm load prevents normal inverter output swing.
+  active_anchor_match_count: 1
+  original_sha256: 0826928e1c8680f18591cac62dd1a74b2539e9d5c5de3797cbbc30b4ec4cfc33
+  mutated_sha256: c94123b76be4a46d64b5ba438a037a97050d0fd45a73c37a368673c18ba565e7
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p06_inverter.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_025_p06_load_heavy/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_025_p06_load_heavy/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_026_p07_supply_low
+  parent_circuit_id: p07_inverter
+  mutation_type: dc_voltage_current
+  target_component: Vdd
+  target_metric: inverter_output_swing_v
+  ground_truth_label: GROUND_TRUTH_NONCOMPLIANT
+  line_before: Vdd Vdd 0 5
+  line_after: Vdd Vdd 0 0.1
+  rationale: Supply starvation prevents nominal output swing.
+  active_anchor_match_count: 1
+  original_sha256: 5224bc7a9dc96afd6c3bdfd9a98ba4e059d08b2b6feb8a346903ac27894dda3f
+  mutated_sha256: a5dff3a80c4cd9eb8a8b3a961b36fb3a2a733d80b4b32b5ce625d7c34cc0ca8e
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p07_inverter.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_026_p07_supply_low/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_026_p07_supply_low/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_029_p10_bad_value
+  parent_circuit_id: p10_lowpass
+  mutation_type: non_simulable
+  target_component: C1
+  target_metric: cutoff_frequency_hz
+  ground_truth_label: GROUND_TRUTH_NON_SIMULABLE
+  line_before: C1 Vout 0 10n
+  line_after: C1 Vout 0 BAD_VALUE
+  rationale: An invalid numeric value must cause a simulator/parser error.
+  active_anchor_match_count: 1
+  original_sha256: ca85e90bea89d974035d3d52fb12f7f645ae68b585362fcc81e1b5e668ea817a
+  mutated_sha256: e49adb8d24ceca42f1e630b6ba6c18817e8ed1680a45142d27b368d6d1ee99cf
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p10_lowpass.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_029_p10_bad_value/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_029_p10_bad_value/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true
+- case_id: cv_030_p09_missing_subckt
+  parent_circuit_id: p09_comparator
+  mutation_type: non_simulable
+  target_component: Xcmp
+  target_metric: comparator_output_separation_v
+  ground_truth_label: GROUND_TRUTH_NON_SIMULABLE
+  line_before: Xcmp Vin Vref Vout Opamp
+  line_after: Xcmp Vin Vref Vout MissingOpamp
+  rationale: An undefined subcircuit must cause a simulator error.
+  active_anchor_match_count: 1
+  original_sha256: a70fb44f7efdbf4587cfb77bf0133b30c850670f91ff69a5a94c76cb1623b302
+  mutated_sha256: 3c74fa88d6ce74abb136c688df21c67cd703aeffa1281becb211c437e798d283
+  effective_mutation: true
+  original_dut: benchmark/analogcoder_pro/p09_comparator.cir
+  mutated_netlist: experiments/controlled_violations/cases/cv_030_p09_missing_subckt/mutated_netlist.cir
+  specification: experiments/controlled_violations/cases/cv_030_p09_missing_subckt/specification.yaml
+  label_status: PRE_EXECUTION_CONTROLLED_LABEL
+  live_simulator_confirmation_required: true

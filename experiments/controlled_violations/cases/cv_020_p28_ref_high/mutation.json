@@ -1,0 +1,20 @@
+{
+  "case_id": "cv_020_p28_ref_high",
+  "parent_circuit_id": "p28_schmitt",
+  "mutation_type": "switching_threshold",
+  "target_component": "Vref",
+  "target_metric": "hysteresis_width",
+  "ground_truth_label": "GROUND_TRUTH_NONCOMPLIANT",
+  "line_before": "Vref Vref 0 2.5",
+  "line_after": "Vref Vref 0 100",
+  "rationale": "Reference is placed far outside the usable input/output range.",
+  "active_anchor_match_count": 1,
+  "original_sha256": "55c7766931947aeaed5dd87b069186706fe18adfe2d8e0d39b05a14157451346",
+  "mutated_sha256": "70ea2725abc7bf8f6c3f96838a6632a53ec2fa206f613bac49df63709fe76805",
+  "effective_mutation": true,
+  "original_dut": "benchmark/analogcoder_pro/p28_schmitt.cir",
+  "mutated_netlist": "experiments/controlled_violations/cases/cv_020_p28_ref_high/mutated_netlist.cir",
+  "specification": "experiments/controlled_violations/cases/cv_020_p28_ref_high/specification.yaml",
+  "label_status": "PRE_EXECUTION_CONTROLLED_LABEL",
+  "live_simulator_confirmation_required": true
+}

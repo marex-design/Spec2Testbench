@@ -1,0 +1,8 @@
+* Independent manual oracle — p10 low-pass nominal
+* Authored independently of Spec2Testbench testbench generation.
+Vin Vin 0 AC 1
+R1 Vin Vout 10k
+C1 Vout 0 10n
+.ac dec 100 1e-8 1e9
+.meas ac cutoff_frequency_hz WHEN vdb(Vout)=-3 CROSS=1
+.end

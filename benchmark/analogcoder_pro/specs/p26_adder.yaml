@@ -1,0 +1,183 @@
+schema_version: '2.0'
+case_id: acp28-p26
+name: analogcoder_pro_p26_adder
+circuit_type: composite
+technology: AnalogCoder-Pro generic Level-1 benchmark models
+description: An Opamp adder to make Vout=-(Vin1+Vin2)
+provenance:
+  benchmark: AnalogCoder-Pro
+  benchmark_subset: ACP-28
+  upstream_repository: https://github.com/laiyao1/AnalogCoderPro
+  upstream_task_id: 26
+  upstream_level: Hard
+  upstream_type: Adder
+  upstream_submodule_name: Unknown
+  upstream_task_description: An Opamp adder to make Vout=-(Vin1+Vin2)
+  upstream_testbench_description: NA
+  official_checker:
+    path: problem_check/Adder.py
+    criterion_summary:
+    - Increasing Vin1 by 0.5 V must change output by at least 0.05 V in the negative direction.
+    - Increasing Vin2 by 0.5 V must change output by at least 0.05 V in the negative direction.
+    - Absolute Vin1/Vin2 effect ratio must remain within 20% of unity.
+    - All test points must match the fitted inverting-adder formula within 20% relative tolerance.
+    upstream_mutates_dut: false
+    notes: Checker semantics summarized from the pinned upstream repository; source code is not vendored.
+  dut:
+    path: benchmark/analogcoder_pro/p26_adder.cir
+    sha256: 3599824774997b267de7d5ccd2ce924f91a0c6c86048884efe14e41614f576e4
+    canonicalization: Embedded analyses/output directives externalized; generated topology and device/component
+      values preserved.
+    topology_and_values_preserved: true
+ports:
+  input: &id001
+  - Vin1
+  - Vin2
+  output: &id002
+  - Vout
+  differential_positive: []
+  differential_negative: []
+  common_mode: []
+  supply_positive:
+  - Vdd
+  supply_negative:
+  - '0'
+  bias: []
+  reference: []
+  loop_break: []
+  loop_injection: []
+  current_probe: []
+operating_conditions:
+  nominal_temperature: 25.0
+  nominal_supply: 5.0
+  process_corner: tt
+stimuli:
+- id: vin1
+  kind: DC
+  source: Vin1
+  node_positive: Vin1
+  node_negative: '0'
+  parameters:
+    value: 3.0
+  purpose: Adder input 1
+- id: vin2
+  kind: DC
+  source: Vin2
+  node_positive: Vin2
+  node_negative: '0'
+  parameters:
+    value: 3.0
+  purpose: Adder input 2
+analyses:
+- id: dc_grid
+  type: DC
+  parameters:
+    bias_voltage: 2.5
+    test_points:
+    - - 2.5
+      - 2.5
+    - - 3.0
+      - 2.5
+    - - 2.5
+      - 3.0
+    - - 3.0
+      - 3.0
+  purpose: Multi-input operating-point grid.
+functional_requirements:
+- id: ACP_ADD_EFFECT1
+  description: Increasing Vin1 by 0.5 V must change output by at least 0.05 V in the negative direction.
+  metric: adder_vin1_effect
+  analysis: dc_grid
+  operator: <
+  threshold: -0.05
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: metadata_only
+  executable_metric: null
+  notes: null
+- id: ACP_ADD_EFFECT2
+  description: Increasing Vin2 by 0.5 V must change output by at least 0.05 V in the negative direction.
+  metric: adder_vin2_effect
+  analysis: dc_grid
+  operator: <
+  threshold: -0.05
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: metadata_only
+  executable_metric: null
+  notes: null
+- id: ACP_ADD_BALANCE
+  description: Absolute Vin1/Vin2 effect ratio must remain within 20% of unity.
+  metric: adder_effect_ratio
+  analysis: dc_grid
+  operator: between
+  threshold: null
+  minimum: 0.8
+  maximum: 1.2
+  unit: ''
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: metadata_only
+  executable_metric: null
+  notes: null
+- id: ACP_ADD_FORMULA
+  description: All test points must match the fitted inverting-adder formula within 20% relative tolerance.
+  metric: adder_formula_error
+  analysis: dc_grid
+  operator: <=
+  threshold: 0.2
+  minimum: null
+  maximum: null
+  unit: ''
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: metadata_only
+  executable_metric: null
+  notes: null
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+    diagnostic_only: true
+    requirement_ids: []
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 3.0
+  input_nodes: *id001
+  output_nodes: *id002
+  temperature: 25.0
+  original_source_dc_values:
+    vin1: 3.0
+    vin2: 3.0
+measurement:
+  backend: AUTO
+  allow_fallback: true
+verification:
+  auto_select: true
+  include_tests: []
+  exclude_tests: []
+  required_policy: all
+  immutable_dut: true
+  not_evaluated_on_missing_mandatory_metric: true
+  require_full_contract_for_compliance: true
+test_requirements:
+  dc_sweep_step_v: 0.01
+test_categories:
+- dc
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.0

@@ -1,0 +1,11 @@
+You are executing a provider smoke check for Spec2Testbench.
+
+Return exactly one JSON object.
+Do not return Markdown.
+Do not use a code fence.
+Do not add any explanation.
+Do not add a verdict.
+Do not include a circuit, DUT, node list, benchmark result, historical result, raw SPICE, or local path.
+Use the exact field names and exact enum values supplied in the schema and example.
+Do not add extra fields.
+Do not wrap the JSON object in any outer object or array.
