@@ -10,3 +10,7 @@ __pycache__/
 build/
 dist/
 results/
+
+# Local H1 / generated runtime artifacts
+.h1_phase1_backup/
+waveforms_test/*.png
