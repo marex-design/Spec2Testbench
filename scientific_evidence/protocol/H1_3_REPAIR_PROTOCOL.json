@@ -1,0 +1,75 @@
+{
+  "experiment_id": "H1.3",
+  "name": "Controlled LLM-SPICE Feedback and Repair",
+  "max_retries": 2,
+
+  "pipeline": [
+    "DeepSeek",
+    "TestbenchPlan",
+    "DeterministicValidator",
+    "ContractGate",
+    "Compiler",
+    "ngspice",
+    "MetricExtractor",
+    "SpecChecker"
+  ],
+
+  "repair_triggers": {
+    "validator_rejection": true,
+    "contract_gate_rejection": true,
+    "spice_execution_error": true,
+    "missing_runtime_evidence": true
+  },
+
+  "llm_may_modify": [
+    "analysis_type",
+    "stimuli",
+    "observed_nodes",
+    "measurements",
+    "simulation_parameters",
+    "backend_preference"
+  ],
+
+  "llm_must_never_modify": [
+    "dut_netlist",
+    "dut_components",
+    "specification_thresholds",
+    "comparison_operators",
+    "requirement_ground_truth",
+    "spec_checker_logic",
+    "final_verdict"
+  ],
+
+  "stopping_conditions": [
+    "verification_success",
+    "max_retries_reached",
+    "unsafe_repair_rejected",
+    "non_repairable_error"
+  ],
+
+  "attempt_evidence": [
+    "attempt_id",
+    "request_sha256",
+    "response_sha256",
+    "plan_sha256",
+    "validation_status",
+    "validation_issues",
+    "contract_gate_status",
+    "spice_execution_status",
+    "spice_error_type",
+    "spice_error_message",
+    "metrics_obtained",
+    "repair_trigger",
+    "repair_action",
+    "tokens"
+  ],
+
+  "final_metrics": [
+    "plan_validity_rate",
+    "execution_success_rate",
+    "repair_success_rate",
+    "first_repair_success_rate",
+    "mean_retries",
+    "unsafe_repair_rejection_rate"
+  ]
+}
