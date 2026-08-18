@@ -19,6 +19,7 @@ class DeepSeekPlanProvider:
     """
 
     mode = "DEEPSEEK_LIVE"
+    scientific_llm_evidence = True
     provider_name = "deepseek"
     prompt_version = "h1-plan-v1"
     default_base_url = "https://api.deepseek.com"
@@ -68,14 +69,22 @@ class DeepSeekPlanProvider:
             "MUST NOT decide PASS/FAIL/COMPLIANT/NONCOMPLIANT. Use only metrics present "
             "in the frozen specification and only circuit nodes supplied by the input. "
             "The deterministic validator will reject unsafe or inconsistent plans. "
-            "When a repair object is present, correct only the cited planning issue."
+            "When a repair object is present, correct only the cited planning issue. "
+            "Do not set provider_mode or scientific_llm_evidence; these provenance "
+            "fields are owned and stamped by the deterministic framework."
         )
 
     def _request_payload(self, payload: dict[str, Any]) -> dict[str, Any]:
+        schema = json.loads(json.dumps(TestbenchPlan.model_json_schema()))
+        properties = schema.get("properties", {})
+        for framework_owned in ("provider_mode", "scientific_llm_evidence"):
+            properties.pop(framework_owned, None)
+            if framework_owned in schema.get("required", []):
+                schema["required"].remove(framework_owned)
         return {
             "task": "propose_testbench_plan",
             "prompt_version": self.prompt_version,
-            "testbench_plan_json_schema": TestbenchPlan.model_json_schema(),
+            "testbench_plan_json_schema": schema,
             "case_id": payload.get("case_id"),
             "specification": payload.get("specification"),
             "deterministic_seed_plan": payload.get("deterministic_plan"),

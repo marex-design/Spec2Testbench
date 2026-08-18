@@ -304,6 +304,13 @@ def deepseek_plan(
         "validation": outcome.validation,
         "repair_history": outcome.repair_history,
         "provider_metadata": outcome.provider_metadata,
+        "provenance_normalization": {
+            "framework_owned_fields": ["provider_mode", "scientific_llm_evidence"],
+            "raw_provider_mode": outcome.raw_response.get("provider_mode") if isinstance(outcome.raw_response, dict) else None,
+            "raw_scientific_llm_evidence": outcome.raw_response.get("scientific_llm_evidence") if isinstance(outcome.raw_response, dict) else None,
+            "parsed_provider_mode": outcome.parsed_plan.provider_mode if outcome.parsed_plan else None,
+            "parsed_scientific_llm_evidence": outcome.parsed_plan.scientific_llm_evidence if outcome.parsed_plan else None,
+        },
         "safety_boundary": {
             "dut_immutable": True,
             "thresholds_immutable": True,

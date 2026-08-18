@@ -23,6 +23,12 @@ class LLMGenerationService:
     def _metadata(self) -> dict[str,Any]:
         return dict(getattr(self.provider,'last_call_metadata',{}) or {})
 
+    def _stamp_framework_provenance(self, plan: TestbenchPlan) -> TestbenchPlan:
+        stamped=plan.model_copy(deep=True)
+        stamped.provider_mode=str(getattr(self.provider,'mode','UNKNOWN'))
+        stamped.scientific_llm_evidence=bool(getattr(self.provider,'scientific_llm_evidence',False))
+        return stamped
+
     def generate_plan(self, specification: Specification, netlist_path: Path, deterministic_plan: dict[str,Any]) -> LLMGenerationOutcome:
         history=[]
         payload={'case_id':specification.case_id,'specification':specification.canonical_dict(),'deterministic_plan':deterministic_plan}
@@ -30,6 +36,7 @@ class LLMGenerationService:
         for attempt in range(self.max_retries+1):
             try:
                 plan=TestbenchPlan.model_validate_json(raw) if isinstance(raw,str) else TestbenchPlan.model_validate(raw)
+                plan=self._stamp_framework_provenance(plan)
             except Exception as exc:
                 if attempt>=self.max_retries:
                     return LLMGenerationOutcome(None,{'status':'INVALID','issues':[{'code':'JSON_SCHEMA_ERROR','message':str(exc)}]},history,raw,self._metadata())

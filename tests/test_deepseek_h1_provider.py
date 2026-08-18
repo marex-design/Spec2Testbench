@@ -70,3 +70,33 @@ def test_deepseek_h1_provider_prompt_forbids_verdict_and_dut_changes():
     assert 'must not modify the dut' in prompt
     assert 'must not modify specification thresholds' in prompt
     assert 'must not decide pass/fail' in prompt
+
+
+
+def test_deepseek_h1_framework_stamps_live_provenance_and_preserves_raw_response():
+    _,np,spec,seed=_p10_seed()
+    # Simulate a model copying provenance fields from the deterministic seed.
+    raw=dict(seed)
+    raw['provider_mode']='DETERMINISTIC'
+    raw['scientific_llm_evidence']=False
+    provider=DeepSeekPlanProvider(api_key='dummy',model='deepseek-v4-pro',client=_FakeClient(raw))
+    out=LLMGenerationService(provider,max_retries=0).generate_plan(spec,np,seed)
+    assert out.validation['status']=='VALID'
+    assert out.raw_response['provider_mode']=='DETERMINISTIC'
+    assert out.raw_response['scientific_llm_evidence'] is False
+    assert out.parsed_plan.provider_mode=='DEEPSEEK_LIVE'
+    assert out.parsed_plan.scientific_llm_evidence is True
+
+
+def test_deepseek_h1_prompt_schema_excludes_framework_owned_provenance_fields():
+    _,_,spec,seed=_p10_seed()
+    fake=_FakeClient(seed)
+    provider=DeepSeekPlanProvider(api_key='dummy',model='deepseek-v4-pro',client=fake)
+    provider.generate({'case_id':spec.case_id,'specification':spec.canonical_dict(),'deterministic_plan':seed})
+    user_message=fake.chat.completions.kwargs['messages'][1]['content']
+    request=json.loads(user_message)
+    props=request['testbench_plan_json_schema']['properties']
+    assert 'provider_mode' not in props
+    assert 'scientific_llm_evidence' not in props
+    prompt=provider._system_prompt().lower()
+    assert 'do not set provider_mode or scientific_llm_evidence' in prompt
