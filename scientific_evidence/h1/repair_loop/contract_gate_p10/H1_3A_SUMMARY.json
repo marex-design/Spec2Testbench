@@ -1,0 +1,28 @@
+{
+  "experiment": "H1.3-A",
+  "case_id": "acp28-p10",
+  "fault": "contract_missing_metric_once",
+  "fault_stage": "contract_gate",
+  "attempts": 2,
+  "repairs": 1,
+  "stopping_condition": "verification_success",
+  "repair_success_rate": 1.0,
+  "first_repair_success_rate": 1.0,
+  "mean_retries": 1.0,
+  "final_execution_status": "SUCCESS",
+  "final_compliance": "COMPLIANT",
+  "dut_unchanged": true,
+  "specification_unchanged": true,
+  "attempt_0": {
+    "validation": "VALID",
+    "contract_gate": "INVALID",
+    "spice": "NOT_RUN",
+    "repair_trigger": "contract_gate_rejection"
+  },
+  "attempt_1": {
+    "validation": "VALID",
+    "contract_gate": "VALID",
+    "spice": "SUCCESS",
+    "incoming_trigger": "contract_gate_rejection"
+  }
+}
