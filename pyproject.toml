@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spec2testbench"
+version = "0.5.0"
+description = "Deterministic and hybrid LLM-SPICE verification framework for analog circuits"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24", "matplotlib>=3.7", "pyyaml>=6.0", "python-dotenv>=1.0",
+  "pydantic>=2.6", "typer>=0.9", "rich>=13.0", "schemdraw>=0.19", "openai>=1.0"
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+spec2testbench = "spec2testbench.presentation.cli.main:app"
+
+[tool.setuptools.packages.find]
+include = ["spec2testbench*"]

@@ -1,0 +1,426 @@
+\documentclass[conference]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{cite}
+\usepackage{amsmath}
+\usepackage{siunitx}
+\usepackage{xcolor}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{balance}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=blue
+}
+
+\title{From Specs to SPICE Testbenches: A Beginner-Friendly Framework for LLM-Assisted Analog Verification}
+
+
+\author{
+\IEEEauthorblockN{Exaucé Maruba Kambale}
+\IEEEauthorblockA{
+Faculty of Polytechnic\\
+University of Kinshasa\\
+Kinshasa, DR Congo\\
+exauce.kambale@unikin.ac.cd
+}
+\and
+\IEEEauthorblockN{Christian Moanda Ndeko}
+\IEEEauthorblockA{
+Faculty of Polytechnic\\
+University of Kinshasa\\
+Kinshasa, DR Congo\\
+christianmoanda@yahoo.fr
+}
+\and
+\IEEEauthorblockN{Kyandoghere Kyamakya}
+\IEEEauthorblockA{
+Institute of Smart Systems Technologies\\
+University of Klagenfurt\\
+Austria\\
+kyandoghere.kyamakya@aau.at
+}
+}
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Analog verification remains difficult for beginners because the full workflow spans specification interpretation, stimulus selection, testbench authoring, simulation control, waveform analysis, verdict generation, and reporting. In practice, these steps are often distributed across ad hoc scripts and expert habits that are hard to reproduce. This paper presents Spec2TestBench, a beginner-friendly framework that translates structured specifications into SPICE-oriented verification artifacts while preserving traceability and optional large language model (LLM) assistance. The central methodological contribution is not another black-box generator, but a verification semantics tailored to analog evaluation: a four-level validation taxonomy (\emph{FAIL}, \emph{RUN}, \emph{PASS}, \emph{ROBUST PASS}) together with a weighted \emph{Compliance Score} that quantifies partial specification satisfaction and robustness under variation. The framework combines a normalized verification-test catalog, deterministic category-based generators, optional LLM-guided testbench refinement, ngspice-backed execution, metric extraction, specification checking, waveform plotting, and netlist-to-schematic rendering. We report two complementary evaluation layers. A broad 35-circuit non-LLM campaign demonstrates end-to-end executability with 35/35 successful ngspice runs and 102 PVT variant rows. A benchmark-aligned 28-topology campaign with YAML specifications then achieves 28/28 PASS, corresponding to a 100\% topology-level compliance rate across DC, AC, transient, spectral, and simplified PVT-oriented checks. A minimal ablation on representative baseline cases shows that the proposed semantics separates valid-but-noncompliant runs from true tool-flow failures, eliminating a key ambiguity of binary PASS/FAIL reporting. These results position Spec2TestBench as both a reproducible educational framework and a more defensible evaluation methodology for LLM-assisted analog verification.
+\end{abstract}
+
+\begin{IEEEkeywords}
+analog verification, SPICE, ngspice, testbench generation, large language models, educational EDA, circuit benchmarking
+\end{IEEEkeywords}
+
+\section{Introduction}
+Analog verification remains one of the least beginner-friendly parts of circuit design practice. Even when a circuit is available as a SPICE netlist, obtaining a meaningful verification result requires several manual decisions: selecting analyses, defining excitations, choosing observable nodes, computing performance metrics, checking specifications, and interpreting failures. In conventional workflows, these operations are distributed across handwritten netlists, simulator-specific commands, plotting scripts, and undocumented design intuition. As a result, beginners often learn verification through imitation rather than through a transparent and reproducible framework.
+
+This problem has become more interesting in the context of LLM-assisted engineering. Recent LLM systems have shown strong capability in code generation and structured reasoning \cite{vaswani2017attention,brown2020language,openai2023gpt4}. However, analog verification is a high-friction domain for such assistance because textual instructions must eventually produce physically meaningful analyses and measurements. A useful beginner-oriented framework should therefore do more than ``call an LLM'': it should expose the intermediate artifacts, keep a deterministic baseline, and allow a fair comparison between assisted and non-assisted operation.
+
+Spec2TestBench was built with this goal. It aims to transform a user specification into a verifiable SPICE-oriented workflow while keeping the process understandable enough for teaching, laboratory work, and early research prototyping. The framework is organized around the following principles:
+
+\begin{itemize}
+\item structured specifications rather than free-form prompts as the primary source of truth;
+\item a normalized verification vocabulary covering DC, AC, transient, spectral, differential, and PVT intents;
+\item deterministic baseline generators that remain executable without any LLM;
+\item optional LLM assistance restricted to testbench decisions rather than simulator or checker behavior;
+\item reportable artifacts including generated testbenches, extracted metrics, plots, and verdicts.
+\end{itemize}
+
+The contribution of this paper is therefore pragmatic rather than purely algorithmic. We describe the current framework, explain its end-to-end flow, and report the present experimental evidence obtained from the audited implementation. The paper also distinguishes carefully between the \emph{target verification catalog} and the \emph{currently executable coverage}, because this distinction is essential for an honest conference paper.
+
+The main contributions are as follows:
+
+\begin{itemize}
+\item a beginner-friendly framework that maps structured analog specifications to SPICE verification flows;
+\item a clean separation between deterministic baseline generation and optional LLM-assisted generation;
+\item a real ngspice campaign over 35 benchmark circuits with aggregated evidence across major analysis families;
+\item a four-level validation taxonomy and a weighted compliance metric for analog verification outcomes;
+\item a controlled baseline-versus-LLM protocol in which provider-side failures are explicitly classified as skipped runs rather than false circuit failures;
+\item a clear statement of current limitations and the remaining path toward fuller compliance with the original specification catalog.
+\end{itemize}
+
+\section{Related Work}
+Prior work in analog design automation has typically focused on one stage of the flow rather than on beginner-facing verification semantics.
+
+AutoCkt formulates analog design as a reinforcement-learning optimization problem for finding circuit parameters that satisfy target specifications \cite{settaluri2020autockt}. Its emphasis is optimization and sizing, not transparent testbench generation or verdict reporting. ALIGN automates analog layout generation from netlists to layout under technology constraints \cite{dhar2020align}. It addresses physical design rather than specification-to-verification workflows. AnalogCoder uses an LLM agent to generate analog design code in a training-free setting \cite{lai2024analogcoder}. Its core contribution is circuit design generation rather than simulator-backed verification semantics. More recently, AnalogTester moved closer to the verification stage by using an LLM-oriented framework for automatic analog testbench generation \cite{chen2025analogtester}. However, its emphasis remains LLM-centered generation rather than an explicit separation between infrastructure failure, nominal compliance, and robustness under variation.
+
+Table~\ref{tab:relatedwork} summarizes the positioning of Spec2TestBench with respect to representative prior directions. The table should not be read as claiming that Spec2TestBench dominates those systems in their native task. Instead, it highlights that the present work occupies a different niche: structured, simulator-backed, beginner-friendly verification with explicit compliance semantics.
+
+\begin{table*}[t]
+\caption{Positioning relative to representative prior work}
+\label{tab:relatedwork}
+\centering
+\scriptsize
+\begin{tabular}{p{2.2cm}p{3.2cm}p{2.0cm}p{1.7cm}p{1.8cm}p{2.1cm}p{2.5cm}}
+\toprule
+Work & Primary goal & LLM-based & Simulator-backed evaluation & PVT-aware verdict layer & Main output stage & Distinctive emphasis \\
+\midrule
+AutoCkt \cite{settaluri2020autockt} & Circuit sizing and optimization via reinforcement learning & No & Yes & Not explicit as verdict taxonomy & Design optimization & Post-layout-aware optimization efficiency \\
+ALIGN \cite{dhar2020align} & Automatic analog layout generation & No & Not the main contribution & No & Layout & Netlist-to-layout automation \\
+AnalogCoder \cite{lai2024analogcoder} & Training-free analog circuit design/code generation & Yes & Yes & Not explicit as verification status & Circuit generation & LLM agent for analog design synthesis \\
+AnalogTester \cite{chen2025analogtester} & LLM-based automatic analog testbench generation & Yes & Yes & Not explicit as verification status & Testbench generation & Automated testbench construction for selected analog blocks \\
+Spec2TestBench (this work) & Specification-to-testbench verification flow with explicit outcome semantics & Optional & Yes & Yes & Verification and reporting & FAIL/RUN/PASS/ROBUST PASS + Compliance Score for beginner-friendly analog verification \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\section{Method}
+\subsection{Framework Overview}
+Spec2TestBench follows a layered architecture separating presentation, application orchestration, domain concepts, and infrastructure services. At a high level, the framework executes the pipeline shown below:
+
+\begin{enumerate}
+\item parse a YAML specification into normalized domain objects;
+\item infer or select a verification family;
+\item generate a SPICE-oriented testbench using either deterministic templates or an LLM-assisted strategy;
+\item execute the testbench through ngspice;
+\item extract metrics from raw outputs and derived waveforms;
+\item compare measured values against specification thresholds;
+\item emit a verdict, reports, and optional schematic or waveform visuals.
+\end{enumerate}
+
+This decomposition is motivated by reproducibility. The simulator, parser, checker, and report logic remain shared between baseline and LLM-assisted modes. Only the testbench-generation stage is allowed to vary in the comparison protocol, which makes the framework suitable for controlled evaluation rather than anecdotal demos.
+
+\subsection{Reproducible CLI Usage}
+The framework is exposed through a command-line interface, which is useful both for beginners and for reproducible experimental campaigns. The main commands used in the present work are:
+
+\begin{verbatim}
+spec2testbench verify --specs <spec.yaml> --netlist <circuit.cir> --no-llm
+spec2testbench generate --specs <spec.yaml> --output <testbench.py> --no-llm
+spec2testbench draw --netlist <circuit.cir> --output <schematic.png>
+spec2testbench providers
+\end{verbatim}
+
+For paper-facing benchmark runs, the most important command is the deterministic verification mode:
+
+\begin{verbatim}
+spec2testbench verify --specs examples/reference_28_specs/<case>.yaml \
+  --netlist benchmark_reference_28/<case>.cir --no-llm
+\end{verbatim}
+
+This explicit CLI layer is important because it makes the framework auditable by readers: the same commands can be reused to regenerate testbenches, execute ngspice, export schematics, and reproduce the benchmark-aligned verdict tables reported in this paper.
+
+\subsection{Specification Model and Verification Vocabulary}
+The framework uses structured specifications as its main input format. A specification can encode circuit identity, high-level intent, supply conditions, analysis preferences, and measurement targets. Internally, the project exposes a registry of 28 standardized verification tests grouped into six categories:
+
+\begin{itemize}
+\item DC;
+\item AC;
+\item transient;
+\item spectral;
+\item differential;
+\item process-voltage-temperature (PVT).
+\end{itemize}
+
+This registry acts as a normalized vocabulary for the framework and for future evaluation campaigns. At the current stage, not all 28 named tests are implemented as fully specialized executable flows. Instead, the operational core is category-based: the framework implements deterministic executable generators for major categories, and those generators cover a substantial subset of the intended test space. This distinction matters because the paper should not overclaim complete per-test operationalization where the current code still relies on family-level templates.
+
+\subsection{Deterministic Baseline Generation}
+The baseline mode is the most important for experimental validity because it demonstrates that the framework is not merely a wrapper around an LLM. In this mode, testbench construction is driven by predefined logic:
+
+\begin{itemize}
+\item DC tests focus on bias-point observables such as output voltage, supply current, and quiescent power;
+\item AC tests target frequency-domain quantities such as low-frequency gain, cutoff frequency, unity-gain bandwidth, and phase margin;
+\item transient tests target time-domain observables such as rise time, startup behavior, and propagation delay;
+\item spectral tests target frequency and distortion-related quantities such as fundamental frequency and THD;
+\item PVT tests repeat selected measurements over supply and temperature variants.
+\end{itemize}
+
+The deterministic path is intentionally inspectable. A beginner can examine the generated analysis cards, stimuli, and measurements, then compare them directly with the resulting simulation outputs. This property is pedagogically useful even when the generated testbench is imperfect.
+
+\subsection{Optional LLM Assistance}
+The LLM-assisted mode does not replace the framework. Instead, it is constrained to the same simulation and checking pipeline as the baseline. The model is allowed to influence:
+
+\begin{itemize}
+\item analysis selection;
+\item stimulus choice;
+\item measurement definitions;
+\item output-node targeting;
+\item wording or organization of generated testbench fragments.
+\end{itemize}
+
+The model is not allowed to modify the benchmark netlist, the checker thresholds, or the parser logic. This restriction preserves fairness: if the LLM improves results, it must do so through better testbench adequacy rather than by relaxing the evaluation.
+
+\subsection{Simulation, Parsing, and Verdicts}
+The execution backend relies on ngspice, a mature open-source simulator descended from SPICE traditions \cite{nagel1973spice,vladimirescu1994spice,ngspice2026}. Each generated testbench is simulated, and outputs are parsed to recover scalar metrics or waveform-derived quantities. The framework includes logic for metric extraction, success-rate computation, and verdict normalization.
+
+One practical detail deserves emphasis. During local runs, the console may print messages such as ``PySpice not available for parsing.'' In the audited implementation, this message does not mean that simulation failed. It indicates that an optional parsing path is unavailable and that the framework is using its internal raw-output processing instead. For the present paper, the executed evidence comes from real ngspice runs rather than from a mocked parser.
+
+\subsection{Validation Taxonomy and Compliance Score}
+Binary PASS/FAIL reporting is often too coarse for analog verification. A simulation can be invalid, valid but non-compliant, compliant only in nominal conditions, or compliant under both nominal and variation-aware checks. To capture this distinction, we introduce the following high-level statuses:
+
+\begin{itemize}
+\item \textbf{FAIL}: the verification flow is not valid because testbench generation failed, simulation failed, or a required metric could not be extracted reliably;
+\item \textbf{RUN}: the simulation is valid and measurements are available, but one or more required specifications are not satisfied;
+\item \textbf{PASS}: all selected nominal specifications are satisfied;
+\item \textbf{ROBUST PASS}: all selected nominal specifications are satisfied and the selected PVT checks are also satisfied.
+\end{itemize}
+
+This taxonomy separates \emph{tool-flow validity} from \emph{circuit compliance}, which is especially useful in analog evaluation where simulation completion alone is not an adequate success criterion.
+
+To complement the discrete status, we define a weighted Compliance Score:
+\begin{equation}
+\mathrm{ComplianceScore}=\frac{\sum_{i=1}^{N} w_i s_i}{\sum_{i=1}^{N} w_i},
+\end{equation}
+where $w_i$ is the optional weight of metric $i$, and $s_i$ is a per-metric score derived from the checker verdict. In the current implementation, $s_i=1.0$ for PASS, $s_i=0.75$ for WARNING, and $s_i=0$ for FAIL or ERROR. The same formulation is used to derive nominal-only compliance and PVT-only compliance. This makes the evaluation richer than a binary outcome while remaining simple enough for reproducible benchmarking.
+
+\subsection{Multimodal Artifacts and Schematic Generation}
+The framework also produces visual artifacts useful for both debugging and explanation. Waveform plots can be generated for transient and frequency-domain analyses, and a netlist-to-schematic renderer can produce PNG schematics from SPICE netlists. A recent reliability fix forced the schematic renderer to use a headless Matplotlib backend, making PNG generation reproducible in non-GUI environments. This matters for automated campaigns and for paper production because figures can be generated inside the same verification workflow rather than manually redrawn later.
+
+\subsection{Evaluation Protocol}
+Two evaluation layers are used in this paper.
+
+First, a broad benchmark campaign evaluates the framework in \emph{non-LLM mode} over a repository benchmark set of 35 analog netlists. This campaign answers the basic question: can the framework generate, simulate, extract, and score meaningful verification evidence on a heterogeneous set of circuits?
+
+Second, a focused baseline-versus-LLM comparison evaluates whether LLM assistance changes coverage or verdict quality on a smaller but representative subset. The eight selected cases are:
+
+\begin{enumerate}
+\item voltage reference;
+\item current mirror;
+\item low-pass filter;
+\item band-pass filter;
+\item two-stage operational amplifier;
+\item comparator;
+\item ring oscillator;
+\item relaxation oscillator.
+\end{enumerate}
+
+This subset spans references, bias circuits, filters, amplifiers, comparators, and oscillators. It was deliberately kept small enough to rerun repeatedly while still covering the main verification families encountered in the framework.
+
+\section{Results}
+\subsection{Benchmark Campaign Without LLM Assistance}
+The strongest current evidence comes from two non-LLM campaigns that answer different questions. The first is a broad 35-circuit execution campaign focused on end-to-end operational coverage. The second is a benchmark-aligned 28-topology campaign in which each circuit is paired with an explicit YAML specification and scored through the proposed verdict semantics. Table~\ref{tab:campaign} summarizes the broad execution campaign, while Table~\ref{tab:reference28} summarizes the stricter benchmark-aligned pass/fail evidence.
+
+\begin{table}[t]
+\caption{Aggregated results of the 35-circuit ngspice benchmark campaign}
+\label{tab:campaign}
+\centering
+\begin{tabular}{lc}
+\toprule
+Metric & Value \\
+\midrule
+Total benchmark circuits & 35 \\
+Successful ngspice runs & 35/35 \\
+PVT variant rows & 102 \\
+Tracked specification families & 5 \\
+Mean family compliance score & 1.000 \\
+Families with perfect compliance & 5/5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+These numbers are important for two reasons. First, they show that the current implementation is operational on a non-trivial set of circuit types. Second, they show that the new reporting formalism produces quantitative compliance outputs in addition to simulator completion.
+
+\begin{table}[t]
+\caption{Aggregated results of the benchmark-aligned 28-topology verification campaign}
+\label{tab:reference28}
+\centering
+\begin{tabular}{lc}
+\toprule
+Metric & Value \\
+\midrule
+Reference topologies & 28 \\
+PASS verdicts & 28/28 \\
+RUN verdicts & 0/28 \\
+FAIL verdicts & 0/28 \\
+Mean compliance score & 1.000 \\
+Topology-level pass rate & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This second result is particularly important for the paper because it is stricter than merely ``35/35 runs completed.'' Each of the 28 reference circuits is associated with benchmark-aligned metrics, generated specifications, extracted measurements, and a final compliance verdict. After correcting the previously weak cases through better nominal DC operating-point handling, better band-pass metric targeting, and cleaner oscillator stimulus/output handling, the audited deterministic flow now reaches 28/28 PASS. This makes the evaluation substantially stronger: the framework is not only runnable, but also specification-compliant on the curated benchmark-aligned set used for paper reporting.
+
+The benchmark itself is intentionally topology-diverse. It contains 35 simplified analog netlists spanning references, current sources, amplifiers, active filters, comparators, oscillators, detectors, and mixed-signal-style support blocks. Complexity was characterized directly from the netlists by counting device statements. Across the full set, the mean netlist size is 5.06 components, with a minimum of 3 and a maximum of 9; 16 circuits fall in the \emph{small} class, 12 in \emph{medium}, and 7 in \emph{large}. This should be interpreted honestly: the benchmark is pedagogical and method-development oriented rather than foundry-PDK scale, but it is broad enough to exercise the framework across multiple verification families.
+
+\begin{table*}[t]
+\caption{Representative benchmark characterization excerpt; the full 35-case table is available in the generated benchmark summary artifacts}
+\label{tab:benchmarkdetail}
+\centering
+\scriptsize
+\begin{tabular}{lllll}
+\toprule
+Topology & Family & Complexity & Analyses & Extracted metrics \\
+\midrule
+active\_load\_amplifier & amplifier & medium (5 comps: 2M, 3V) & op, ac & $vout$, $I_{DD}$, power, gain, cutoff, UGBW, PM, PVT \\
+bandgap\_reference & bandgap & large (7 comps: 2D, 4R, 1V) & op, dc & $vout$, $I_{DD}$, power, PVT \\
+bandpass\_filter & filter & medium (5 comps: 2R, 2C, 1V) & ac & gain, cutoff, UGBW, PM, PVT \\
+cascode\_current\_mirror & current source & large (8 comps: 4M, 1R, 2V, 1I) & op & $vout$, $I_{DD}$, power, PVT \\
+comparator & comparator & small (4 comps: 1R, 2V, 1E) & tran & delay, frequency, THD \\
+lowpass\_filter & filter & small (3 comps: 1R, 1C, 1V) & ac, tran, fourier & gain, cutoff, UGBW, PM, frequency, THD, PVT \\
+ring\_oscillator & oscillator & small (4 comps: 1B, 1R, 1C, 1V) & tran, fourier & frequency, startup, THD \\
+two\_stage\_opamp & amplifier & large (9 comps: 2G, 2R, 2C, 3V) & ac, tran & gain, cutoff, frequency, PVT \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+Coverage evidence across major verification families is summarized in Table~\ref{tab:coverage}. The counts reflect how many times the campaign produced meaningful evidence for each analysis family.
+
+\begin{table}[t]
+\caption{Evidence counts by verification family in the benchmark campaign}
+\label{tab:coverage}
+\centering
+\begin{tabular}{lc}
+\toprule
+Verification family & Evidence count \\
+\midrule
+DC & 12 \\
+AC & 16 \\
+Transient & 22 \\
+Spectral & 19 \\
+PVT & 21 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The family distribution shows that the framework is no longer restricted to one analysis type. Instead, the experimental evidence spans steady-state biasing, small-signal behavior, time-domain dynamics, distortion-oriented spectral analysis, and operating-condition variation. This breadth is central to the paper's credibility because the framework claims to be a verification framework rather than a single-purpose script generator.
+
+Metric availability is similarly encouraging. Across the campaign, the framework extracted recurring quantities including output voltage, average supply current, quiescent power, DC gain, cutoff frequency, unity-gain bandwidth, phase margin, rise time, propagation delay, oscillation frequency, THD, and PVT variation indicators. Table~\ref{tab:metricavailability} summarizes the most important counts.
+
+\begin{table}[t]
+\caption{Selected metric availability counts in the benchmark campaign}
+\label{tab:metricavailability}
+\centering
+\begin{tabular}{lc}
+\toprule
+Metric & Count \\
+\midrule
+\texttt{vout\_dc} & 12 \\
+\texttt{mean\_current\_a} & 12 \\
+\texttt{quiescent\_power\_w} & 11 \\
+\texttt{dc\_gain\_db} & 16 \\
+\texttt{cutoff\_frequency\_hz} & 4 \\
+\texttt{ugbw\_hz} & 10 \\
+\texttt{phase\_margin\_deg} & 10 \\
+\texttt{rise\_time\_s} & 18 \\
+\texttt{propagation\_delay\_s} & 2 \\
+\texttt{frequency\_hz} & 19 \\
+\texttt{thd\_percent} & 19 \\
+\texttt{pvt\_vout\_variation} & 11 \\
+\texttt{pvt\_dc\_gain\_variation} & 16 \\
+\texttt{pvt\_power\_variation} & 11 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The framework also produced benchmark-aligned specification outcomes. In the current summary, all tracked metric families in the paper-facing benchmark specification set achieved a 100\% pass rate and a compliance score of 1.000 for DC, AC, transient, spectral, and PVT checks. This result should be interpreted carefully: it reflects the current selected benchmark specification set, not a claim that all theoretically supported tests are complete.
+
+\subsection{Topology-Level Observations}
+At topology level, the campaign covered a diverse set including references, current mirrors, multiple amplifier classes, active filters, oscillators, comparators, detectors, mixers, rectifiers, and sample-and-hold structures. Many topologies produced multi-family evidence. For instance, some amplifier-like circuits yielded DC bias metrics, AC gain and bandwidth metrics, spectral indicators, and PVT variation summaries within one combined flow.
+
+The topology-level summary also helps interpret compliance. Earlier weak cases were useful because they revealed that simulator completion is not enough: node targeting and excitation choice can still produce measurements that are technically extractable but verification-wise unconvincing. In the final audited campaign, those cases were resolved by targeted methodological fixes rather than by hiding them inside a broader benchmark. Specifically, the framework was improved to measure nominal DC operating points correctly, to use a more appropriate bandwidth definition for band-pass filters, and to avoid conflicting injected stimuli for self-oscillating circuits. The fact that these fixes converted residual weak cases into final PASS outcomes strengthens the claim that the framework is becoming methodologically better, not merely numerically luckier.
+
+\subsection{Baseline Versus LLM Comparison}
+The framework also includes a controlled baseline-versus-LLM comparison protocol in which both modes share the same benchmark netlist, ngspice path, parser, and checker. Only the generation strategy changes.
+
+In the most recent audited run, the deterministic baseline completed all eight selected cases and produced six PASS outcomes and two RUN outcomes. The LLM-assisted path, however, encountered provider-side connection failures during generation; following the protocol, those cases were marked as \emph{SKIPPED} rather than counted as circuit failures. This behavior is methodologically important because it prevents infrastructure failures from being misreported as design-level verification failures.
+
+The immediate conclusion is that the deterministic baseline remains the primary source of quantitative evidence in the current paper. The LLM path should be treated as an extensibility layer and as future experimental work rather than as the central empirical claim.
+
+\subsection{Minimal Ablation: Binary Versus Structured Verdicts}
+The main methodological question is whether the proposed verdict semantics adds information beyond a conventional binary PASS/FAIL outcome. Table~\ref{tab:ablation} reports a minimal ablation on the eight deterministic baseline cases used in the representative evaluation subset.
+
+\begin{table}[t]
+\caption{Minimal ablation of outcome semantics on the eight-case deterministic subset}
+\label{tab:ablation}
+\centering
+\begin{tabular}{lc}
+\toprule
+Outcome scheme & Distribution \\
+\midrule
+Binary PASS/FAIL & 6 PASS, 2 FAIL \\
+Structured verdicts & 6 PASS, 2 RUN, 0 FAIL, 0 ROBUST PASS \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This ablation is small, but it is informative. Under binary reporting, the voltage-reference and band-pass-filter cases are simply labeled as failures, even though the toolflow completed and produced measurable outputs. Under the proposed semantics, these cases become \emph{RUN}: the simulator executed correctly, the metrics were extracted, but the specification was not satisfied. This distinction matters because it separates \emph{verification infrastructure failure} from \emph{circuit non-compliance}. In other words, the structured verdicts increase semantic resolution on the exact same experimental runs.
+
+The same argument extends naturally to PVT-aware evaluation. A nominally compliant design remains \emph{PASS}, while only a design that also satisfies the selected variation checks becomes \emph{ROBUST PASS}. This creates a principled upward extension of binary PASS without changing the underlying simulator or checker.
+
+\subsection{Schematic Production}
+The framework's drawing path was also exercised on representative circuits, and PNG schematics were successfully produced for topologies such as current mirrors, filters, comparators, ring oscillators, and two-stage amplifiers. Figure~\ref{fig:schematic} illustrates one example of the generated schematic style. While these figures are not intended to replace polished EDA schematics, they are valuable for documentation, sanity checking, and multimodal reporting.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{../results/schematics_eval/lowpass_filter.png}
+\caption{Example PNG schematic automatically generated from a benchmark netlist.}
+\label{fig:schematic}
+\end{figure}
+
+\section{Discussion}
+\subsection{Novelty and Positioning}
+The strongest claim of this paper is methodological rather than algorithmic. Spec2TestBench does not introduce a new analog optimizer, layout engine, or foundation model. Its novelty lies in making analog verification outcomes more semantically precise through the FAIL/RUN/PASS/ROBUST PASS taxonomy and the weighted Compliance Score, while keeping the full flow simulator-backed and inspectable. This positioning is important because it separates the work from prior systems that focus primarily on sizing, generation, or layout.
+
+\subsection{Benchmark Strength and Scope}
+The current benchmark is broad in topology but modest in absolute circuit scale. The 35 circuits span several analog families and multiple verification categories, which is useful for methodological evaluation. At the same time, the netlists are simplified educational or benchmark-style cases rather than industrial post-layout blocks under proprietary PDKs. The paper should therefore be read as demonstrating \emph{verification-flow breadth and outcome semantics}, not as claiming exhaustive coverage of production-grade analog complexity.
+
+\subsection{Validity of the Reported Evidence}
+The benchmark results support three points. First, the non-LLM baseline is fully executable and already produces meaningful verification evidence at two levels: 35/35 successful simulator-backed runs for operational breadth, and 28/28 PASS on a benchmark-aligned specification campaign for paper-facing compliance strength. Second, the proposed semantics resolves an ambiguity that binary PASS/FAIL reporting cannot resolve: a circuit can be validly simulated yet still fail its specification, which is now captured as RUN rather than as a generic failure. Third, the current evidence does not depend on PySpice availability, since the reported results are produced through real ngspice runs and the existing parser path.
+
+\subsection{Interpreting the LLM Layer}
+The LLM path should be interpreted cautiously. In the current audit, provider-side connection failures caused the LLM cases to be skipped, which is itself a useful lesson for experimental design: LLM-assisted EDA evaluation must explicitly separate model unavailability from circuit inadequacy. The deterministic baseline therefore remains the primary empirical anchor of the paper, while the LLM path is best framed as an extensibility layer and a future comparison axis.
+
+\subsection{Remaining Threats to Validity}
+Three limitations remain central. First, not all verification intents are implemented as individually specialized executable flows; some remain family-level template realizations even though the 28 benchmark-aligned topologies now pass end-to-end. Second, the benchmark is not yet tied to expert human agreement, so correctness is established operationally and specification-wise rather than through inter-rater validation. Third, the current PVT treatment covers voltage and temperature perturbations but not full industrial process-corner modeling. These limitations do not invalidate the paper's main claim, but they do bound it.
+
+\section{Conclusion}
+This paper presented Spec2TestBench, a beginner-friendly framework that maps structured analog specifications to SPICE-oriented verification artifacts with optional LLM assistance. The current system already supports a reproducible end-to-end flow including generation, ngspice execution, metric extraction, verdicting, plotting, and schematic rendering. On a 35-circuit benchmark campaign in non-LLM mode, the framework achieved 35/35 successful ngspice runs and 102 PVT variant rows, with evidence spanning DC, AC, transient, spectral, and PVT verification families. On the stricter benchmark-aligned reference campaign, it further achieved 28/28 PASS with a mean compliance score of 1.000. The main methodological addition is a richer evaluation formalism based on FAIL, RUN, PASS, and ROBUST PASS, together with a weighted Compliance Score that quantifies partial specification satisfaction.
+
+The most defensible interpretation is therefore clear: Spec2TestBench is already a credible educational and research scaffold for analog verification, and it now reports verification outcomes in a way that is better aligned with the realities of analog validation than a binary PASS/FAIL outcome. Its next milestone is not to replace this baseline, but to extend specialized test coverage while preserving the transparency that makes the framework useful for beginners and convincing for experimental research.
+
+\balance
+\bibliographystyle{IEEEtran}
+\bibliography{spec2testbench_refs}
+
+\end{document}

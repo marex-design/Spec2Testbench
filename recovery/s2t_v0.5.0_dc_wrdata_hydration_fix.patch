@@ -1,0 +1,124 @@
+diff --git a/spec2testbench/infrastructure/simulator/pyspice_simulator.py b/spec2testbench/infrastructure/simulator/pyspice_simulator.py
+index face264..1f7a148 100644
+--- a/spec2testbench/infrastructure/simulator/pyspice_simulator.py
++++ b/spec2testbench/infrastructure/simulator/pyspice_simulator.py
+@@ -1006,12 +1006,34 @@ class PySpiceSimulator(ICircuitSimulator):
+             results["tran"] = transient
+             results["transient"] = dict(transient)
+         if AnalysisType.DC in analysis_types and not results.get("dc"):
+-            value = float(data[-1, -1])
+-            results["dc"] = {
+-                "vout_dc": value,
+-                "operating_point": value,
+-                "vout": value,
++            # Native DC WRDATA uses ``wr_singlescale`` and writes:
++            #   column 0 -> swept source value
++            #   column 1 -> V(output)
++            #   column 2 -> I(Vdd), when available
++            # Preserve the full sweep. Semantic ACP metrics such as inverter
++            # endpoint voltages, comparator monotonicity and current-mirror
++            # stability require waveforms rather than a single terminal value.
++            sweep = data[:, 0].astype(float)
++            vout = data[:, 1].astype(float)
++            dc = {
++                "sweep": sweep.tolist(),
++                "source_values": sweep.tolist(),
++                "vout": vout.tolist(),
++                "vout_values": vout.tolist(),
++                "vout_waveform": vout.tolist(),
++                "output": vout.tolist(),
++                "voltage": {
++                    "vout": vout.tolist(),
++                },
++                "vout_dc": float(vout[-1]),
++                "operating_point": float(vout[-1]),
+             }
++            if data.shape[1] >= 3:
++                current = data[:, 2].astype(float)
++                dc["current_waveforms"] = {"Vdd": current.tolist()}
++                results.setdefault("currents", {})
++                results["currents"].setdefault("vdd", float(current[-1]))
++            results["dc"] = dc
+     
+     def extract_metrics(self, 
+                         results: Dict[str, Any],
+diff --git a/tests/test_pyspice_native_backend_selection.py b/tests/test_pyspice_native_backend_selection.py
+index 0fc65c0..9149939 100644
+--- a/tests/test_pyspice_native_backend_selection.py
++++ b/tests/test_pyspice_native_backend_selection.py
+@@ -130,3 +130,75 @@ def test_netlist_inspector_parses_spice_scaled_ac_magnitude():
+ 
+     assert inspection.sources[0].dc_value == 1.0
+     assert inspection.sources[0].ac_magnitude == 1e-9
++
++
++def _dc_testbench() -> TestBench:
++    return TestBench(
++        name="dc_sweep_tb",
++        category="dc",
++        circuit_name="demo",
++        analyses=[AnalysisConfig(type=AnalysisType.DC, parameters={"source": "vin", "start": 0, "stop": 5, "step": 1})],
++        measurements=[Measurement(name="dc_transfer_curve", expression="max(Vout)-min(Vout)", unit="V")],
++        metadata={
++            "measurement_context": {"input_node": "vin", "output_node": "vout"},
++        },
++    )
++
++
++def test_wrdata_hydration_preserves_dc_sweep_and_supply_current_trace(tmp_path):
++    simulator = PySpiceSimulator(allow_mock=True)
++    vectors_path = tmp_path / "vectors.dat"
++    vectors_path.write_text(
++        "\n".join(
++            [
++                "0 5.0 -1.0e-3",
++                "1 4.9 -1.1e-3",
++                "2 2.5 -1.2e-3",
++                "3 0.5 -1.15e-3",
++                "4 0.1 -1.05e-3",
++                "5 0.0 -1.0e-3",
++            ]
++        ),
++        encoding="utf-8",
++    )
++    results = {"dc": {}, "currents": {}}
++
++    simulator._hydrate_results_from_vectors(results, _dc_testbench(), vectors_path)
++
++    assert results["dc"]["sweep"] == [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
++    assert results["dc"]["vout_values"] == [5.0, 4.9, 2.5, 0.5, 0.1, 0.0]
++    assert results["dc"]["vout_dc"] == 0.0
++    assert results["dc"]["current_waveforms"]["Vdd"] == [
++        -1.0e-3, -1.1e-3, -1.2e-3, -1.15e-3, -1.05e-3, -1.0e-3
++    ]
++    assert results["currents"]["vdd"] == -1.0e-3
++
++
++def test_hydrated_dc_sweep_supports_acp_semantic_extractors(tmp_path):
++    from spec2testbench.infrastructure.spec_checker.metric_extractor import MetricExtractor
++
++    simulator = PySpiceSimulator(allow_mock=True)
++    vectors_path = tmp_path / "vectors.dat"
++    vectors_path.write_text(
++        "\n".join(
++            [
++                "0 5.0 -1.0e-3",
++                "1 4.9 -1.0001e-3",
++                "2 4.5 -1.0002e-3",
++                "3 0.5 -1.00015e-3",
++                "4 0.1 -1.00005e-3",
++                "5 0.0 -1.0e-3",
++            ]
++        ),
++        encoding="utf-8",
++    )
++    results = {"dc": {}, "currents": {}}
++    simulator._hydrate_results_from_vectors(results, _dc_testbench(), vectors_path)
++    extractor = MetricExtractor()
++
++    assert extractor.extract(results, "inverter_low_input_output_v") == 5.0
++    assert extractor.extract(results, "inverter_high_input_output_v") == 0.0
++    assert extractor.extract(results, "dc_transfer_curve") == 5.0
++    assert extractor.extract(results, "comparator_output_separation_v") is not None
++    assert extractor.extract(results, "comparator_monotonicity_percent") == 100.0
++    assert abs(extractor.extract(results, "current_stability_delta_a") - 2.0e-7) < 1e-15

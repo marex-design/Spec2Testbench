@@ -1,0 +1,37 @@
+{
+  "reconstruction_date": "2026-08-18",
+  "version": "0.5.0-reconstructed",
+  "source_archives": {
+    "Spec2Testbench_BASE_REBUILD.zip": "9476f211877886497303335eb41d832377489271e0cbdd502044a43f9b5e7dec",
+    "S2T_RECOVERY_ASSETS.zip": "d705806935d295e088df91a19dd34e17549be0d14e8864fe3924a9030effc443"
+  },
+  "op_bias_support": {
+    "script_size_bytes": 18633,
+    "script_sha256": "1472e8f41e54016a39c3a1efae8eb24185f3c7b773e4df2cb90d33fdae084d45"
+  },
+  "contract": {
+    "circuits": 28,
+    "mandatory_criteria": 64,
+    "executable_criteria": 47,
+    "not_implemented_criteria": 17
+  },
+  "historical_acceptance_target": {
+    "pytest_non_live": "293 passed, 12 skipped, 5 deselected (historical lost branch only)",
+    "simulation_success": 26,
+    "COMPLIANT": 16,
+    "NONCOMPLIANT": 7,
+    "NOT_EVALUATED": 5,
+    "evaluation_rate": 0.8214,
+    "compliance_evaluated": 0.6957,
+    "verified_compliance_yield": 0.5714,
+    "Cov_circuits": 0.8571,
+    "Cov_metrics": 0.6719,
+    "Cov_analyses": 0.6923
+  },
+  "limitations": [
+    "Not a byte-identical recovery of the lost local Git branch test.",
+    "Real ngspice execution unavailable in the ChatGPT construction sandbox.",
+    "ACP numerical acceptance target must be revalidated under user ngspice-42 environment.",
+    "Reconstructed DUT files originate from the uploaded base archive; hashes can differ from historical canonicalized provenance hashes even when topology/values are equivalent."
+  ]
+}

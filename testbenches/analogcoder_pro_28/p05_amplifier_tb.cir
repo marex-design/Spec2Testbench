@@ -1,0 +1,28 @@
+* TestBench: analogcoder_pro_p05_amplifier_full_testbench
+* Circuit: analogcoder_pro_p05_amplifier
+* Category: full
+*
+.OPTIONS POST=2 PROBE
+
+* AnalogCoder-Pro p5: A single-stage cascode amplifier with two NMOS transistors provides a single-ended output through a resistive load R
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p5\p5.py
+* AnalogCoder-Pro type: Amplifier
+* Inputs: Vin, Vbias
+* Outputs: Vout
+
+.MODEL nmos NMOS (LEVEL=1 KP=0.0001 VTO=0.5)
+
+Vdd Vdd 0 5
+Vbias Vbias 0 3
+Vin Vin 0 DC 1.5 AC 1n
+Rload Vout Vdd 10k
+M1 Drain_M1 Vin 0 0 nmos W=5e-05 L=1e-06
+M2 Vout Vbias Drain_M1 Drain_M1 nmos W=5e-05 L=1e-06
+
+.OP
+.AC DEC 100 1 1G
+
+.TEMP 27.0
+.TRAN 1n 50u 0
+
+.END

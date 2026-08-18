@@ -1,0 +1,8 @@
+* RC Low-Pass Filter - AC analysis only
+Vin in 0 DC 0 AC 1
+R1 in out 1k
+C1 out 0 1n
+
+.AC DEC 10 10 1MEG
+.PRINT AC V(out)
+.END

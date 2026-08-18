@@ -1,0 +1,25 @@
+name: analogcoder_pro_p28_schmitt
+circuit_type: schmitt_trigger
+technology: AnalogCoder-Pro/PySpice generic Level-1 models
+description: A non-inverting Schmitt trigger with positive feedback op-map
+source:
+  benchmark: AnalogCoder-Pro
+  task_id: 28
+  level: Hard
+  type: Schmitt
+  submodule_name: Unknown
+  netlist: benchmark_analogcoder_pro_28/p28_schmitt.cir
+performance_targets:
+  propagation_delay:
+    max: 0.001
+    unit: s
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: Vin
+  output_nodes: Vout
+  testbench_note: The testbench inputs a sine wave at Vin.
+  expected_behavior: The output (Vout) should be a square wave.
+test_categories:
+  - transient

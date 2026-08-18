@@ -1,0 +1,15 @@
+name: cascode_opamp_cascode_loads
+circuit_type: opamp
+technology: reference_28_behavioral
+description: cascode opamp cascode loads
+performance_targets:
+  dc_gain:
+    min: 14.020599913236762
+    max: 38.020599913236765
+    unit: dB
+  cutoff_frequency_hz:
+    min: 808984.1423240565
+    max: 6471873.138592452
+    unit: Hz
+test_categories:
+- ac

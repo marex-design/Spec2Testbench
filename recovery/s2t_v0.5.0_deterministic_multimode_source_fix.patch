@@ -1,0 +1,50 @@
+diff --git a/spec2testbench/infrastructure/testbench/llm_guided_synthesis.py b/spec2testbench/infrastructure/testbench/llm_guided_synthesis.py
+index e3bc221..adb567c 100644
+--- a/spec2testbench/infrastructure/testbench/llm_guided_synthesis.py
++++ b/spec2testbench/infrastructure/testbench/llm_guided_synthesis.py
+@@ -310,9 +310,16 @@ Hard rules:
+         primary_output = specification.output_nodes[0] if specification.output_nodes else "Vout"
+         source_actions: List[SourceAction] = []
+         seen_inputs = set()
+-        grouped: Dict[str, List[Stimulus]] = {}
++        grouped: Dict[tuple[str, str], List[Stimulus]] = {}
+         for stimulus in testbench.stimuli:
+-            grouped.setdefault(stimulus.name.lower(), []).append(stimulus)
++            # Consolidate by electrical drive location, not by stimulus label.
++            # A deterministic testbench can legitimately contain separate DC
++            # and AC stimulus objects with different names but the same input
++            # node. Grouping by name would keep only the first source action
++            # because ``seen_inputs`` suppresses the second one, silently
++            # dropping the AC magnitude.
++            key = (stimulus.node_positive.lower(), stimulus.node_negative.lower())
++            grouped.setdefault(key, []).append(stimulus)
+ 
+         for key, stimuli in grouped.items():
+             candidate = self._choose_multimode_stimulus(stimuli, specification)
+diff --git a/tests/test_llm_planning_components.py b/tests/test_llm_planning_components.py
+index 3d4ed48..c756c3d 100644
+--- a/tests/test_llm_planning_components.py
++++ b/tests/test_llm_planning_components.py
+@@ -334,3 +334,22 @@ def test_llm_generation_service_repairs_invalid_plan():
+     )
+     assert outcome.parsed_plan is not None
+     assert len(outcome.repair_history) == 1
++
++
++def test_deterministic_amplifier_plan_preserves_dc_bias_and_ac_excitation():
++    from spec2testbench.infrastructure.testbench.testbench_generator import TestBenchGenerator
++
++    specification = load_amplifier_spec()
++    testbench = TestBenchGenerator(use_llm=False).generate(specification, netlist_path=P01_NETLIST)
++    plan = testbench.metadata["llm_guided_plan"]
++    actions = [
++        action
++        for action in plan["source_actions"]
++        if action["new_source"].get("node_positive") == "Vin"
++    ]
++
++    assert len(actions) == 1
++    source = actions[0]["new_source"]
++    assert source["type"] == "ac"
++    assert source["dc_value"] == pytest.approx(1.0)
++    assert source["ac_magnitude"] == pytest.approx(1.0)

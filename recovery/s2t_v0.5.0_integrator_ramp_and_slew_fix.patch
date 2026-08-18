@@ -1,0 +1,186 @@
+diff --git a/spec2testbench/infrastructure/simulator/pyspice_simulator.py b/spec2testbench/infrastructure/simulator/pyspice_simulator.py
+index 1f7a148..b8d23ae 100644
+--- a/spec2testbench/infrastructure/simulator/pyspice_simulator.py
++++ b/spec2testbench/infrastructure/simulator/pyspice_simulator.py
+@@ -1112,11 +1112,12 @@ class PySpiceSimulator(ICircuitSimulator):
+         if len(vout) > 1 and len(time) > 1:
+             dv = np.diff(vout)
+             dt = np.diff(time)
+-            with np.errstate(divide='ignore'):
+-                sr = np.max(np.abs(dv / dt))
+-            if not np.isnan(sr) and not np.isinf(sr):
+-                metrics['slew_rate_v_s'] = float(sr)
+-                metrics['slew_rate'] = float(sr)
++            finite = np.isfinite(dv) & np.isfinite(dt) & (np.abs(dt) > 1e-30)
++            if np.any(finite):
++                sr = np.max(np.abs(dv[finite] / dt[finite]))
++                if np.isfinite(sr):
++                    metrics['slew_rate_v_s'] = float(sr)
++                    metrics['slew_rate'] = float(sr)
+             schmitt_metrics = self._extract_schmitt_metrics(tran)
+             if "propagation_delay" in blocked_native_metrics:
+                 schmitt_metrics.pop("propagation_delay", None)
+diff --git a/spec2testbench/infrastructure/spec_checker/metric_extractor.py b/spec2testbench/infrastructure/spec_checker/metric_extractor.py
+index 1b6e308..cee49d4 100644
+--- a/spec2testbench/infrastructure/spec_checker/metric_extractor.py
++++ b/spec2testbench/infrastructure/spec_checker/metric_extractor.py
+@@ -773,12 +773,13 @@ class MetricExtractor:
+     def _extract_integrator_ramp_slope(self, results: Dict[str, Any]) -> Optional[float]:
+         direct_value = self._lookup_metric_value(results, ("integrator_ramp_slope", "ramp_slope", "integrator_slope"))
+         if direct_value is not None:
+-            return direct_value
++            return abs(float(direct_value))
+         fit = self._linear_fit_waveform(results)
+         if fit is None:
+             return None
+         slope, _intercept, _r2 = fit
+-        return slope
++        # ACP Integrator.py compares the magnitude of the ramp slope.
++        return abs(float(slope))
+ 
+     def _extract_integrator_linearity(self, results: Dict[str, Any]) -> Optional[float]:
+         direct_value = self._lookup_metric_value(results, ("integrator_linearity", "ramp_linearity", "linearity_score"))
+@@ -1253,29 +1254,89 @@ class MetricExtractor:
+         return max(0.0, second_time - first_time)
+ 
+     def _linear_fit_waveform(self, results: Dict[str, Any]) -> Optional[tuple[float, float, float]]:
++        """Fit one physical integrator ramp, not the whole triangle waveform.
++
++        AnalogCoder-Pro's Integrator checker fits the output only between a
++        detected peak and the following trough.  Fitting 10--90 % of the
++        entire transient mixes positive and negative ramps and can therefore
++        create an artificial near-zero slope / R^2.  Here we deterministically
++        identify turning points from the output derivative and fit the complete
++        monotonic segment with the largest output excursion.
++        """
+         tran_data = results.get("transient") or results.get("tran", {})
+-        time = tran_data.get("time", [])
+-        values = self._get_waveform(tran_data, "out")
++        time = [float(x) for x in tran_data.get("time", [])]
++        values = [float(y) for y in self._get_waveform(tran_data, "out")]
+         if len(time) < 4 or len(values) < 4 or len(time) != len(values):
+             return None
+-        start = int(len(time) * 0.1)
+-        stop = max(start + 2, int(len(time) * 0.9))
+-        xs = [float(value) for value in time[start:stop]]
+-        ys = [float(value) for value in values[start:stop]]
+-        if len(xs) < 2:
+-            return None
+-        mean_x = sum(xs) / len(xs)
+-        mean_y = sum(ys) / len(ys)
+-        numerator = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
+-        denominator = sum((x - mean_x) ** 2 for x in xs)
+-        if denominator <= 1e-30:
+-            return None
+-        slope = numerator / denominator
+-        intercept = mean_y - slope * mean_x
+-        ss_tot = sum((y - mean_y) ** 2 for y in ys)
+-        ss_res = sum((y - (slope * x + intercept)) ** 2 for x, y in zip(xs, ys))
+-        r2 = 1.0 if ss_tot <= 1e-30 else max(0.0, 1.0 - (ss_res / ss_tot))
+-        return slope, intercept, r2
++
++        def fit_segment(start: int, stop: int) -> Optional[tuple[float, float, float]]:
++            # stop is inclusive. Trim a small fraction at both ends to avoid
++            # switching-edge curvature while preserving the physical ramp.
++            n = stop - start + 1
++            if n < 4:
++                return None
++            trim = max(0, int(n * 0.03))
++            a = min(stop - 1, start + trim)
++            b = max(a + 2, stop - trim)
++            xs = time[a:b + 1]
++            ys = values[a:b + 1]
++            if len(xs) < 3:
++                return None
++            mean_x = sum(xs) / len(xs)
++            mean_y = sum(ys) / len(ys)
++            denominator = sum((x - mean_x) ** 2 for x in xs)
++            if denominator <= 1e-30:
++                return None
++            numerator = sum((x - mean_x) * (y - mean_y) for x, y in zip(xs, ys))
++            slope = numerator / denominator
++            intercept = mean_y - slope * mean_x
++            ss_tot = sum((y - mean_y) ** 2 for y in ys)
++            ss_res = sum((y - (slope * x + intercept)) ** 2 for x, y in zip(xs, ys))
++            r2 = 1.0 if ss_tot <= 1e-30 else max(0.0, 1.0 - (ss_res / ss_tot))
++            return slope, intercept, r2
++
++        diffs = [values[i + 1] - values[i] for i in range(len(values) - 1)]
++        amplitude = max(values) - min(values)
++        eps = max(abs(amplitude) * 1e-9, 1e-12)
++        signs = [1 if d > eps else -1 if d < -eps else 0 for d in diffs]
++
++        # Fill zero-derivative samples with the nearest known trend so plateaus
++        # do not create spurious turning points.
++        last = 0
++        for i, sign in enumerate(signs):
++            if sign:
++                last = sign
++            elif last:
++                signs[i] = last
++        last = 0
++        for i in range(len(signs) - 1, -1, -1):
++            if signs[i]:
++                last = signs[i]
++            elif last:
++                signs[i] = last
++
++        turning = [0]
++        for i in range(1, len(signs)):
++            if signs[i - 1] and signs[i] and signs[i - 1] != signs[i]:
++                turning.append(i)
++        turning.append(len(values) - 1)
++        turning = sorted(set(turning))
++
++        candidates = []
++        for start, stop in zip(turning[:-1], turning[1:]):
++            fit = fit_segment(start, stop)
++            if fit is None:
++                continue
++            excursion = abs(values[stop] - values[start])
++            candidates.append((excursion, fit))
++
++        if candidates:
++            # A true ramp has the largest excursion; a saturated plateau has
++            # near-zero excursion even if its numerical R^2 is high.
++            return max(candidates, key=lambda item: item[0])[1]
++
++        # Conservative fallback for monotonic traces without a turning point.
++        return fit_segment(0, len(values) - 1)
+ 
+     def _harmonic_magnitudes(self, results: Dict[str, Any]) -> List[float]:
+         fourier = results.get("fourier", {})
+diff --git a/tests/test_acp_semantic_metrics.py b/tests/test_acp_semantic_metrics.py
+index debb507..2354a36 100644
+--- a/tests/test_acp_semantic_metrics.py
++++ b/tests/test_acp_semantic_metrics.py
+@@ -57,3 +57,29 @@ def test_oscillation_cycle_count_and_period_cv(ex):
+     cv = ex.extract(data, "oscillation_period_cv")
+     assert cycles is not None and cycles >= 4
+     assert cv is not None and cv < 0.05
++
++
++def test_integrator_metrics_fit_one_ramp_not_whole_triangle(ex):
++    # Two clean triangular periods with |slope| = 500 V/s.  A global fit of
++    # the full triangle would incorrectly yield a near-zero slope/R^2.
++    dt = 1e-4
++    t = [i * dt for i in range(201)]
++    period = 0.01
++    half = period / 2
++    y = []
++    for x in t:
++        phase = x % period
++        if phase <= half:
++            y.append(500.0 * phase)
++        else:
++            y.append(500.0 * (period - phase))
++    data = {"transient": {"time": t, "vout": y}}
++    assert ex.extract(data, "integrator_ramp_slope") == pytest.approx(500.0, rel=0.03)
++    assert ex.extract(data, "integrator_linearity") >= 0.99
++
++
++def test_integrator_slope_is_reported_as_magnitude(ex):
++    t = [i * 1e-3 for i in range(20)]
++    y = [5.0 - 400.0 * x for x in t]
++    data = {"transient": {"time": t, "vout": y}}
++    assert ex.extract(data, "integrator_ramp_slope") == pytest.approx(400.0, rel=1e-6)

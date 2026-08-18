@@ -1,0 +1,14 @@
+name: nmos_constant_current_source_resistive_load
+circuit_type: current_mirror
+technology: reference_28_behavioral
+description: nmos constant current source resistive load
+performance_targets:
+  vout_dc:
+    min: 0.7500000067082049
+    max: 1.2500000111803413
+    unit: V
+  idd:
+    max: 0.00030000000082917963
+    unit: A
+test_categories:
+- dc

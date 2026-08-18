@@ -1,0 +1,169 @@
+schema_version: '2.0'
+case_id: acp28-p22
+name: analogcoder_pro_p22_oscillator
+circuit_type: oscillator
+technology: AnalogCoder-Pro generic Level-1 benchmark models
+description: An RC phase-shift oscillator
+provenance:
+  benchmark: AnalogCoder-Pro
+  benchmark_subset: ACP-28
+  upstream_repository: https://github.com/laiyao1/AnalogCoderPro
+  upstream_task_id: 22
+  upstream_level: Hard
+  upstream_type: Oscillator
+  upstream_task_description: An RC phase-shift oscillator
+  upstream_testbench_description: The testbench initializes the op-amp non-inverting
+    input (Vinp) to 2.51V and the inverting input (Vinn) to 2.5V.
+  official_checker:
+    path: problem_check/Oscillator.py
+    criterion_summary:
+    - More than two peaks must be detected in the latter half of the waveform.
+    - Peak-to-peak oscillator output must exceed 5 uV.
+    - Coefficient of variation of detected periods must be below 0.2.
+    upstream_mutates_dut: false
+    notes: Criterion semantics reconstructed from the local pinned AnalogCoder-Pro
+      checker shipped with the uploaded base. The upstream startup protocol seeds
+      the first two op-amp pins at 2.51 V and 2.5 V; for this DUT those nodes are
+      Vref and Vinn. Spec2Testbench reproduces that .IC test condition without modifying
+      DUT topology or component values.
+  dut:
+    path: benchmark/analogcoder_pro/p22_oscillator.cir
+    sha256: 060c0dc5b6e4b187e05faa579f430ea19b0ad2ce490288d324c174fc2df573cb
+    canonicalization: Uploaded ACP-28 DUT bytes preserved; embedded analyses/output
+      directives are externalized at execution.
+    topology_and_values_preserved: true
+ports:
+  input: &id001 []
+  output: &id002
+  - Vout
+  differential_positive: []
+  differential_negative: []
+  common_mode: []
+  supply_positive:
+  - Vdd
+  supply_negative:
+  - '0'
+  bias: []
+  reference: []
+  loop_break: []
+  loop_injection: []
+  current_probe: []
+operating_conditions:
+  nominal_temperature: 25.0
+  nominal_supply: 5.0
+  process_corner: tt
+stimuli: []
+analyses:
+- id: tran_osc
+  type: TRAN
+  parameters:
+    step_time: 1.0e-06
+    end_time: 0.02
+    start_time: 0.0
+    initial_conditions:
+      Vref: 2.51
+      Vinn: 2.5
+  purpose: Oscillator startup and sustained oscillation using the upstream ACP initial-condition
+    seed.
+functional_requirements:
+- id: ACP_OSC_CYCLES
+  description: More than two peaks must be detected in the latter half of the waveform.
+  metric: oscillation_cycle_count
+  analysis: tran_osc
+  operator: '>'
+  threshold: 2.0
+  minimum: null
+  maximum: null
+  unit: cycles
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: semantic
+  implementation_status: executable
+  executable_metric: oscillation_cycle_count
+  notes: ''
+- id: ACP_OSC_SWING
+  description: Peak-to-peak oscillator output must exceed 5 uV.
+  metric: output_swing_v
+  analysis: tran_osc
+  operator: '>'
+  threshold: 5.0e-06
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: executable
+  executable_metric: output_swing_v
+  notes: ''
+- id: ACP_OSC_PERIOD_CV
+  description: Coefficient of variation of detected periods must be below 0.2.
+  metric: oscillation_period_cv
+  analysis: tran_osc
+  operator: <
+  threshold: 0.2
+  minimum: null
+  maximum: null
+  unit: ''
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: executable
+  executable_metric: oscillation_period_cv
+  notes: ''
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+    diagnostic_only: true
+    requirement_ids: []
+  oscillation_cycle_count:
+    unit: cycles
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_OSC_CYCLES
+    min: 2.0
+  output_swing_v:
+    unit: V
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_OSC_SWING
+    min: 5.0e-06
+  oscillation_period_cv:
+    unit: ''
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_OSC_PERIOD_CV
+    max: 0.2
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: *id001
+  output_nodes: *id002
+  temperature: 25.0
+  original_source_dc_values:
+    vdd: 5.0
+    vbias: 1.5
+    vref: 2.5
+measurement:
+  backend: AUTO
+  allow_fallback: true
+verification:
+  auto_select: true
+  include_tests: []
+  exclude_tests: []
+  required_policy: all
+  immutable_dut: true
+  not_evaluated_on_missing_mandatory_metric: true
+  require_full_contract_for_compliance: true
+test_requirements:
+  dc_sweep_step_v: 0.01
+test_categories:
+- tran
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.0

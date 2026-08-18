@@ -1,0 +1,10 @@
+name: "bandpass_filter"
+circuit_type: "band_pass_filter"
+technology: "benchmark_behavioral"
+performance_targets:
+  bandwidth_hz:
+    min: 2500
+    max: 3500
+    unit: "Hz"
+test_categories:
+  - "ac"

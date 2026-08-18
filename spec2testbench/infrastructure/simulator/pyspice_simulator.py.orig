@@ -1,0 +1,1025 @@
+# spec2testbench/infrastructure/simulator/pyspice_simulator.py
+
+"""
+Real SPICE simulator using PySpice and Ngspice.
+Compatible with Windows, Linux, and macOS.
+"""
+
+import logging
+import tempfile
+import subprocess
+import os
+import re
+import shutil
+from pathlib import Path
+from typing import Dict, Any, Optional, List, Tuple
+from dataclasses import dataclass, field
+import numpy as np
+
+from ...domain.entities.testbench import TestBench, AnalysisType
+from ...domain.interfaces.icircuit_simulator import ICircuitSimulator
+from ...domain.value_objects.scientific_status import ExecutionStatus, SimulationMode
+from .op_bias_probe import needs_op_bias_probe, run_op_bias_probe
+
+logger = logging.getLogger(__name__)
+
+
+class SimulationError(Exception):
+    """Raised when simulation fails."""
+    pass
+
+
+@dataclass
+class SimulationResult:
+    """Results from a SPICE simulation."""
+    success: bool
+    logs: List[str]
+    errors: List[str]
+    ac: Optional[Dict[str, np.ndarray]] = None
+    tran: Optional[Dict[str, np.ndarray]] = None
+    dc: Optional[Dict[str, np.ndarray]] = None
+    currents: Optional[Dict[str, float]] = None
+    metrics: Dict[str, float] = field(default_factory=dict)
+    raw_output: str = ""
+
+
+class PySpiceSimulator(ICircuitSimulator):
+    """
+    Real SPICE simulator using PySpice with Ngspice backend.
+    
+    Requirements:
+    - PySpice installed: pip install PySpice
+    - Ngspice installed: 
+        Windows: Download from https://ngspice.sourceforge.io/
+        Linux: sudo apt-get install ngspice
+        macOS: brew install ngspice
+    """
+    
+    def __init__(self, ngspice_path: Optional[str] = None, timeout: int = 300, allow_mock: bool = False, timeout_seconds: Optional[float] = None):
+        """Create simulator. Scientific runs default to no mock fallback."""
+        self.ngspice_path = ngspice_path or os.getenv("NGSPICE_PATH") or self._find_ngspice()
+        self.timeout = float(timeout_seconds if timeout_seconds is not None else timeout)
+        self.allow_mock = bool(allow_mock)
+        self._ngspice_available = self._check_ngspice()
+
+    def _find_ngspice(self) -> str:
+        """Find a usable ngspice executable path."""
+        candidates = [
+            r"C:\ProgramData\chocolatey\lib\ngspice\tools\Spice64\bin\ngspice.exe",
+            r"C:\ProgramData\chocolatey\bin\ngspice.exe",
+            r"C:\Program Files\ngspice\bin\ngspice.exe",
+            shutil.which("ngspice"),
+            shutil.which("ngspice.exe"),
+        ]
+        for candidate in candidates:
+            if candidate:
+                return candidate
+        return "ngspice"
+    
+    def _check_ngspice(self) -> bool:
+        """Check if ngspice is available."""
+        if shutil.which("ngspice") or shutil.which("ngspice.exe"):
+            logger.info("Ngspice found in PATH")
+            return True
+        if Path(self.ngspice_path).exists():
+            logger.info(f"Ngspice executable found at {self.ngspice_path}")
+            return True
+        logger.warning(f"Ngspice not found at {self.ngspice_path}")
+        logger.warning("Install ngspice or set NGSPICE_PATH in .env")
+        return False
+    
+    @property
+    def is_available(self) -> bool:
+        """Check if simulator is available."""
+        return self._ngspice_available
+    
+    def run(self, netlist_path: Path, testbench: TestBench, output_dir: Optional[Path] = None) -> Dict[str, Any]:
+        """Run one deterministic SPICE deck and preserve exact execution artifacts."""
+        netlist_path=Path(netlist_path)
+        if not self._ngspice_available:
+            if self.allow_mock:
+                result=self._run_mock_simulation(testbench)
+                result.update({"simulation_mode":SimulationMode.MOCK.value,"execution_status":ExecutionStatus.SUCCESS.value})
+                return result
+            return {"success":False,"simulation_mode":SimulationMode.NONE.value,"execution_status":ExecutionStatus.ERROR.value,
+                    "error_type":"backend_unavailable","error_message":"ngspice executable is not available",
+                    "logs":[],"errors":["ngspice executable is not available"],"metrics":{},"dc":{},"ac":{},"tran":{},"transient":{},"currents":{},"fourier":{}}
+        artifact_dir=Path(output_dir) if output_dir else Path(tempfile.mkdtemp(prefix="s2t_sim_"))
+        artifact_dir.mkdir(parents=True,exist_ok=True)
+        generated=artifact_dir/"generated_testbench.ckt"; executed=artifact_dir/"executed_testbench.ckt"; raw=artifact_dir/"simulation.raw"
+        vectors_path=artifact_dir/"vectors.dat"
+        deck=self._generate_spice_deck(netlist_path,testbench)
+        generated.write_text(deck,encoding="utf-8")
+        executed_deck=self._generate_native_wrdata_deck(deck,testbench,vectors_path)
+        executed.write_text(executed_deck,encoding="utf-8")
+        run_result=self._run_ngspice(executed,raw)
+        (artifact_dir/"ngspice_stdout.txt").write_text("\n".join(run_result.get("logs",[])),encoding="utf-8")
+        (artifact_dir/"ngspice_stderr.txt").write_text("\n".join(run_result.get("errors",[])),encoding="utf-8")
+        parsed=self._parse_results(raw,testbench)
+        self._hydrate_results_from_vectors(parsed,testbench,vectors_path)
+        parsed.update({"logs":run_result.get("logs",[]),"errors":run_result.get("errors",[]),
+                       "success":bool(run_result.get("success")),"simulation_mode":SimulationMode.REAL.value,
+                       "execution_status":ExecutionStatus.SUCCESS.value if run_result.get("success") else ExecutionStatus.ERROR.value,
+                       "artifact_dir":str(artifact_dir),"executed_deck_path":str(executed)})
+        # The OP device-current floor is auxiliary evidence; it never mutates the DUT or thresholds.
+        if needs_op_bias_probe(testbench):
+            probe=run_op_bias_probe(ngspice_path=self.ngspice_path,executed_deck_path=executed,artifact_dir=artifact_dir,timeout_seconds=self.timeout)
+            parsed["op_bias_probe"]={"status":probe.status,"reason":probe.reason,"value":probe.value,"devices":list(probe.devices),"currents_a":list(probe.currents_a),"metadata_path":probe.metadata_path}
+            if probe.value is not None:
+                parsed.setdefault("native_metrics",{})["minimum_device_drain_current_a"]=probe.value
+                parsed.setdefault("metrics",{})["minimum_device_drain_current_a"]=probe.value
+        completion=self._transient_completion_status(parsed,testbench)
+        parsed["transient_completion"]=completion
+        if completion.get("requested") and completion.get("complete") is False:
+            parsed["success"]=False; parsed["execution_status"]=ExecutionStatus.ERROR.value; parsed["error_type"]="transient_incomplete"
+            parsed["error_message"]=(f"Transient analysis incomplete: observed_stop={completion.get('observed_stop_s')} s, "
+                                     f"expected_stop={completion.get('expected_stop_s')} s, completion_ratio={completion.get('completion_ratio')}")
+        if parsed.get("success"):
+            parsed.setdefault("metrics",{}).update(self.extract_metrics(parsed,testbench))
+        else:
+            parsed.setdefault("metrics",{})
+        return parsed
+
+    def _run_mock_simulation(self, testbench: TestBench) -> Dict[str, Any]:
+        """Run mock simulation when ngspice is not available."""
+        logger.info("Running mock simulation")
+        
+        # Generate mock results based on testbench type
+        results = {
+            'success': True,
+            'logs': ['Mock simulation - ngspice not available'],
+            'errors': [],
+            'metrics': {},
+            'ac': {},
+            'tran': {}
+        }
+        
+        # Mock AC results
+        if any(a.type == AnalysisType.AC for a in testbench.analyses):
+            freq = np.logspace(0, 9, 100)
+            # Simple low-pass response
+            mag = 100 / (1 + (freq / 1e6)**2)
+            results['ac'] = {
+                'frequency': freq,
+                'magnitude': mag,
+                'phase': -np.arctan2(freq, 1e6) * 180 / np.pi
+            }
+            results['metrics']['dc_gain_db'] = 20 * np.log10(mag[0])
+        
+        # Mock transient results
+        if any(a.type == AnalysisType.TRANSIENT for a in testbench.analyses):
+            time = np.linspace(0, 10e-6, 1000)
+            vout = 2.5 + 2.5 * np.sin(2 * np.pi * 1e6 * time)
+            results['tran'] = {
+                'time': time,
+                'vout': vout
+            }
+            # Calculate mock slew rate
+            dv = np.diff(vout)
+            dt = np.diff(time)
+            results['metrics']['slew_rate_v_s'] = float(np.max(np.abs(dv / dt)))
+        
+        # Mock DC results
+        if any(a.type == AnalysisType.DC for a in testbench.analyses):
+            vin = np.linspace(0, 5, 50)
+            vout = 2.5 + 2.5 * np.tanh(vin - 2.5)
+            results['dc'] = {
+                'vin': vin,
+                'vout': vout
+            }
+        
+        # Mock currents
+        results['currents'] = {'vdd': 1e-3}
+        
+        return results
+    
+    @staticmethod
+    def _strip_embedded_execution(text: str) -> str:
+        """Keep DUT/models, externalize analyses/measures/control blocks."""
+        out=[]; control=False
+        for raw in text.splitlines():
+            s=raw.strip()
+            low=s.lower()
+            if low==".control": control=True; continue
+            if control:
+                if low==".endc": control=False
+                continue
+            if re.match(r"^\s*\.(?:op|dc|ac|tran|four|noise|tf|sens|print|plot|measure|meas|save|wrdata)\b",raw,re.I): continue
+            if low==".end": continue
+            out.append(raw)
+        return "\n".join(out).rstrip()+"\n"
+
+    @staticmethod
+    def _render_stimulus_source(stimulus) -> str:
+        name=str(stimulus.name)
+        lower=name.lower()
+        # Natural-language planners commonly call an input source "in".  That
+        # label is a voltage-input role, not a SPICE current-source designator.
+        if lower in {"in", "input"}:
+            source_name="V"+name
+        elif lower.startswith(("v", "i")):
+            source_name=name
+        else:
+            source_name="V"+name
+        p=stimulus.parameters or {}; typ=str(stimulus.type).lower(); n1=stimulus.node_positive; n2=stimulus.node_negative
+        if typ=="ac":
+            dc=p.get("dc_value",p.get("value",0.0)); mag=p.get("magnitude",1.0); phase=p.get("phase",0.0)
+            return f"{source_name} {n1} {n2} DC {dc} AC {mag} {phase}"
+        if typ=="dc":
+            return f"{source_name} {n1} {n2} DC {p.get('dc_value',p.get('value',0.0))}"
+        if typ=="pulse":
+            return f"{source_name} {n1} {n2} PULSE({p.get('v1',0)} {p.get('v2',5)} {p.get('delay',0)} {p.get('rise','1n')} {p.get('fall','1n')} {p.get('width','1u')} {p.get('period','2u')})"
+        if typ=="sin":
+            return f"{source_name} {n1} {n2} SIN({p.get('offset',0)} {p.get('amplitude',1)} {p.get('frequency',1e6)})"
+        return stimulus.to_spice()
+
+    def _generate_spice_deck(self, netlist_path: Path, testbench: TestBench) -> str:
+        original=Path(netlist_path).read_text(encoding="utf-8",errors="replace")
+        base=self._strip_embedded_execution(original)
+        # Consolidate source actions by electrical drive location. The last matching source
+        # is not added as a duplicate; existing source is rewritten with DC+AC/PULSE/SIN modes.
+        for stim in testbench.stimuli:
+            rendered=self._render_stimulus_source(stim)
+            # source names such as Vin/Vinp already include V. Match exact first token.
+            token=rendered.split()[0]
+            pattern=re.compile(rf"^\s*{re.escape(token)}\s+\S+\s+\S+.*$",re.I|re.M)
+            if pattern.search(base): base=pattern.sub(rendered,base,count=1)
+            else: base += rendered+"\n"
+        lines=[f"* Spec2Testbench deterministic deck",f"* TestBench: {testbench.name}",base.rstrip()]
+        if not re.search(r"^\s*\.temp\b",base,re.I|re.M): lines.append(f".TEMP {testbench.temperature}")
+        for analysis in testbench.analyses: lines.append(analysis.to_spice())
+        lines.append(".END")
+        return "\n".join(lines)+"\n"
+
+    def _generate_native_wrdata_deck(self, deck: str, testbench: TestBench, vectors_path: Path) -> str:
+        """Return the exact executable deck with a native ngspice WRDATA export.
+
+        The ACP runner executes one analysis per pass.  For AC/DC/TRAN this
+        makes WRDATA the primary structured evidence path and avoids a runtime
+        dependency on PySpice raw-file parsing.  OP remains a normal .OP run;
+        the MOS current-floor probe is an independent auxiliary pass.
+        """
+        if len(testbench.analyses) != 1:
+            return deck
+        analysis = testbench.analyses[0]
+        if analysis.type not in {AnalysisType.AC, AnalysisType.DC, AnalysisType.TRANSIENT}:
+            return deck
+
+        base = self._strip_embedded_execution(deck).rstrip()
+        ctx = dict(testbench.metadata.get("measurement_context") or {})
+        input_node = ctx.get("input_node") or testbench.metadata.get("input_node")
+        output_node = ctx.get("output_node") or testbench.metadata.get("output_node")
+        vectors: List[str] = []
+
+        if analysis.type == AnalysisType.AC:
+            if input_node:
+                vectors.append(f"v({input_node})")
+            if output_node and str(output_node).lower() != str(input_node).lower():
+                vectors.append(f"v({output_node})")
+        elif analysis.type == AnalysisType.DC:
+            if output_node:
+                vectors.append(f"v({output_node})")
+            source = str(analysis.parameters.get("source") or "Vdd")
+            # Branch current is defined only for voltage sources.  ACP DC
+            # compliance sweeps use existing voltage sources (Vin/Vdd).
+            if source.lower().startswith("v"):
+                vectors.append(f"i({source})")
+            # Preserve supply-current evidence when sweeping an input source.
+            if source.lower() != "vdd":
+                vectors.append("i(Vdd)")
+        elif analysis.type == AnalysisType.TRANSIENT:
+            if input_node:
+                vectors.append(f"v({input_node})")
+            if output_node and str(output_node).lower() != str(input_node).lower():
+                vectors.append(f"v({output_node})")
+
+        # Deduplicate while preserving order.
+        vectors = list(dict.fromkeys(vectors))
+        if not vectors:
+            return deck
+
+        analysis_cmd = analysis.to_spice().strip()
+        if analysis_cmd.startswith("."):
+            analysis_cmd = analysis_cmd[1:]
+        return (
+            base
+            + "\n.control\n"
+            + "set wr_singlescale\n"
+            + analysis_cmd
+            + "\n"
+            + f"wrdata {vectors_path.resolve()} {' '.join(vectors)}\n"
+            + "quit\n.endc\n.end\n"
+        )
+
+    def _hydrate_results_from_vectors(self, results: Dict[str, Any], testbench: TestBench, vectors_path: Path) -> None:
+        """Hydrate structured AC/DC/TRAN results from native ngspice WRDATA."""
+        if not Path(vectors_path).is_file():
+            return
+        try:
+            data = np.loadtxt(vectors_path, ndmin=2)
+        except Exception as exc:
+            logger.warning("Failed to parse WRDATA vectors %s: %s", vectors_path, exc)
+            return
+        if data.ndim != 2 or data.shape[0] == 0 or data.shape[1] < 2:
+            return
+
+        analysis_types = {a.type for a in testbench.analyses}
+        ctx = dict(testbench.metadata.get("measurement_context") or {})
+        input_node = str(ctx.get("input_node") or testbench.metadata.get("input_node") or "vin")
+        output_node = str(ctx.get("output_node") or testbench.metadata.get("output_node") or "vout")
+
+        if AnalysisType.AC in analysis_types and not results.get("ac"):
+            # With wr_singlescale, complex Vin/Vout are emitted as
+            # frequency, Re(Vin), Im(Vin), Re(Vout), Im(Vout).
+            if data.shape[1] >= 5:
+                dataset = {
+                    "frequency": data[:, 0].astype(float),
+                    f"v({input_node})": data[:, 1].astype(float) + 1j * data[:, 2].astype(float),
+                    f"v({output_node})": data[:, 3].astype(float) + 1j * data[:, 4].astype(float),
+                }
+                results["ac"] = self._build_ac_results(dataset)
+            elif data.shape[1] >= 3:
+                dataset = {
+                    "frequency": data[:, 0].astype(float),
+                    f"v({output_node})": data[:, 1].astype(float) + 1j * data[:, 2].astype(float),
+                }
+                results["ac"] = self._build_ac_results(dataset)
+
+        if AnalysisType.TRANSIENT in analysis_types and not (results.get("transient") or results.get("tran")):
+            time = data[:, 0].astype(float)
+            dataset: Dict[str, np.ndarray] = {"time": time}
+            if data.shape[1] >= 3:
+                dataset[f"v({input_node})"] = data[:, 1].astype(float)
+                dataset[f"v({output_node})"] = data[:, 2].astype(float)
+            else:
+                dataset[f"v({output_node})"] = data[:, 1].astype(float)
+            transient = self._build_transient_results(dataset)
+            results["tran"] = transient
+            results["transient"] = dict(transient)
+            results["fourier"] = self._estimate_fourier(transient)
+
+        if AnalysisType.DC in analysis_types and not results.get("dc"):
+            # Native DC WRDATA with wr_singlescale:
+            #   col0 sweep, col1 V(output), remaining columns source currents.
+            sweep = data[:, 0].astype(float)
+            vout = data[:, 1].astype(float)
+            dc = {
+                "sweep": sweep.tolist(),
+                "source_values": sweep.tolist(),
+                "vout": vout.tolist(),
+                "vout_values": vout.tolist(),
+                "vout_waveform": vout.tolist(),
+                "output": vout.tolist(),
+                "voltage": {"vout": vout.tolist(), output_node: vout.tolist()},
+                "vout_dc": float(vout[-1]),
+                "operating_point": float(vout[-1]),
+            }
+            current_waveforms: Dict[str, List[float]] = {}
+            source = str(next((a.parameters.get("source") for a in testbench.analyses if a.type == AnalysisType.DC), None) or "Vdd")
+            if data.shape[1] >= 3:
+                first_current = data[:, 2].astype(float)
+                current_waveforms[source] = first_current.tolist()
+                results.setdefault("currents", {})[source.lower()] = float(first_current[-1])
+                if source.lower() == "vdd":
+                    results["currents"]["vdd"] = float(first_current[-1])
+            if data.shape[1] >= 4:
+                supply = data[:, 3].astype(float)
+                current_waveforms["Vdd"] = supply.tolist()
+                results.setdefault("currents", {})["vdd"] = float(supply[-1])
+            if current_waveforms:
+                dc["current_waveforms"] = current_waveforms
+            results["dc"] = dc
+
+    @staticmethod
+    def _parse_spice_numeric(value: Any) -> Optional[float]:
+        if value is None: return None
+        if isinstance(value,(int,float)): return float(value)
+        s=str(value).strip().lower()
+        multipliers={"t":1e12,"g":1e9,"meg":1e6,"k":1e3,"m":1e-3,"u":1e-6,"n":1e-9,"p":1e-12,"f":1e-15}
+        m=re.match(r"^([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)(meg|[tgkmunpf])?$",s)
+        if not m: return None
+        return float(m.group(1))*multipliers.get(m.group(2),1.0)
+
+    def _transient_completion_status(self, results: Dict[str, Any], testbench: TestBench) -> Dict[str, Any]:
+        analysis=next((a for a in testbench.analyses if a.type==AnalysisType.TRANSIENT),None)
+        if analysis is None: return {"requested":False,"complete":True}
+        expected=self._parse_spice_numeric(analysis.parameters.get("end_time"))
+        if expected is None or expected<=0: return {"requested":True,"complete":None,"expected_stop_s":expected}
+        tr=results.get("transient") or results.get("tran") or {}
+        try: ts=np.asarray(tr.get("time",[]),dtype=float); ts=ts[np.isfinite(ts)]
+        except Exception: ts=np.asarray([])
+        if not ts.size: return {"requested":True,"complete":False,"expected_stop_s":expected,"observed_stop_s":None,"completion_ratio":0.0}
+        obs=float(np.max(ts)); ratio=obs/expected
+        return {"requested":True,"complete":bool(obs>=0.99*expected),"expected_stop_s":float(expected),"observed_stop_s":obs,"completion_ratio":float(ratio)}
+
+    def _run_ngspice(self, spice_file: Path, raw_file: Path) -> Dict[str, Any]:
+        """
+        Run ngspice simulation.
+        
+        Returns:
+            Dictionary with success flag and logs
+        """
+        # Command to run ngspice in batch mode
+        cmd = [
+            self.ngspice_path,
+            "-b",  # Batch mode
+            "-r", str(raw_file),  # Raw output file
+            str(spice_file)
+        ]
+        
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=self.timeout,
+                shell=False
+            )
+            
+            logs = result.stdout.splitlines() if result.stdout else []
+            errors = result.stderr.splitlines() if result.stderr else []
+            
+            # Check for convergence issues
+            all_output = (result.stdout or "") + (result.stderr or "")
+            all_output_lower = all_output.lower()
+            
+            success = result.returncode == 0
+            fatal_indicators = ('no convergence','timestep too small','run simulation(s) aborted','singular matrix','fatal')
+            if any(indicator in all_output_lower for indicator in fatal_indicators):
+                success = False
+            
+            return {
+                'success': success,
+                'logs': logs,
+                'errors': errors
+            }
+            
+        except subprocess.TimeoutExpired:
+            return {
+                'success': False,
+                'logs': [],
+                'errors': [f"Simulation timed out after {self.timeout} seconds"]
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'logs': [],
+                'errors': [str(e)]
+            }
+    
+    def _parse_results(self, raw_file: Path, testbench: TestBench) -> Dict[str, Any]:
+        """
+        Parse ngspice raw output file.
+        
+        Returns:
+            Structured results dictionary
+        """
+        results = {
+            'ac': {},
+            'tran': {},
+            'transient': {},
+            'dc': {},
+            'currents': {},
+            'fourier': {},
+        }
+        
+        if not raw_file.exists():
+            return results
+        
+        try:
+            # Try to parse with PySpice
+            from PySpice.Spice.RawFile import RawFile
+            
+            raw = RawFile(str(raw_file))
+            parsed_plots = self._extract_rawfile_plots(raw)
+            results.update(self._build_structured_results(parsed_plots))
+            
+        except ImportError:
+            logger.warning("PySpice not available for parsing")
+        except Exception as e:
+            logger.warning(f"Failed to parse raw file with PySpice parser: {e}")
+
+        if not any(results[key] for key in ('ac', 'tran', 'dc', 'currents')):
+            parsed_plots = self._parse_raw_fallback(raw_file)
+            if parsed_plots:
+                results.update(self._build_structured_results(parsed_plots))
+        
+        return results
+    
+    def extract_metrics(self, 
+                        results: Dict[str, Any],
+                        testbench: TestBench) -> Dict[str, float]:
+        """
+        Extract metrics from simulation results.
+        """
+        metrics = {}
+        
+        ac = results.get('ac', {})
+        if ac.get('dc_gain_db') is not None:
+            metrics['dc_gain_db'] = float(ac['dc_gain_db'])
+        if ac.get('bandwidth') is not None:
+            metrics['bandwidth'] = float(ac['bandwidth'])
+            metrics['cutoff_frequency_hz'] = float(ac['bandwidth'])
+        if ac.get('unity_gain_frequency') is not None:
+            metrics['unity_gain_frequency'] = float(ac['unity_gain_frequency'])
+            metrics['ugbw'] = float(ac['unity_gain_frequency'])
+        if ac.get('phase_margin') is not None:
+            metrics['phase_margin'] = float(ac['phase_margin'])
+
+        dc = results.get('dc', {})
+        for key in ('vout_dc', 'operating_point'):
+            if key in dc:
+                metrics[key] = float(dc[key])
+
+        current = results.get('currents', {}).get('vdd')
+        supply = results.get('vdd', 0.0)
+        current_items = []
+        for key, value in results.get('currents', {}).items():
+            if value is None:
+                continue
+            try:
+                current_items.append((key.lower(), float(abs(value))))
+            except Exception:
+                continue
+
+        averaged_currents = [value for key, value in current_items if key != 'vdd']
+        if not averaged_currents and current is not None:
+            averaged_currents = [float(abs(current))]
+
+        mean_current = float(np.mean(averaged_currents)) if averaged_currents else None
+        if mean_current is not None:
+            metrics['mean_current_a'] = mean_current
+
+        if current is not None:
+            metrics['supply_current_a'] = float(abs(current))
+        if mean_current is not None:
+            metrics['quiescent_current'] = mean_current
+            metrics['idd'] = mean_current
+            if supply:
+                metrics['power'] = float(abs(supply * mean_current))
+        elif current is not None:
+            metrics['quiescent_current'] = float(abs(current))
+            metrics['idd'] = float(abs(current))
+            if supply:
+                metrics['power'] = float(abs(supply * current))
+
+        tran = results.get('transient') or results.get('tran', {})
+        vout = tran.get('vout', [])
+        time = tran.get('time', [])
+        if len(vout) > 1 and len(time) > 1:
+            dv = np.diff(vout)
+            dt = np.diff(time)
+            with np.errstate(divide='ignore'):
+                sr = np.max(np.abs(dv / dt))
+            if not np.isnan(sr) and not np.isinf(sr):
+                metrics['slew_rate_v_s'] = float(sr)
+                metrics['slew_rate'] = float(sr)
+
+        fourier = results.get('fourier', {})
+        if 'thd' in fourier:
+            metrics['thd'] = float(fourier['thd'])
+            metrics['thd_percent'] = float(fourier['thd'])
+        if 'fundamental_frequency' in fourier:
+            metrics['fundamental_frequency'] = float(fourier['fundamental_frequency'])
+
+        for measurement in testbench.measurements:
+            for container in (metrics, dc, ac, fourier, results.get('pvt', {}).get('summary', {})):
+                if measurement.name in container:
+                    value = container[measurement.name]
+                    if value is None:
+                        continue
+                    metrics[measurement.name] = float(value)
+                    break
+        
+        return metrics
+
+    def _extract_rawfile_plots(self, raw: Any) -> Dict[str, Dict[str, np.ndarray]]:
+        parsed_plots: Dict[str, Dict[str, np.ndarray]] = {}
+        plots = getattr(raw, 'plots', None)
+        if not plots:
+            plots = [raw]
+
+        for plot_index, plot in enumerate(plots):
+            plot_name = getattr(plot, 'plot_name', f'plot_{plot_index}') or f'plot_{plot_index}'
+            dataset: Dict[str, np.ndarray] = {}
+            variables = getattr(plot, 'variables', [])
+            for variable in variables:
+                var_name = getattr(variable, 'name', None) or str(variable)
+                try:
+                    data = plot.get_variable(var_name)
+                except Exception:
+                    try:
+                        data = raw.get_variable(var_name)
+                    except Exception:
+                        continue
+                if data is not None:
+                    dataset[var_name] = np.array(data)
+            if dataset:
+                parsed_plots[plot_name.lower()] = dataset
+        return parsed_plots
+
+    def _parse_raw_fallback(self, raw_file: Path) -> Dict[str, Dict[str, np.ndarray]]:
+        try:
+            text = raw_file.read_text(errors='ignore')
+        except Exception:
+            return {}
+
+        if not text.lstrip().startswith('Title:'):
+            return {}
+
+        lines = text.splitlines()
+        plot_starts = [index for index, line in enumerate(lines) if line.startswith('Plotname:')]
+        if not plot_starts:
+            return {}
+        plot_starts.append(len(lines))
+
+        plots: Dict[str, Dict[str, np.ndarray]] = {}
+        for block_index in range(len(plot_starts) - 1):
+            section = lines[plot_starts[block_index]:plot_starts[block_index + 1]]
+            plot_name = section[0].split(':', 1)[1].strip().lower()
+            variables: List[str] = []
+            values_index = None
+            point_count = None
+
+            for index, line in enumerate(section):
+                lower = line.lower().strip()
+                if lower.startswith('no. points'):
+                    point_count = int(line.split(':', 1)[1].strip())
+                elif lower == 'variables:':
+                    cursor = index + 1
+                    while cursor < len(section):
+                        current = section[cursor].strip()
+                        if current.lower() == 'values:':
+                            break
+                        tokens = current.split()
+                        if len(tokens) >= 2 and tokens[0].isdigit():
+                            variables.append(tokens[1])
+                        cursor += 1
+                elif lower == 'values:':
+                    values_index = index + 1
+                    break
+
+            if not variables or values_index is None:
+                continue
+
+            parsed_columns = {name: [] for name in variables}
+            cursor = values_index
+            points_read = 0
+            while cursor < len(section) and (point_count is None or points_read < point_count):
+                line = section[cursor]
+                match = re.match(r'^\s*(\d+)\s+(.+?)\s*$', line)
+                if not match:
+                    cursor += 1
+                    continue
+
+                parsed_columns[variables[0]].append(self._parse_raw_value(match.group(2), variables[0]))
+                cursor += 1
+                for variable_index in range(1, len(variables)):
+                    if cursor >= len(section):
+                        break
+                    parsed_columns[variables[variable_index]].append(
+                        self._parse_raw_value(section[cursor].strip(), variables[variable_index])
+                    )
+                    cursor += 1
+                points_read += 1
+
+            plots[plot_name] = {name: np.array(values) for name, values in parsed_columns.items()}
+
+        return plots
+
+    def _parse_raw_value(self, raw_value: str, variable_name: str) -> complex | float:
+        raw_value = raw_value.strip()
+        if ',' in raw_value:
+            try:
+                real_str, imag_str = raw_value.split(',', 1)
+                real = float(real_str)
+                imag = float(imag_str)
+                return real if variable_name.lower() == 'frequency' else complex(real, imag)
+            except Exception:
+                return float('nan')
+        try:
+            return float(raw_value)
+        except Exception:
+            return float('nan')
+
+    def _build_structured_results(self, plots: Dict[str, Dict[str, np.ndarray]]) -> Dict[str, Any]:
+        results = {
+            'ac': {},
+            'tran': {},
+            'transient': {},
+            'dc': {},
+            'currents': {},
+            'fourier': {},
+        }
+        if not plots:
+            return results
+
+        ac_plot = next((dataset for name, dataset in plots.items() if 'ac analysis' in name), None)
+        tran_plot = next((dataset for name, dataset in plots.items() if 'transient analysis' in name), None)
+        dc_plot = next((dataset for name, dataset in plots.items() if 'operating point' in name or 'dc transfer' in name), None)
+
+        if ac_plot is None and any('frequency' in key.lower() for dataset in plots.values() for key in dataset):
+            ac_plot = next(dataset for dataset in plots.values() if any('frequency' in key.lower() for key in dataset))
+        if tran_plot is None and any('time' in key.lower() for dataset in plots.values() for key in dataset):
+            tran_plot = next(dataset for dataset in plots.values() if any('time' in key.lower() for key in dataset))
+        if dc_plot is None:
+            dc_plot = next((dataset for dataset in plots.values() if dataset is not ac_plot and dataset is not tran_plot), None)
+
+        if ac_plot is not None:
+            results['ac'] = self._build_ac_results(ac_plot)
+        if tran_plot is not None:
+            transient = self._build_transient_results(tran_plot)
+            results['tran'] = transient
+            results['transient'] = transient
+            results['fourier'] = self._estimate_fourier(transient)
+        if dc_plot is not None:
+            dc, currents = self._build_dc_results(dc_plot)
+            results['dc'] = dc
+            results['currents'].update(currents)
+        return results
+
+    def _build_ac_results(self, dataset: Dict[str, np.ndarray]) -> Dict[str, Any]:
+        frequency_key = next((key for key in dataset if 'frequency' in key.lower()), None)
+        if frequency_key is None:
+            return {}
+
+        frequency = np.real(np.atleast_1d(dataset[frequency_key])).astype(float)
+        voltage_keys = [key for key in dataset if key.lower().startswith('v(')]
+        out_key = self._choose_voltage_node(voltage_keys, preferred=('out', 'vout'))
+        in_key = self._choose_voltage_node(voltage_keys, preferred=('in', 'vin', 'inp'))
+
+        if out_key is None:
+            return {'frequency': frequency.tolist()}
+
+        vout = np.atleast_1d(dataset[out_key])
+        vin = np.atleast_1d(dataset[in_key]) if in_key and in_key in dataset else None
+
+        with np.errstate(divide='ignore', invalid='ignore'):
+            transfer = vout / vin if vin is not None and np.any(np.abs(vin) > 0) else vout
+        magnitude = np.abs(transfer).astype(float)
+        phase = np.degrees(np.angle(transfer)).astype(float)
+
+        ac = {
+            'frequency': frequency.tolist(),
+            'magnitude': magnitude.tolist(),
+            'phase': phase.tolist(),
+        }
+        if magnitude.size:
+            ac['dc_gain_db'] = float(20 * np.log10(max(magnitude[0], 1e-30)))
+            bandpass_metrics = self._find_bandpass_characteristics(frequency, magnitude)
+            if bandpass_metrics is not None:
+                ac.update(bandpass_metrics)
+                ac['peak_gain_db'] = float(20 * np.log10(max(np.max(magnitude), 1e-30)))
+            else:
+                ac['bandwidth'] = self._find_minus_3db_bandwidth(frequency, magnitude)
+            ac['unity_gain_frequency'] = self._find_unity_gain_frequency(frequency, magnitude)
+        if phase.size and ac.get('unity_gain_frequency') is not None:
+            phase_at_ugf = self._sample_at_frequency(frequency, phase, ac['unity_gain_frequency'])
+            if phase_at_ugf is not None:
+                ac['phase_margin'] = float(max(0.0, min(180.0, 180.0 + phase_at_ugf)))
+        return ac
+
+    def _build_transient_results(self, dataset: Dict[str, np.ndarray]) -> Dict[str, Any]:
+        time_key = next((key for key in dataset if 'time' in key.lower()), None)
+        if time_key is None:
+            return {}
+
+        time = np.real(np.atleast_1d(dataset[time_key])).astype(float)
+        voltage_keys = [key for key in dataset if key.lower().startswith('v(')]
+        out_key = self._choose_voltage_node(voltage_keys, preferred=('out', 'vout'))
+        in_key = self._choose_voltage_node(voltage_keys, preferred=('in', 'vin', 'inp'))
+
+        voltage_map = {}
+        for key in voltage_keys:
+            clean = self._clean_node_name(key)
+            voltage_map[clean] = np.real(np.atleast_1d(dataset[key])).astype(float).tolist()
+
+        transient = {
+            'time': time.tolist(),
+            'voltage': voltage_map,
+        }
+        if out_key:
+            transient['vout'] = np.real(np.atleast_1d(dataset[out_key])).astype(float).tolist()
+        if in_key:
+            transient['vin'] = np.real(np.atleast_1d(dataset[in_key])).astype(float).tolist()
+        return transient
+
+    def _build_dc_results(self, dataset: Dict[str, np.ndarray]) -> Tuple[Dict[str, Any], Dict[str, float]]:
+        """Hydrate the full DC sweep, not just its terminal value."""
+        dc: Dict[str, Any] = {}; currents: Dict[str, float] = {}
+        voltage_keys=[k for k in dataset if k.lower().startswith('v(')]
+        current_keys=[k for k in dataset if k.lower().startswith('i(')]
+        out_key=self._choose_voltage_node(voltage_keys,preferred=('vout','out','vref'))
+        in_key=self._choose_voltage_node(voltage_keys,preferred=('vin','inp','in'))
+        # ngspice raw DC plots generally expose v-sweep/i-sweep as the independent variable.
+        scale_key=next((k for k in dataset if 'sweep' in k.lower()),None)
+        if scale_key is None:
+            scale_key=next((k for k in dataset if k not in voltage_keys and k not in current_keys),None)
+        sweep=np.real(np.atleast_1d(dataset[scale_key])).astype(float) if scale_key else np.asarray([])
+        if out_key is not None:
+            vout=np.real(np.atleast_1d(dataset[out_key])).astype(float)
+            dc.update({'vout_values':vout.tolist(),'vout_waveform':vout.tolist(),'output':vout.tolist(),
+                       'voltage':{'vout':vout.tolist()},'vout_dc':float(vout[-1]),'operating_point':float(vout[-1])})
+            dc['vout']=vout.tolist() if vout.size>1 else float(vout[-1])
+        if in_key is not None:
+            vin=np.real(np.atleast_1d(dataset[in_key])).astype(float)
+            dc.setdefault('voltage',{})['vin']=vin.tolist(); dc['vin']=vin.tolist()
+        if sweep.size:
+            dc['sweep']=sweep.tolist(); dc['source_values']=sweep.tolist()
+        waveforms={}
+        for key in current_keys:
+            clean=self._clean_node_name(key); arr=np.real(np.atleast_1d(dataset[key])).astype(float)
+            if not arr.size: continue
+            waveforms[clean]=arr.tolist(); currents[clean]=float(arr[-1])
+            if 'vdd' in clean.lower(): currents['vdd']=float(arr[-1]); waveforms['Vdd']=arr.tolist()
+        if waveforms: dc['current_waveforms']=waveforms
+        return dc,currents
+
+    def _estimate_fourier(self, transient: Dict[str, Any]) -> Dict[str, Any]:
+        time = np.array(transient.get('time', []), dtype=float)
+        vout = np.array(transient.get('vout', []), dtype=float)
+        if time.size < 8 or vout.size < 8:
+            return {}
+
+        dt = float(np.mean(np.diff(time)))
+        if not np.isfinite(dt) or dt <= 0:
+            return {}
+
+        windowed = (vout - np.mean(vout)) * np.hanning(vout.size)
+        spectrum = np.fft.rfft(windowed)
+        frequencies = np.fft.rfftfreq(vout.size, dt)
+        magnitudes = np.abs(spectrum)
+        if magnitudes.size < 2:
+            return {}
+
+        magnitudes[0] = 0.0
+        fundamental_index = int(np.argmax(magnitudes))
+        if fundamental_index <= 0 or fundamental_index >= frequencies.size:
+            return {}
+
+        fundamental_frequency = float(frequencies[fundamental_index])
+        fundamental_magnitude = float(magnitudes[fundamental_index])
+        harmonics = [{'order': 1, 'frequency': fundamental_frequency, 'magnitude': fundamental_magnitude}]
+
+        sum_squares = 0.0
+        for harmonic_order in range(2, 6):
+            target_frequency = harmonic_order * fundamental_frequency
+            harmonic_index = int(np.argmin(np.abs(frequencies - target_frequency)))
+            harmonic_magnitude = float(magnitudes[harmonic_index]) if harmonic_index < magnitudes.size else 0.0
+            harmonics.append({
+                'order': harmonic_order,
+                'frequency': float(frequencies[harmonic_index]),
+                'magnitude': harmonic_magnitude,
+            })
+            sum_squares += harmonic_magnitude ** 2
+
+        thd = 100.0 * np.sqrt(sum_squares) / max(fundamental_magnitude, 1e-30)
+        return {
+            'fundamental_frequency': fundamental_frequency,
+            'harmonics': harmonics,
+            'thd': float(thd),
+        }
+
+    def _choose_voltage_node(self, voltage_keys: List[str], preferred: Tuple[str, ...]) -> Optional[str]:
+        lowered = [(key, key.lower()) for key in voltage_keys]
+        for token in preferred:
+            for key, key_lower in lowered:
+                if token in key_lower:
+                    return key
+        return voltage_keys[0] if voltage_keys else None
+
+    def _clean_node_name(self, name: str) -> str:
+        return name.replace('(', '').replace(')', '').replace('v', '', 1) if name.lower().startswith('v(') else name.replace('(', '').replace(')', '')
+
+    def _find_minus_3db_bandwidth(self, frequency: np.ndarray, magnitude: np.ndarray) -> Optional[float]:
+        if frequency.size == 0 or magnitude.size == 0:
+            return None
+        target = magnitude[0] / np.sqrt(2.0)
+        for index, value in enumerate(magnitude):
+            if value <= target:
+                return float(frequency[index])
+        return None
+
+    def _find_bandpass_characteristics(self, frequency: np.ndarray, magnitude: np.ndarray) -> Optional[Dict[str, float]]:
+        if frequency.size < 3 or magnitude.size < 3:
+            return None
+
+        peak_index = int(np.argmax(magnitude))
+        if peak_index == 0 or peak_index == magnitude.size - 1:
+            return None
+
+        peak_magnitude = float(magnitude[peak_index])
+        edge_floor = max(float(magnitude[0]), float(magnitude[-1]), 1e-30)
+        if peak_magnitude < edge_floor * np.sqrt(2.0):
+            return None
+
+        target = peak_magnitude / np.sqrt(2.0)
+        lower_cutoff = None
+        for index in range(peak_index, -1, -1):
+            if magnitude[index] <= target:
+                lower_cutoff = float(frequency[index])
+                break
+
+        upper_cutoff = None
+        for index in range(peak_index, magnitude.size):
+            if magnitude[index] <= target:
+                upper_cutoff = float(frequency[index])
+                break
+
+        if lower_cutoff is None or upper_cutoff is None or upper_cutoff <= lower_cutoff:
+            return None
+
+        return {
+            'lower_cutoff_frequency': lower_cutoff,
+            'upper_cutoff_frequency': upper_cutoff,
+            'center_frequency': float(frequency[peak_index]),
+            'bandwidth': upper_cutoff - lower_cutoff,
+            'cutoff_frequency_hz': upper_cutoff - lower_cutoff,
+        }
+
+    def _find_unity_gain_frequency(self, frequency: np.ndarray, magnitude: np.ndarray) -> Optional[float]:
+        if frequency.size == 0 or magnitude.size == 0:
+            return None
+        for index, value in enumerate(magnitude):
+            if value <= 1.0:
+                return float(frequency[index])
+        return None
+
+    def _sample_at_frequency(self, frequency: np.ndarray, values: np.ndarray, target_frequency: float) -> Optional[float]:
+        if frequency.size == 0 or values.size == 0:
+            return None
+        index = int(np.argmin(np.abs(frequency - target_frequency)))
+        if index >= values.size:
+            return None
+        return float(values[index])
+    
+    def get_waveform(self, 
+                     results: Any,
+                     node: str,
+                     analysis_type: str = "tran") -> Dict[str, list]:
+        """
+        Get waveform data for a specific node.
+        """
+        if analysis_type == "tran" and hasattr(results, 'tran'):
+            tran = results.tran
+            if node in tran:
+                return {
+                    'time': tran['time'].tolist() if hasattr(tran['time'], 'tolist') else list(tran['time']),
+                    'voltage': tran[node].tolist() if hasattr(tran[node], 'tolist') else list(tran[node])
+                }
+        
+        return {'time': [], 'voltage': []}
+    
+    def check_convergence(self, logs: str) -> bool:
+        """
+        Check if simulation converged.
+        """
+        logs_lower = logs.lower()
+        
+        failure_indicators = [
+            'no convergence',
+            'timestep too small',
+            'singular matrix',
+            'failed',
+            'error'
+        ]
+        
+        for indicator in failure_indicators:
+            if indicator in logs_lower:
+                return False
+        
+        return True
+    
+    def get_simulator_info(self) -> Dict[str, str]:
+        """
+        Get simulator information.
+        """
+        return {
+            'name': 'PySpice with Ngspice',
+            'version': self._get_ngspice_version(),
+            'backend': 'ngspice',
+            'status': 'available' if self._ngspice_available else 'unavailable',
+            'path': self.ngspice_path
+        }
+    
+    def _get_ngspice_version(self) -> str:
+        """Get ngspice version."""
+        if not self._ngspice_available:
+            return "not installed"
+        
+        try:
+            result = subprocess.run(
+                [self.ngspice_path, "-v"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+                shell=False
+            )
+            output = result.stdout or result.stderr
+            return output.splitlines()[0] if output else "available"
+        except Exception:
+            return "available"
+    
+    def supports_pvt_analysis(self) -> bool:
+        """Check if PVT analysis is supported."""
+        return True

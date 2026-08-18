@@ -1,0 +1,11 @@
+* Op-amp subtractor
+V1 in1 0 SIN(0 0.5 1k)
+V2 in2 0 SIN(0 0.5 2k)
+R1 in1 nminus 10k
+R2 out nminus 10k
+R3 in2 nplus 10k
+R4 nplus 0 10k
+Eop out 0 nplus nminus 1e5
+.tran 10u 5m
+.ac dec 100 10 100k
+.end

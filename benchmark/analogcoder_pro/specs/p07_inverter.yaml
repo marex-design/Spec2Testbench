@@ -1,0 +1,173 @@
+schema_version: '2.0'
+case_id: acp28-p07
+name: analogcoder_pro_p07_inverter
+circuit_type: amplifier
+technology: AnalogCoder-Pro generic Level-1 benchmark models
+description: A logical inverter with 1 NMOS and 1 PMOS
+provenance:
+  benchmark: AnalogCoder-Pro
+  benchmark_subset: ACP-28
+  upstream_repository: https://github.com/laiyao1/AnalogCoderPro
+  upstream_task_id: 7
+  upstream_level: Easy
+  upstream_type: Inverter
+  upstream_task_description: A logical inverter with 1 NMOS and 1 PMOS
+  upstream_testbench_description: NA
+  official_checker:
+    path: problem_check/Inverter.py
+    criterion_summary:
+    - With Vin=5 V, Vout must be at or below 2.5 V.
+    - With Vin=0 V, Vout must be at or above 2.5 V.
+    - The low-input and high-input output levels must differ by at least 1 V.
+    upstream_mutates_dut: false
+    notes: Criterion semantics reconstructed from the local pinned AnalogCoder-Pro
+      checker shipped with the uploaded base.
+  dut:
+    path: benchmark/analogcoder_pro/p07_inverter.cir
+    sha256: d2846b9031cad7f8f2e941d0b7695ab692bb2ddfe353c5c371d31538541db70a
+    canonicalization: Uploaded ACP-28 DUT bytes preserved; embedded analyses/output
+      directives are externalized at execution.
+    topology_and_values_preserved: true
+ports:
+  input: &id001
+  - Vin
+  output: &id002
+  - Vout
+  differential_positive: []
+  differential_negative: []
+  common_mode: []
+  supply_positive:
+  - Vdd
+  supply_negative:
+  - '0'
+  bias: []
+  reference: []
+  loop_break: []
+  loop_injection: []
+  current_probe: []
+operating_conditions:
+  nominal_temperature: 25.0
+  nominal_supply: 5.0
+  process_corner: tt
+stimuli:
+- id: dc_input
+  kind: DC
+  source: Vin
+  node_positive: Vin
+  node_negative: '0'
+  parameters:
+    start: 0.0
+    stop: 5.0
+    step: 0.01
+  purpose: DC transfer sweep.
+analyses:
+- id: dc_logic
+  type: DC
+  parameters:
+    source: Vin
+    start: 0.0
+    stop: 5.0
+    step: 0.01
+  purpose: Evaluate inverter logic transfer.
+functional_requirements:
+- id: ACP_INV_HIGH
+  description: With Vin=5 V, Vout must be at or below 2.5 V.
+  metric: inverter_high_input_output_v
+  analysis: dc_logic
+  operator: <=
+  threshold: 2.5
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: executable
+  executable_metric: inverter_high_input_output_v
+  notes: ''
+- id: ACP_INV_LOW
+  description: With Vin=0 V, Vout must be at or above 2.5 V.
+  metric: inverter_low_input_output_v
+  analysis: dc_logic
+  operator: '>='
+  threshold: 2.5
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: executable
+  executable_metric: inverter_low_input_output_v
+  notes: ''
+- id: ACP_INV_SEPARATION
+  description: The low-input and high-input output levels must differ by at least
+    1 V.
+  metric: inverter_output_separation_v
+  analysis: dc_logic
+  operator: '>='
+  threshold: 1.0
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: executable
+  executable_metric: inverter_output_separation_v
+  notes: ''
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+    diagnostic_only: true
+    requirement_ids: []
+  inverter_high_input_output_v:
+    unit: V
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_INV_HIGH
+    max: 2.5
+  inverter_low_input_output_v:
+    unit: V
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_INV_LOW
+    min: 2.5
+  inverter_output_separation_v:
+    unit: V
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_INV_SEPARATION
+    min: 1.0
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: *id001
+  output_nodes: *id002
+  temperature: 25.0
+  original_source_dc_values:
+    vdd: 5.0
+    vin: 0.0
+measurement:
+  backend: AUTO
+  allow_fallback: true
+verification:
+  auto_select: true
+  include_tests: []
+  exclude_tests: []
+  required_policy: all
+  immutable_dut: true
+  not_evaluated_on_missing_mandatory_metric: true
+  require_full_contract_for_compliance: true
+test_requirements:
+  dc_sweep_step_v: 0.01
+test_categories:
+- dc
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.0

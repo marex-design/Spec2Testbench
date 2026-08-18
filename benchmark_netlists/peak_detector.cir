@@ -1,0 +1,16 @@
+* Peak Detector
+Vin in 0 SIN(0 5 1k)
+D1 in out DIODE
+C1 out 0 10u
+Rload out 0 100k
+.model DIODE D IS=1e-14
+.tran 10u 20m
+
+.control
+set noaskquit
+save all
+run
+.endc
+
+.end
+

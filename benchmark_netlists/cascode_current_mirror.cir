@@ -1,0 +1,20 @@
+* Cascode Current Mirror
+Vdd vdd 0 DC 5
+Iref vdd ref DC 100u
+Vbias bias 0 DC 2.5
+M1 n1 ref 0 0 NMOS
+M2 ref bias n1 0 NMOS
+M3 n2 ref 0 0 NMOS
+M4 out bias n2 0 NMOS
+Rload vdd out 20k
+.model NMOS NMOS LEVEL=1 VTO=1 KP=1m LAMBDA=0.02 KF=0 AF=1
+.op
+
+.control
+set noaskquit
+save all
+run
+.endc
+
+.end
+

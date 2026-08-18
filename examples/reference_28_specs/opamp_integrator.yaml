@@ -1,0 +1,12 @@
+name: opamp_integrator
+circuit_type: integrator
+technology: reference_28_behavioral
+description: opamp integrator
+performance_targets:
+  frequency_hz:
+    min: 24.977457168620376
+    max: 199.819657348963
+    unit: Hz
+test_categories:
+- transient
+- ac

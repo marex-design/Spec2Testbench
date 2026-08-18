@@ -1,0 +1,645 @@
+# spec2testbench/infrastructure/spec_checker/metric_extractor.py
+
+"""
+MetricExtractor - Extracts metrics from simulation results.
+"""
+
+import math
+import numpy as np
+import logging
+from typing import Dict, Any, Optional, List, Iterable
+
+logger = logging.getLogger(__name__)
+
+
+class MetricExtractor:
+    """
+    Extract specific metrics from simulation results.
+    
+    Supports:
+    - Gain (dB and linear)
+    - Bandwidth
+    - Phase margin
+    - Slew rate
+    - Settling time
+    - Power consumption
+    - THD (Total Harmonic Distortion)
+    """
+    
+    def extract(self, results: Dict[str, Any], metric_name: str) -> Optional[float]:
+        """
+        Extract a specific metric from simulation results.
+        
+        Args:
+            results: Simulation results dictionary
+            metric_name: Name of the metric to extract
+            
+        Returns:
+            Metric value or None if not found
+        """
+        metric_lower = metric_name.lower()
+
+        direct_value = self._lookup_metric_value(results, self._candidate_names(metric_lower, metric_name))
+        if direct_value is not None:
+            if metric_lower in {"quiescent_current", "idd"}:
+                return abs(float(direct_value))
+            return direct_value
+        
+        # Map metric name to extraction method
+        extractors = {
+            "operating_point": self._extract_operating_point,
+            "vout_dc": self._extract_operating_point,
+            "quiescent_current": self._extract_current,
+            "idd": self._extract_current,
+            "dc_gain": self._extract_dc_gain,
+            "gain": self._extract_dc_gain,
+            "bandwidth": self._extract_bandwidth,
+            "cutoff_frequency": self._extract_bandwidth,
+            "gbw": self._extract_gbw,
+            "ugbw": self._extract_gbw,
+            "unity_gain_frequency": self._extract_gbw,
+            "phase_margin": self._extract_phase_margin,
+            "slew_rate": self._extract_slew_rate,
+            "settling_time": self._extract_settling_time,
+            "propagation_delay": self._extract_propagation_delay,
+            "oscillator_frequency": self._extract_frequency,
+            "frequency_hz": self._extract_frequency,
+            "startup_amplitude": self._extract_startup_amplitude,
+            "power": self._extract_power,
+            "current": self._extract_current,
+            "thd": self._extract_thd,
+            "cmrr": self._extract_cmrr,
+            "psrr": self._extract_psrr,
+            "pvt": self._extract_pvt_metric,
+            "minimum_device_drain_current_a": self._extract_minimum_device_drain_current,
+            "inverter_low_input_output_v": self._extract_inverter_low_input_output,
+            "inverter_high_input_output_v": self._extract_inverter_high_input_output,
+            "inverter_output_separation_v": self._extract_inverter_output_separation,
+            "comparator_output_separation_v": self._extract_comparator_output_separation,
+            "comparator_monotonicity_percent": self._extract_comparator_monotonicity,
+            "current_stability_delta_a": self._extract_current_stability_delta,
+            "minimum_output_current_a": self._extract_minimum_output_current,
+            "lowpass_attenuation_db": self._extract_lowpass_attenuation,
+            "lowpass_monotonicity_percent": self._extract_lowpass_monotonicity,
+            "highpass_attenuation_db": self._extract_highpass_attenuation,
+            "highpass_monotonicity_percent": self._extract_highpass_monotonicity,
+            "bandpass_peak_separation_db": self._extract_bandpass_peak_separation,
+            "bandstop_notch_depth_db": self._extract_bandstop_notch_depth,
+            "oscillation_cycle_count": self._extract_oscillation_cycle_count,
+            "oscillation_period_cv": self._extract_oscillation_period_cv,
+            "output_swing_v": self._extract_output_swing,
+            "integrator_ramp_slope": self._extract_integrator_ramp_slope,
+            "integrator_linearity": self._extract_integrator_linearity,
+            "differentiator_output_amplitude_v": self._extract_output_amplitude,
+            "hysteresis_width": self._extract_hysteresis_width,
+            "v_t_plus": self._extract_v_t_plus,
+            "v_t_minus": self._extract_v_t_minus,
+        }
+        
+        # Prefer exact metric dispatch. Generic substring rules such as
+        # "current" must never shadow ACP metrics like current_stability_delta_a
+        # or minimum_device_drain_current_a.
+        if metric_lower in extractors:
+            return extractors[metric_lower](results)
+        for key, extractor in extractors.items():
+            if key in {"current", "gain", "pvt"}:
+                continue
+            if key in metric_lower:
+                return extractor(results)
+        
+        # Try direct lookup
+        if metric_name in results:
+            return results[metric_name]
+        
+        logger.warning(f"Metric '{metric_name}' not found in results")
+        return None
+
+    def _candidate_names(self, metric_lower: str, metric_name: str) -> List[str]:
+        aliases = {
+            "operating_point": ["vout_dc", "op_point", "op_voltage"],
+            "vout_dc": ["operating_point", "op_point", "vout"],
+            "quiescent_current": ["idd", "iq", "current", "mean_current_a", "supply_current_a"],
+            "idd": ["quiescent_current", "iq", "current", "mean_current_a", "supply_current_a"],
+            "power": ["power_w", "power_mw", "quiescent_power_w"],
+            "dc_gain": ["dc_gain_db", "gain_db"],
+            "bandwidth": ["cutoff_frequency", "cutoff_frequency_hz", "bw"],
+            "unity_gain_frequency": ["ugbw", "gbw"],
+            "gbw": ["ugbw", "unity_gain_frequency"],
+            "phase_margin": ["phase_margin_deg"],
+            "propagation_delay": ["comparator_delay", "delay", "propagation_delay_s"],
+            "oscillator_frequency": ["frequency_hz", "fundamental_frequency"],
+            "frequency_hz": ["oscillator_frequency", "fundamental_frequency"],
+            "thd": ["thd_percent"],
+            "pvt_vout_variation": ["vout_variation"],
+            "pvt_dc_gain_variation": ["gain_variation"],
+            "pvt_power_variation": ["power_variation"],
+        }
+        return [metric_name, metric_lower, *aliases.get(metric_lower, [])]
+
+    def _lookup_metric_value(self, results: Dict[str, Any], names: Iterable[str]) -> Optional[float]:
+        containers = [
+            results.get("metrics", {}),
+            results.get("dc", {}),
+            results.get("ac", {}),
+            results.get("fourier", {}),
+            results.get("pvt", {}).get("summary", {}),
+            results,
+        ]
+
+        for container in containers:
+            if not isinstance(container, dict):
+                continue
+            for name in names:
+                value = container.get(name)
+                if isinstance(value, (int, float)):
+                    return float(value)
+        return None
+
+    def _extract_minimum_device_drain_current(self, results: Dict[str, Any]) -> Optional[float]:
+        # Exact-only evidence. Supply current is deliberately NOT accepted as a substitute.
+        for container in (results.get("native_metrics", {}), results.get("metrics", {}), results):
+            if isinstance(container, dict):
+                value = container.get("minimum_device_drain_current_a")
+                if isinstance(value, (int, float)) and math.isfinite(float(value)):
+                    return abs(float(value))
+        return None
+
+    @staticmethod
+    def _as_float_array(values) -> np.ndarray:
+        try:
+            arr=np.asarray(values if values is not None else [],dtype=float).reshape(-1)
+            return arr[np.isfinite(arr)] if arr.size else arr
+        except Exception:
+            return np.asarray([],dtype=float)
+
+    def _dc_waveforms(self, results):
+        dc=results.get("dc",{}) or {}
+        sweep=self._as_float_array(dc.get("source_values", dc.get("sweep", dc.get("vin", []))))
+        out=self._as_float_array(dc.get("vout_values", dc.get("vout_waveform", dc.get("output", dc.get("vout", [])))))
+        currents=dc.get("current_waveforms",{}) or {}
+        cur=[]
+        if isinstance(currents,dict):
+            for key,val in currents.items():
+                if "vdd" in str(key).lower() or "out" in str(key).lower(): cur=val; break
+        return sweep,out,self._as_float_array(cur)
+
+    def _extract_inverter_low_input_output(self, results):
+        _s,y,_c=self._dc_waveforms(results); return float(y[0]) if y.size else None
+    def _extract_inverter_high_input_output(self, results):
+        _s,y,_c=self._dc_waveforms(results); return float(y[-1]) if y.size else None
+    def _extract_inverter_output_separation(self, results):
+        a=self._extract_inverter_low_input_output(results); b=self._extract_inverter_high_input_output(results)
+        return abs(a-b) if a is not None and b is not None else None
+    def _extract_comparator_output_separation(self, results):
+        _s,y,_c=self._dc_waveforms(results); return float(np.max(y)-np.min(y)) if y.size>=2 else None
+    def _extract_comparator_monotonicity(self, results):
+        _s,y,_c=self._dc_waveforms(results)
+        if y.size<2: return None
+        d=np.diff(y); inc=float(np.mean(d>=-1e-9)); dec=float(np.mean(d<=1e-9)); return 100.0*max(inc,dec)
+    def _extract_current_stability_delta(self, results):
+        _s,_y,c=self._dc_waveforms(results)
+        if not c.size:
+            dc=results.get("dc",{}) or {}; c=self._as_float_array(dc.get("iout",dc.get("current",[])))
+        return float(np.max(np.abs(c)) - np.min(np.abs(c))) if c.size>=2 else None
+    def _extract_minimum_output_current(self, results):
+        _s,_y,c=self._dc_waveforms(results)
+        if not c.size:
+            dc=results.get("dc",{}) or {}; c=self._as_float_array(dc.get("iout",dc.get("current",[])))
+        return float(np.min(np.abs(c))) if c.size else None
+
+    def _ac_db(self, results):
+        ac=results.get("ac",{}) or {}; mag=self._as_float_array(ac.get("magnitude",[]))
+        return 20*np.log10(np.maximum(np.abs(mag),1e-30)) if mag.size else mag
+    def _extract_lowpass_attenuation(self, results):
+        db=self._ac_db(results); return float(db[0]-db[-1]) if db.size>=2 else None
+    def _extract_lowpass_monotonicity(self, results):
+        db=self._ac_db(results); return float(100*np.mean(np.diff(db)<=0.5)) if db.size>=3 else None
+    def _extract_highpass_attenuation(self, results):
+        db=self._ac_db(results); return float(db[-1]-db[0]) if db.size>=2 else None
+    def _extract_highpass_monotonicity(self, results):
+        db=self._ac_db(results); return float(100*np.mean(np.diff(db)>=-0.5)) if db.size>=3 else None
+    def _extract_bandpass_peak_separation(self, results):
+        db=self._ac_db(results)
+        if db.size<5: return None
+        i=int(np.argmax(db))
+        if i==0 or i==db.size-1: return None
+        return float(min(db[i]-np.mean(db[:i]), db[i]-np.mean(db[i+1:])))
+    def _extract_bandstop_notch_depth(self, results):
+        db=self._ac_db(results)
+        if db.size<5: return None
+        i=int(np.argmin(db))
+        if i==0 or i==db.size-1: return None
+        return float(min(np.mean(db[:i])-db[i], np.mean(db[i+1:])-db[i]))
+
+    def _oscillation_crossings(self, results):
+        tr=results.get("transient") or results.get("tran",{}) or {}; t=self._as_float_array(tr.get("time",[])); y=np.asarray(self._get_waveform(tr,"out"),dtype=float)
+        n=min(t.size,y.size); t=t[:n]; y=y[:n]
+        if n<4: return np.asarray([])
+        level=float((np.max(y)+np.min(y))/2); idx=np.where((y[:-1]<=level)&(y[1:]>level))[0]
+        return t[np.minimum(idx+1,t.size-1)]
+    def _extract_oscillation_cycle_count(self, results):
+        c=self._oscillation_crossings(results); return float(max(0,c.size-1)) if c.size else None
+    def _extract_oscillation_period_cv(self, results):
+        c=self._oscillation_crossings(results)
+        if c.size<3: return None
+        p=np.diff(c); mean=float(np.mean(p)); return float(np.std(p)/mean) if mean>0 else None
+    def _extract_output_swing(self, results):
+        tr=results.get("transient") or results.get("tran",{}) or {}; y=self._as_float_array(self._get_waveform(tr,"out"))
+        if y.size: return float(np.max(y)-np.min(y))
+        _s,y,_c=self._dc_waveforms(results); return float(np.max(y)-np.min(y)) if y.size else None
+    def _extract_output_amplitude(self, results):
+        swing=self._extract_output_swing(results); return swing/2.0 if swing is not None else None
+
+    def _linear_fit_waveform(self, results):
+        tr=results.get("transient") or results.get("tran",{}) or {}; t=np.asarray(tr.get("time",[]),dtype=float); y=np.asarray(self._get_waveform(tr,"out"),dtype=float)
+        n=min(t.size,y.size); t=t[:n]; y=y[:n]
+        if n<4: return None
+        valid=np.isfinite(t)&np.isfinite(y); t=t[valid]; y=y[valid]
+        if t.size<4: return None
+        d=np.diff(y); amp=float(np.ptp(y)); eps=max(amp*1e-9,1e-12); signs=np.sign(np.where(np.abs(d)>eps,d,0.0))
+        # forward/backward fill zeros
+        last=0
+        for i in range(signs.size):
+            if signs[i]!=0: last=signs[i]
+            elif last!=0: signs[i]=last
+        last=0
+        for i in range(signs.size-1,-1,-1):
+            if signs[i]!=0: last=signs[i]
+            elif last!=0: signs[i]=last
+        turns=[0]+[i for i in range(1,signs.size) if signs[i-1]*signs[i]<0]+[t.size-1]
+        best=None
+        for a,b in zip(turns[:-1],turns[1:]):
+            if b-a+1<4: continue
+            trim=max(0,int((b-a+1)*0.03)); aa=min(b-2,a+trim); bb=max(aa+2,b-trim)
+            x=t[aa:bb+1]; z=y[aa:bb+1]
+            if x.size<3: continue
+            slope,intercept=np.polyfit(x,z,1); pred=slope*x+intercept; ss=float(np.sum((z-np.mean(z))**2)); res=float(np.sum((z-pred)**2)); r2=1.0 if ss<=1e-30 else max(0.0,1.0-res/ss)
+            exc=abs(float(y[b]-y[a])); cand=(exc,float(slope),float(intercept),float(r2))
+            if best is None or cand[0]>best[0]: best=cand
+        if best is None: return None
+        return best[1],best[2],best[3]
+    def _extract_integrator_ramp_slope(self, results):
+        direct=self._lookup_metric_value(results,("integrator_ramp_slope","ramp_slope","integrator_slope"))
+        if direct is not None: return abs(float(direct))
+        f=self._linear_fit_waveform(results); return abs(float(f[0])) if f else None
+    def _extract_integrator_linearity(self, results):
+        direct=self._lookup_metric_value(results,("integrator_linearity","ramp_linearity","linearity_score"))
+        if direct is not None: return float(direct)
+        f=self._linear_fit_waveform(results); return float(f[2]) if f else None
+
+    def _schmitt_thresholds(self, results):
+        tr=results.get("transient") or results.get("tran",{}) or {}; vin=np.asarray(self._get_waveform(tr,"in"),dtype=float); vout=np.asarray(self._get_waveform(tr,"out"),dtype=float)
+        n=min(vin.size,vout.size)
+        if n<4: return None
+        vin=vin[:n]; vout=vout[:n]; mid=float((np.max(vout)+np.min(vout))/2); state=vout>=mid; idx=np.where(state[1:]!=state[:-1])[0]+1
+        if idx.size<2: return None
+        rising=[float(vin[i]) for i in idx if vout[i]>vout[i-1]]; falling=[float(vin[i]) for i in idx if vout[i]<vout[i-1]]
+        if not rising or not falling: return None
+        return float(np.median(rising)),float(np.median(falling))
+    def _extract_v_t_plus(self, results):
+        x=self._schmitt_thresholds(results); return x[0] if x else None
+    def _extract_v_t_minus(self, results):
+        x=self._schmitt_thresholds(results); return x[1] if x else None
+    def _extract_hysteresis_width(self, results):
+        x=self._schmitt_thresholds(results); return abs(x[0]-x[1]) if x else None
+
+    def _extract_operating_point(self, results: Dict[str, Any]) -> Optional[float]:
+        dc_data = results.get("dc", {})
+        for key in ("vout_dc", "vout", "out", "operating_point"):
+            value = dc_data.get(key)
+            if isinstance(value, (int, float)):
+                return float(value)
+        metrics = results.get("metrics", {})
+        for key in ("vout_dc", "operating_point", "vout"):
+            value = metrics.get(key)
+            if isinstance(value, (int, float)):
+                return float(value)
+        return None
+    
+    def _extract_dc_gain(self, results: Dict[str, Any]) -> Optional[float]:
+        """Extract DC gain from AC analysis."""
+        ac_data = results.get("ac", {})
+        direct_gain = ac_data.get("dc_gain_db")
+        if isinstance(direct_gain, (int, float)):
+            return float(direct_gain)
+        magnitude = ac_data.get("magnitude", [])
+        
+        if magnitude and len(magnitude) > 0:
+            # DC gain is magnitude at lowest frequency
+            dc_gain_linear = magnitude[0]
+            return 20 * math.log10(dc_gain_linear) if dc_gain_linear > 0 else -float('inf')
+        
+        return None
+    
+    def _extract_bandwidth(self, results: Dict[str, Any]) -> Optional[float]:
+        """Extract -3dB bandwidth from AC analysis."""
+        ac_data = results.get("ac", {})
+        for key in ("bandwidth", "cutoff_frequency", "cutoff_frequency_hz"):
+            value = ac_data.get(key)
+            if isinstance(value, (int, float)):
+                return float(value)
+        magnitude = ac_data.get("magnitude", [])
+        frequency = ac_data.get("frequency", [])
+        
+        if not magnitude or not frequency:
+            return None
+        
+        # Find DC gain
+        dc_gain_linear = magnitude[0]
+        target_gain = dc_gain_linear / math.sqrt(2)  # -3dB point
+        
+        # Find frequency where magnitude drops below target
+        for i, mag in enumerate(magnitude):
+            if mag < target_gain:
+                if i > 0:
+                    # Interpolate
+                    return self._interpolate_frequency(
+                        frequency[i-1], frequency[i],
+                        magnitude[i-1], magnitude[i],
+                        target_gain
+                    )
+                return frequency[i]
+        
+        return frequency[-1] if frequency else None
+    
+    def _extract_gbw(self, results: Dict[str, Any]) -> Optional[float]:
+        """Extract Gain-Bandwidth Product."""
+        ac_data = results.get("ac", {})
+        for key in ("unity_gain_frequency", "ugbw", "gbw"):
+            value = ac_data.get(key)
+            if isinstance(value, (int, float)):
+                return float(value)
+        magnitude = ac_data.get("magnitude", [])
+        frequency = ac_data.get("frequency", [])
+        
+        if not magnitude or not frequency:
+            return None
+        
+        # Find unity gain frequency (0dB = gain = 1)
+        target_gain = 1.0
+        
+        for i, mag in enumerate(magnitude):
+            if mag < target_gain:
+                if i > 0:
+                    return self._interpolate_frequency(
+                        frequency[i-1], frequency[i],
+                        magnitude[i-1], magnitude[i],
+                        target_gain
+                    )
+                return frequency[i]
+        
+        return frequency[-1] if frequency else None
+    
+    def _extract_phase_margin(self, results: Dict[str, Any]) -> Optional[float]:
+        """Extract phase margin at GBW."""
+        ac_data = results.get("ac", {})
+        phase_margin = ac_data.get("phase_margin")
+        if isinstance(phase_margin, (int, float)):
+            return float(phase_margin)
+        phase = ac_data.get("phase", [])
+        frequency = ac_data.get("frequency", [])
+        magnitude = ac_data.get("magnitude", [])
+        
+        if not phase or not frequency or not magnitude:
+            return None
+        
+        # Find GBW frequency
+        gbw = self._extract_gbw(results)
+        if gbw is None:
+            return None
+        
+        # Find phase at GBW
+        for i, freq in enumerate(frequency):
+            if freq >= gbw:
+                # Phase margin = 180 + phase (since phase is negative)
+                phase_at_gbw = phase[i] if i < len(phase) else phase[-1]
+                margin = 180 + phase_at_gbw
+                return max(0, min(180, margin))
+        
+        return None
+    
+    def _extract_slew_rate(self, results: Dict[str, Any]) -> Optional[float]:
+        """Extract slew rate from transient analysis."""
+        tran_data = results.get("transient") or results.get("tran", {})
+        time = tran_data.get("time", [])
+        vout = self._get_waveform(tran_data, "out")
+        
+        if not time or not vout or len(time) < 2:
+            return None
+        
+        # Compute max derivative
+        max_sr = 0.0
+        for i in range(1, len(time)):
+            dt = time[i] - time[i-1]
+            dv = vout[i] - vout[i-1]
+            if dt > 0:
+                sr = abs(dv / dt)
+                if sr > max_sr:
+                    max_sr = sr
+        
+        return max_sr
+    
+    def _extract_settling_time(self, results: Dict[str, Any]) -> Optional[float]:
+        """Extract settling time to 1%."""
+        tran_data = results.get("transient") or results.get("tran", {})
+        time = tran_data.get("time", [])
+        vout = self._get_waveform(tran_data, "out")
+        
+        if not time or not vout or len(time) < 2:
+            return None
+        
+        # Find final value (last point)
+        final_value = vout[-1]
+        tolerance = 0.01 * abs(final_value)  # 1%
+        
+        # Find when output enters and stays within tolerance
+        settled_time = None
+        settled_count = 0
+        required_samples = 5  # Need 5 consecutive samples within tolerance
+        
+        for i in range(len(time) - 1, -1, -1):
+            if abs(vout[i] - final_value) <= tolerance:
+                settled_count += 1
+                if settled_count >= required_samples:
+                    settled_time = time[i]
+                    break
+            else:
+                settled_count = 0
+        
+        return settled_time
+
+    def _extract_propagation_delay(self, results: Dict[str, Any]) -> Optional[float]:
+        tran_data = results.get("transient") or results.get("tran", {})
+        time = tran_data.get("time", [])
+        vin = self._get_waveform(tran_data, "in")
+        vout = self._get_waveform(tran_data, "out")
+
+        if not time or not vin or not vout:
+            return None
+
+        vin_threshold = (max(vin) + min(vin)) / 2
+        vout_threshold = (max(vout) + min(vout)) / 2
+        input_crossing = self._first_threshold_crossing(time, vin, vin_threshold)
+        output_crossing = self._first_threshold_crossing(time, vout, vout_threshold)
+
+        if input_crossing is None or output_crossing is None:
+            return None
+        return max(0.0, output_crossing - input_crossing)
+
+    def _extract_frequency(self, results: Dict[str, Any]) -> Optional[float]:
+        tran_data = results.get("transient") or results.get("tran", {})
+        time = tran_data.get("time", [])
+        vout = self._get_waveform(tran_data, "out")
+
+        if len(time) < 3 or len(vout) < 3:
+            return None
+
+        mean_value = sum(vout) / len(vout)
+        crossings = []
+        for index in range(1, len(vout)):
+            if vout[index - 1] <= mean_value < vout[index]:
+                crossings.append(time[index])
+
+        if len(crossings) < 2:
+            return None
+
+        periods = [crossings[index] - crossings[index - 1] for index in range(1, len(crossings))]
+        valid_periods = [period for period in periods if period > 0]
+        if not valid_periods:
+            return None
+        average_period = sum(valid_periods) / len(valid_periods)
+        return 1.0 / average_period if average_period > 0 else None
+
+    def _extract_startup_amplitude(self, results: Dict[str, Any]) -> Optional[float]:
+        tran_data = results.get("transient") or results.get("tran", {})
+        vout = self._get_waveform(tran_data, "out")
+        if len(vout) < 5:
+            return None
+        tail_start = max(0, int(len(vout) * 0.8))
+        steady_state = vout[tail_start:]
+        return (max(steady_state) - min(steady_state)) / 2
+    
+    def _extract_power(self, results: Dict[str, Any]) -> Optional[float]:
+        """Extract power consumption."""
+        direct_power = self._lookup_metric_value(results, ("power", "power_w", "power_mw", "quiescent_power_w"))
+        if direct_power is not None:
+            return direct_power
+        mean_current = self._lookup_metric_value(results, ("mean_current_a", "quiescent_current", "idd", "iq", "current"))
+        if mean_current is not None:
+            return results.get("vdd", 1.8) * abs(mean_current)
+        # Get current from VDD source
+        currents = results.get("currents", {})
+        idd = currents.get("vdd", currents.get("VDD", 0))
+        
+        # Get voltage
+        vdd = results.get("vdd", 1.8)
+        
+        return vdd * abs(idd)
+    
+    def _extract_current(self, results: Dict[str, Any]) -> Optional[float]:
+        """Extract current consumption."""
+        direct_current = self._lookup_metric_value(results, ("quiescent_current", "idd", "iq", "current", "mean_current_a", "supply_current_a"))
+        if direct_current is not None:
+            return abs(float(direct_current))
+        currents = results.get("currents", {})
+        value = currents.get("vdd", currents.get("VDD", None))
+        return abs(float(value)) if isinstance(value, (int, float)) else None
+    
+    def _extract_thd(self, results: Dict[str, Any]) -> Optional[float]:
+        """Extract Total Harmonic Distortion."""
+        direct_thd = self._lookup_metric_value(results, ("thd", "thd_percent"))
+        if direct_thd is not None:
+            return direct_thd
+        fourier = results.get("fourier", {})
+        harmonics = fourier.get("harmonics", [])
+        
+        if not harmonics or len(harmonics) < 2:
+            return None
+        
+        fundamental = harmonics[0].get("magnitude", 0)
+        if fundamental == 0:
+            return None
+        
+        # THD = sqrt(sum(H2^2 + H3^2 + ...)) / H1
+        sum_squares = sum(h.get("magnitude", 0)**2 for h in harmonics[1:])
+        thd = math.sqrt(sum_squares) / fundamental
+        
+        return thd * 100  # Return as percentage
+
+    def _extract_pvt_metric(self, results: Dict[str, Any]) -> Optional[float]:
+        summary = results.get("pvt", {}).get("summary", {})
+        if not isinstance(summary, dict):
+            return None
+        for value in summary.values():
+            if isinstance(value, (int, float)):
+                return float(value)
+        return None
+    
+    def _extract_cmrr(self, results: Dict[str, Any]) -> Optional[float]:
+        """Extract Common Mode Rejection Ratio."""
+        # CMRR = |Ad| / |Acm|
+        ac_data = results.get("ac", {})
+        
+        # Differential gain (assumes in-phase inputs)
+        ad = ac_data.get("differential_gain", [])
+        # Common mode gain (same input on both)
+        acm = ac_data.get("common_mode_gain", [])
+        
+        if ad and acm and len(ad) > 0 and len(acm) > 0:
+            cmrr = ad[0] / acm[0] if acm[0] != 0 else float('inf')
+            return 20 * math.log10(cmrr) if cmrr > 0 else -float('inf')
+        
+        return None
+    
+    def _extract_psrr(self, results: Dict[str, Any]) -> Optional[float]:
+        """Extract Power Supply Rejection Ratio."""
+        # PSRR = |Vout| / |Vdd|
+        ac_data = results.get("ac", {})
+        vout = ac_data.get("magnitude", [])
+        vdd = ac_data.get("vdd_magnitude", [])
+        
+        if vout and vdd and len(vout) > 0 and len(vdd) > 0:
+            psrr = vout[0] / vdd[0] if vdd[0] != 0 else float('inf')
+            return 20 * math.log10(1/psrr) if psrr > 0 else float('inf')
+        
+        return None
+    
+    def _interpolate_frequency(self, f1: float, f2: float, 
+                               m1: float, m2: float, 
+                               target: float) -> float:
+        """Interpolate frequency at target magnitude."""
+        if m1 == m2:
+            return f1
+        
+        # Linear interpolation in log-log space
+        log_f1 = math.log10(f1)
+        log_f2 = math.log10(f2)
+        log_m1 = math.log10(max(m1, 1e-30))
+        log_m2 = math.log10(max(m2, 1e-30))
+        log_target = math.log10(target)
+        
+        ratio = (log_target - log_m1) / (log_m2 - log_m1)
+        log_f = log_f1 + ratio * (log_f2 - log_f1)
+        
+        return 10 ** log_f
+
+    def _get_waveform(self, tran_data: Dict[str, Any], node: str) -> List[float]:
+        voltage = tran_data.get("voltage", {})
+        if isinstance(voltage, dict):
+            for key in (node, f"v{node}", "vout" if node == "out" else "vin"):
+                values = voltage.get(key)
+                if isinstance(values, list):
+                    return values
+
+        for key in (node, f"v{node}", "vout" if node == "out" else "vin"):
+            values = tran_data.get(key)
+            if isinstance(values, list):
+                return values
+
+        return []
+
+    def _first_threshold_crossing(self, time: List[float], values: List[float], threshold: float) -> Optional[float]:
+        for index in range(1, min(len(time), len(values))):
+            if values[index - 1] < threshold <= values[index]:
+                return time[index]
+        return None

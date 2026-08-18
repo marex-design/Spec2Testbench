@@ -1,0 +1,10 @@
+circuit: "lowpass_filter"
+specifications:
+  type: "lowpass"
+  cutoff_frequency:
+    target: 10000
+    unit: "Hz"
+  attenuation_stopband:
+    target: 20
+    unit: "dB"
+    frequency: 100000

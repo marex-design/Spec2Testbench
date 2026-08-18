@@ -1,0 +1,3440 @@
+{
+  "file_count": 687,
+  "files": [
+    {
+      "path": ".env.example",
+      "size": 329,
+      "sha256": "e648c420e59f4b44e8806a92b6e937de07a20a3f7e6da80159e203be4a13aaf5"
+    },
+    {
+      "path": ".gitignore",
+      "size": 691,
+      "sha256": "6f6cc9a05bc2dffe20316e475e894da3afb61ee79495b60a32a1d4f93fafd2aa"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "size": 1951,
+      "sha256": "ca47b656d29df548f58988c5250c21770f9138ab9fcbdb8cae796e702b2052f1"
+    },
+    {
+      "path": "README.md",
+      "size": 4678,
+      "sha256": "be87cc0860cdc1a8530a5ef3a2bd32e6d6fc3533ab518df63e580e162d7f47d1"
+    },
+    {
+      "path": "README_RECONSTRUCTION.md",
+      "size": 5221,
+      "sha256": "b48efd6de20e3d6c4b9e0ae1350f8496a9365085de9db0ae7c94cc4fb2e5821c"
+    },
+    {
+      "path": "RECONSTRUCTION_PROVENANCE.json",
+      "size": 1467,
+      "sha256": "a80368c6364ee19c95126aa88360fddea0e3076a732151f6c542403aedecf718"
+    },
+    {
+      "path": "REPRO.md",
+      "size": 2228,
+      "sha256": "8de1b7a5e720492cf141f991247b046886edc01f2ac4e7d7a0a0bf13071a52a3"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/.gitignore",
+      "size": 3221,
+      "sha256": "48ca54662d67797b10c9214fc5b2d514d9072a2bfdcc97e00b3eb9df772c917e"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/AnalogCoder.png",
+      "size": 900216,
+      "sha256": "16c4f9e174093de8f5b46dd835cb0a2f61d8f6c3b80a6723098f8921fac2eb08"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/AnalogCoder_label.png",
+      "size": 513173,
+      "sha256": "51498c6b91b6ba603e146dbc998c981f80327e437859e6353c9326b2854a486c"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/README.md",
+      "size": 9950,
+      "sha256": "7bb65511e386989bf05c11f2f4a0ac56cbeb52948232ac338fc26a2695f74e03"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/environment.yml",
+      "size": 150,
+      "sha256": "43298348a61623265adcd44aee41b7ccc26c839bf8aa69f360c9e71b5f59b82c"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/execution_error.md",
+      "size": 163,
+      "sha256": "851d1edfd5993d109c5e9752f432f9c06297cb4f3aefa99908de75c0791c3cf6"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/gpt_run.py",
+      "size": 64778,
+      "sha256": "b55a6d02fdc5c6af9da7fb7d59178a95c37693710686758794cb7c71cb72643f"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/hkummlab.png",
+      "size": 13292,
+      "sha256": "a5264740b35a8702e41b64d7f1159cda7dd3d251ebde9bf4a65eaca4b43c1db4"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/lib_info.tsv",
+      "size": 772,
+      "sha256": "95ead3fb66d7bcd37d534fddc37b62a285337c635f42335f44e774e16d5e035b"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_check/Adder.py",
+      "size": 2171,
+      "sha256": "c8c665da0c79ca2bdf8abd1b9d479ffacabf8e90ef02838ea85e5d45c3234f7f"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_check/Amplifier.py",
+      "size": 1449,
+      "sha256": "9e19d79ae709a4fed1620ea235bb5182ca4e1b91dcc9e209bcd63c390aa21d8e"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_check/CurrentMirror.py",
+      "size": 2408,
+      "sha256": "60caa714be1326b00ec12aeb106c1644df08683689722321762cfd426497bdb7"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_check/Differentiator.py",
+      "size": 5854,
+      "sha256": "f745167a33b69cc79d7ec8ec33d7b3c9073328ea3938c156cce5c2003612a054"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_check/Integrator.py",
+      "size": 3571,
+      "sha256": "ec2490c44d4ca68d89a55808308774d44ba6705d5d9c6f5fbebdbc5a129e003f"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_check/Inverter.py",
+      "size": 928,
+      "sha256": "d1f5d624d91356258bbcb66fb9466d79aabd05eae6c2df3697621e31906a53d3"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_check/Opamp.py",
+      "size": 2275,
+      "sha256": "99f1b8ea9181c7f94af69f7934058dc3bbba7f22432e73f63c06cfea9b4a63eb"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_check/Oscillator.py",
+      "size": 3019,
+      "sha256": "a1717b25dae664ab38c185f849c255992b042f169eb8e04c916486e05019b01b"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_check/PLL.py",
+      "size": 2654,
+      "sha256": "451c004fc406374085bbaaaeb0669c42581529988e9bff89742e117fc8cdf5e3"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_check/Schmitt.py",
+      "size": 2345,
+      "sha256": "b70f121204424a67961b9906d033c65c2b227c3eeada8d95ecca32d1a7fc589a"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_check/Subtractor.py",
+      "size": 2905,
+      "sha256": "aa3bf14b2d1f58cc7eb22d3dce6abe1176d902ffeafbb8850e39e3a96b569a3c"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_check/VCO.py",
+      "size": 3456,
+      "sha256": "233df1a00e7df6f55d571c8b8e50cb09780648b9bd8a9d8d5aba86ecb5f5472d"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/problem_set.tsv",
+      "size": 3033,
+      "sha256": "b37bf4613f2238232713dd1dff0e5aba167bba41c096d1278d4ad17870d41859"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/prompt_template.md",
+      "size": 4365,
+      "sha256": "ce7764fe3037d51e33d25beeea5d5e0c9c06e59d838da9a8871df97f9ffc2ef8"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/prompt_template_complex.md",
+      "size": 2780,
+      "sha256": "e29439ed2d5c45048f54c1a72f3b323e895ae2c2f505e1b0ce6d8341340a06ce"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/retrieval_prompt.md",
+      "size": 3006,
+      "sha256": "078243b78851bc14870cf83c7a81f589d7ed619143643eff2c6f8983db2a5e75"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p1.py",
+      "size": 657,
+      "sha256": "eacf49cea8bffdbea63208f5ceec7953138ccc45745a044fb8fe56279a96d4bc"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p10.py",
+      "size": 845,
+      "sha256": "f1e5d249d3eba0fda8e06ce25ffee33d23755fd776ad460d48fd799fad93b886"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p11.py",
+      "size": 1220,
+      "sha256": "e2c6a10ac7d2967cfd1d44c718aa7446394cb700716e963ed6c9daebd9e766ae"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p12.py",
+      "size": 986,
+      "sha256": "bb2bf38684c56707d49fe9c81d6ed7b7a587413e6240b8c4b099a34572431b57"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p13.py",
+      "size": 1225,
+      "sha256": "b00b1d6f086eb18722714845b2d65bd5aea0b30c903841ee54fffa900ea13e2e"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p14.py",
+      "size": 1794,
+      "sha256": "74e29e758c05b85d3af2c7b9f833c8a83b04a0653eec9b2c40050abeb0c62695"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p15.py",
+      "size": 1875,
+      "sha256": "251f539d1a7bd4864c640cd811c14c509ec24951e130ced8ccd3ae20560a1996"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p16.py",
+      "size": 1095,
+      "sha256": "24f1f4fbe2fe5b904b32d5d02adb61bfb52fd035879a3c8fc37b38c22e193a64"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p17.py",
+      "size": 972,
+      "sha256": "18f35ecc01dba6bf1486f2d3556e06823fd62908c8a8be7eba3dac50fa607a59"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p18.py",
+      "size": 1155,
+      "sha256": "3f99b5ef80e9cc7b0c550f7620f492191d88008722db229142798dc977fbd3c0"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p19.py",
+      "size": 851,
+      "sha256": "7a3bcc1f690303c2576ba3e26f3f581fa56012832b4554f691e43c3c8041e23f"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p2.py",
+      "size": 1010,
+      "sha256": "1fef88fb3e317354dfeea4f436daf85bccadd3444ec9565dda09bf65e25fa616"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p20.py",
+      "size": 939,
+      "sha256": "a01763fa0e3dd67e617531f373fa0f972f6648c9400a07d38ed968a6565b9add"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p21.py",
+      "size": 917,
+      "sha256": "e5b3ccabab98fa7cb1bcf84a0cb0811c6f77355cc76783d570ca20691d8d3bf9"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p22.py",
+      "size": 1455,
+      "sha256": "301c7aeb17ef913b02329026671b658b0b71a677718db2a7448953da77b26c87"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p23.py",
+      "size": 2098,
+      "sha256": "cbb1e88db6f9c27930efd87f07d1587f32f24b690e5b22da37fb60fcddf61505"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p24.py",
+      "size": 2053,
+      "sha256": "432c3bdc42dffbeebdfbb9d373b752c4e3313ff83cb5926832069b7cd5f8302a"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p3.py",
+      "size": 629,
+      "sha256": "708a124323895a88583b6a6360e5c99119e4e72493aeec7e797f8272a56b50f2"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p4.py",
+      "size": 721,
+      "sha256": "65c5a20bfc9dab327bb0970d63e8e4ca23a2c15c743730846f489ef05b48aaaa"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p5.py",
+      "size": 867,
+      "sha256": "8631399cf03d7b4a43118351f8f784a747a6ec52c190d4b05f7cff8d4a641bb2"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p6.py",
+      "size": 646,
+      "sha256": "c449d09fd87756ca9cf790d827b93edb293f37beb868abd19df46a97d80ab85c"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p7.py",
+      "size": 727,
+      "sha256": "5b7617866ee3e1061de8a8ff68ca4382a1044648db28dd71371a7db6725357cc"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p8.py",
+      "size": 740,
+      "sha256": "19cf939edef8b06b8c7974be2e5a81036662ac3e1f188d56a3a45ceb24f007f6"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p9.py",
+      "size": 1175,
+      "sha256": "8e377f12c84113ed9bc544aad9d79393bcd46974ae4400284a42ceefe1211199"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/p_lib.py",
+      "size": 1138,
+      "sha256": "1fa16956528aad533256568cba2d9d74a40e2dc8bddac53781bca87a77415f4b"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/charge_pump.py",
+      "size": 3764,
+      "sha256": "229b4e4afb34e4796c9f9a387ee5c7990534e772a06c1e13ab9b4db667998297"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/circuit_imgs/RingVCO.png",
+      "size": 313159,
+      "sha256": "dc7c3df3c26bc4151aea95416ba932d1b34b79b1d1792299a3434887bfb443b2"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/circuit_imgs/cp_and_lf.png",
+      "size": 268298,
+      "sha256": "e2f34995567423600e118db4c0ac0a95a04e56f805d33b08378438df5ba1ff19"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/circuit_imgs/divider.png",
+      "size": 102865,
+      "sha256": "31c3dd3fa57d62d807a6cf1297468d292bbeedee93d94ac44f8c8a9dc7b6dfa7"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/circuit_imgs/opamp.png",
+      "size": 63396,
+      "sha256": "4572b95c4833127a791d03144f3a5df42c0201e3adc681c5e6709d01255c2d3d"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/circuit_imgs/pfd.png",
+      "size": 296594,
+      "sha256": "7d459a1aa6ca7521a4fa62fadd40bc5cd7cca40c24fbaa0dfd8a811969e9d34d"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/dff.py",
+      "size": 4121,
+      "sha256": "a7fe74f25930a7c17d33c4f0690931e4142fe4bfec02cb1f292412b21205df87"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/diffop.py",
+      "size": 1138,
+      "sha256": "1fa16956528aad533256568cba2d9d74a40e2dc8bddac53781bca87a77415f4b"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/divider.py",
+      "size": 2282,
+      "sha256": "bf2ef5d106fac4acee38cd14498ed4a6d518997399bdedaa65391ad37483e96b"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/logic_gates.py",
+      "size": 3413,
+      "sha256": "a8fdb8366c61d97b38e35537e167ac6b0f5702521ae5b6265f99fae846a78b0b"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/loop_filter.py",
+      "size": 714,
+      "sha256": "9c38e62fab89bcff0250fcb2c54e3ab7beea707a99922edda8768ae31f70fa39"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/opamp.py",
+      "size": 2079,
+      "sha256": "9e0fa74def6ef59c3bfa2cea1996cc674d46c37502d4fe6aadadbffa65740a27"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/pfd.py",
+      "size": 2427,
+      "sha256": "889631cc6cff661b505a6b6f5270fa0afb4a59f4aafd53d49df236a798c2dcf2"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/subcircuits/ring_vco.py",
+      "size": 4076,
+      "sha256": "5217d05715026e62da05eef19d89ba6975b055d6693cded73b987f9f18381e26"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/sample_design/test_all_sample_design.py",
+      "size": 707,
+      "sha256": "7fb27bca5476d1adbcd2b41fb7cda744faf3d82c971198493e3e4fa23875a71d"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/simulation_error.md",
+      "size": 246,
+      "sha256": "3bdba262b1c03caa93002ee49ce387ab3039bede53122c13b5c57135bd439d38"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p10_lib.py",
+      "size": 922,
+      "sha256": "bd9ff433b328abc1e68e3c2f506208e7e807ec898de470cc8785071e8d8c28aa"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p11_lib.py",
+      "size": 1138,
+      "sha256": "1fa16956528aad533256568cba2d9d74a40e2dc8bddac53781bca87a77415f4b"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p12_lib.py",
+      "size": 1216,
+      "sha256": "976da19f1e7b2a8af2399240699510fd450fff29e3de08058551404842b8ba21"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p13_lib.py",
+      "size": 1335,
+      "sha256": "1c6e0b7d9cc9945c92015bb0496e30a33e68041a4f116d3ac1dd51aa505a1d36"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p14_lib.py",
+      "size": 1504,
+      "sha256": "6fb71bd0ca118a9304578bb71d9d0e647e18aeb58236b56749810e278365a231"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p15_lib.py",
+      "size": 1744,
+      "sha256": "0c3077f893b9416abf6c7d086c1267a594f9fbda21101aefb7876aea94b0869a"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p1_lib.py",
+      "size": 647,
+      "sha256": "b9917b6cdc7570f8384f9850b2233e0357cbf7b836d23ebecf30ede61769370e"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p2_lib.py",
+      "size": 961,
+      "sha256": "4a6f63f2c7a6e96ca7a3b6c4f14e385fa0e3d515f480e1d855ac3e403931ba25"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p3_lib.py",
+      "size": 571,
+      "sha256": "4f11c687ef9af6e36f34dffa4395eeeffb7d908b907f07c8cd34aafe4574f24d"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p4_lib.py",
+      "size": 680,
+      "sha256": "e49b893c4cdf6abf7a10407619dd09db742033cdc015063f7715ae03b58826e9"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p5_lib.py",
+      "size": 859,
+      "sha256": "ed56e02610fe01061a6120f5b2c0866784214837972594ec7928d84ad056822c"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p6_lib.py",
+      "size": 643,
+      "sha256": "ef3df1e8e8fc84bcefc6e6f25bf4d157f1c555596401f7bf427d9f5d45380fa2"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p7_lib.py",
+      "size": 649,
+      "sha256": "0228a3397c8b9858545dcd430e0f5b78a802f7c19349a468f910fa5697825331"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p8_lib.py",
+      "size": 699,
+      "sha256": "7dba17e6469a5b35e04628107f54ac83fae2810363141936173681444b00be68"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/subcircuit_lib/p9_lib.py",
+      "size": 1116,
+      "sha256": "7c1b72df764d496c2b0fe2a7384eb7df3af02403533429bd7c6e591561037c52"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/teaser.png",
+      "size": 660270,
+      "sha256": "885a5aeb073cd07801df913b2ee3b88f8eb992ce136e10ab3975ed779fb478f8"
+    },
+    {
+      "path": "analogcoder/AnalogCoder-main/utda.jpg",
+      "size": 2920,
+      "sha256": "30d00df35aeda6d1199c035afefe9b401136565e63ef1e53dde70ef30fee6f8c"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/.gitignore",
+      "size": 18,
+      "sha256": "4a01ee16fa414d96c4ddb474d67adae6a95b505f642e3727bb548cfd72559d1e"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/README.md",
+      "size": 5640,
+      "sha256": "c457038de18c4680dcf2f919d4b62551b29df8af6e323095eb69ff0233d2980f"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/dc_sweep_template.py",
+      "size": 4216,
+      "sha256": "5d4ca6ece8f565d10f446e019346be326c7cfafb8c92bfa9746a2bec01db9e4d"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/execution_error.md",
+      "size": 321,
+      "sha256": "1cdc41327b5c6ce257ff59045f3cf6a926808187d8dd8644e86d248322059187"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/opamp.py",
+      "size": 1116,
+      "sha256": "d25fa67d5d1b2cb18e2f58485996277da8016cf9566c395ff3266c80b389bea1"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/optimize_template.md",
+      "size": 5839,
+      "sha256": "d0ddec88787c22bc0ea518dc66b67867bbe9b2be6ea8576a4e61733cafa82913"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/Adder.py",
+      "size": 6836,
+      "sha256": "9b7479e4a8f633c4282fd4fa1ef1609fa5513e3ab5585c078c8ae26a26d010fc"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/Amplifier.py",
+      "size": 1932,
+      "sha256": "d6385196ffdd8690b54f143b6f55272c26249ea32a8536039fca8496f4b1ae26"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/BandPass.py",
+      "size": 4261,
+      "sha256": "9f637a9313fa63f159b59cd7716e4c643f5fc4c627a14014f51dc9ebe198459a"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/BandStop.py",
+      "size": 3934,
+      "sha256": "feff8fc8d97e683756fcf0c98f9b60feada70eeded6e1c7fed800f624c61d340"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/Comparator.py",
+      "size": 3280,
+      "sha256": "107bde6fc9040515263456ba090206ed75547a2cda370c08021aeafefefcda13"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/CurrentMirror.py",
+      "size": 2408,
+      "sha256": "60caa714be1326b00ec12aeb106c1644df08683689722321762cfd426497bdb7"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/Differentiator.py",
+      "size": 7338,
+      "sha256": "68cb14823d57a118cb3681b7c70d5386b0024ac5e8b058a8aa0a62755970853d"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/HighPass.py",
+      "size": 3090,
+      "sha256": "ee3846c1a1dea9848e9a6fb0a7664b9a901da6437f5ec6d969e536c1412b60d7"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/Integrator.py",
+      "size": 5877,
+      "sha256": "e7b22b27e3b4fa7a41b3f16d665a8da4bb922277742424fa7f2b4f1249a73f14"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/Inverter.py",
+      "size": 1483,
+      "sha256": "2be616cc2f8b8c7df4fd7ddd202e4dd91da4a9382fdb81e614110688dad2d7db"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/LowPass.py",
+      "size": 3087,
+      "sha256": "00844f41034a4cd05945a1035ea85b42cfcc5918dac1bb6c606c1407e06e7246"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/Mixer.py",
+      "size": 10374,
+      "sha256": "621e1db439b2e98435506c099a24fefa04cd96fb350573fdfaa65c239687e819"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/Opamp.py",
+      "size": 2722,
+      "sha256": "0d0159731991e0b72fce505bbc932fa29fa06f00d94ea2c26557d8f38c0a114c"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/Oscillator.py",
+      "size": 5909,
+      "sha256": "35a160f0e58642a016ab60facc927a6428f6bcefed86d63caf85f8c455c2329d"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/OscillatorFFT.py",
+      "size": 7218,
+      "sha256": "41d4e1f44f2302c9442335c41875854cc85ad9bb166e7651e39d418f7f5ab9ca"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/Schmitt.py",
+      "size": 8709,
+      "sha256": "911db5932fac012dfbbcf0d13acdc1ef56cfeb1442268ef314c9530f1141db37"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_check/Subtractor.py",
+      "size": 2566,
+      "sha256": "e6e2e73cf330fcd2f3404703f745da79b70c1f4e5710be9715074dd5827cbac3"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/problem_set.tsv",
+      "size": 7778,
+      "sha256": "3d409c0dffe5f536f4076774b10dd7c72fd8e3f6146849811ae3a7783792fba7"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/prompt_template.md",
+      "size": 4366,
+      "sha256": "5b23d9ad90e601d9d76c443d31ef13f211226eb36f44637bfd4ff301c8ed5155"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/prompt_template_comptex.md",
+      "size": 3281,
+      "sha256": "1a12242e04165d9c39c92eec520f0434bb1543876d6b1653c7a3091e60fc2edb"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/prompt_template_optimize.md",
+      "size": 4913,
+      "sha256": "e0990f0711769710e682f010d278240c68569d5d4dbc7210c2607b1105e6593a"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/run.py",
+      "size": 66121,
+      "sha256": "8dc0f6948d2446f5c3f9896b472fda6b4e84a0f2afdd92550aa042f18e601029"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p1/p1.py",
+      "size": 3126,
+      "sha256": "691d33f56e6955e922bb31e0738839ab5b077cdbedf7299f4454fbf5d4686969"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p10/p10.py",
+      "size": 3506,
+      "sha256": "3b88839914b05cd7b7e1cfb8274abba93e6ecbcd4cc7ca729f506a6dd900bbc0"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p10/p10_waveform.png",
+      "size": 35857,
+      "sha256": "164273e33519b07a1b9764a6eb1c497e7580291f8e309f406f895d5872699eda"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p11/p11.py",
+      "size": 4064,
+      "sha256": "663d237a2243598d1fd6aac90a372d981d7e5cf907164f03f037b9ffdfac0923"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p11/p11_waveform.png",
+      "size": 32064,
+      "sha256": "100bc4cd9378ab7885707654da566a44a6d2767a61d4b3954cba989fa22ca8f9"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p12/p12.py",
+      "size": 4808,
+      "sha256": "50d2a375dec94b924f2dfec891f62745b60c471a937ee28c282fd46b5862458e"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p12/p12_waveform.png",
+      "size": 40981,
+      "sha256": "98c58412bb4cbf0b70a7b5f7d29f2e391f986dc7c8d91b8afb680000f84e4dc6"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p13/p13.py",
+      "size": 4749,
+      "sha256": "fda2ae0c53e71fa2c6712ea64b2d0610f534767f78f250249941cfbf9fa568b4"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p13/p13_waveform.png",
+      "size": 28971,
+      "sha256": "35443f73305ec8dd80a61b1898a3946de99ddefa133d0a8597f70c76884c623e"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p14/p14.py",
+      "size": 3404,
+      "sha256": "c119a86398839552a9a8ab0de09ab7c5d0d9b11f67d0238ca45ee70396274713"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p15/p15.py",
+      "size": 3355,
+      "sha256": "f9bd66072706e6f4414184e1bd9ca5fa90d3ea1cb42b8b78be38c3b9a80e9ad5"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p16/p16.py",
+      "size": 4154,
+      "sha256": "ccc7ab6af39e16de839882950a46e04406b2012fd75fbbba21488fa29e04cff0"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p17/p17.py",
+      "size": 3672,
+      "sha256": "75d96e4f46e114537a2f8b0577a7345ec311a0135e1135b18d62283fabe97071"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p18/p18.py",
+      "size": 4332,
+      "sha256": "cf1ec43e5bed68762ab130e6219986abceeb642e3dc81c3c515589a2f56579a5"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p19/p19.py",
+      "size": 12044,
+      "sha256": "753ce5e8ac54644c5fef6fb78aa70241354873dae5a9caf2177c1e6f077b0d8a"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p19/p19_waveform.png",
+      "size": 348846,
+      "sha256": "2b1ff6c298247f2077e4e8d516842a501ab985c8209a710f81542933ae7b1454"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p2/p2.py",
+      "size": 3367,
+      "sha256": "9e548a287fd34a4ee8914888945557595c828442b8eb5889b8bf3894b0c5061a"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p20/p20.py",
+      "size": 4735,
+      "sha256": "9495a949ffe6dc4389b00e478681df168e6a5ac66bd535cdfce02cc71d16a025"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p21/p21.py",
+      "size": 4871,
+      "sha256": "52020b7a0758211a4103ab24ed09b626a82160ce26f9aa0e25e54abcb521c89f"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p22/opamp.py",
+      "size": 1116,
+      "sha256": "d25fa67d5d1b2cb18e2f58485996277da8016cf9566c395ff3266c80b389bea1"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p22/p22.py",
+      "size": 7836,
+      "sha256": "a12a185ddad3f0541e4f5f22558179211f939e20b5c1092227d3b83076e65fb6"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p22/p22_waveform.png",
+      "size": 596304,
+      "sha256": "89a0fb94497c7622e5f0281a60af2aa5cc2ae95d5f15299deb293782daf02f62"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p23/opamp.py",
+      "size": 1116,
+      "sha256": "d25fa67d5d1b2cb18e2f58485996277da8016cf9566c395ff3266c80b389bea1"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p23/p23.py",
+      "size": 8047,
+      "sha256": "f1fc046342bc8cac86824680c7cf11fb35429637d54c340b1e56a9f59003ad29"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p23/p23_waveform.png",
+      "size": 729955,
+      "sha256": "bdde3fdbe7afc11664e3936b103caf9712346df5f53d304aee2321a21d4bc5e7"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p24/opamp.py",
+      "size": 1116,
+      "sha256": "d25fa67d5d1b2cb18e2f58485996277da8016cf9566c395ff3266c80b389bea1"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p24/p24.py",
+      "size": 7062,
+      "sha256": "8b1d0bfd68c20a835cf4f197ec295b32ba94e8807e88d4c3ef1cbb5aa1958f02"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p24/p24_waveform.png",
+      "size": 282534,
+      "sha256": "b051e49d869f300ad6750e0a4871ea53a1bdc17fc2b2190dcfd39755a4ac07c0"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p25/opamp.py",
+      "size": 1116,
+      "sha256": "d25fa67d5d1b2cb18e2f58485996277da8016cf9566c395ff3266c80b389bea1"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p25/p25.py",
+      "size": 8302,
+      "sha256": "d8bdf67187cb52007cd205f133ac987a054398f0b9bb357e2b4fee4056e43014"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p25/p25_waveform.png",
+      "size": 282607,
+      "sha256": "a8c6b35fe2c072571f0736cb2f242e93f5b7c35aaab5c0547d4e3bc9ae0ebb4b"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p26/opamp.py",
+      "size": 1116,
+      "sha256": "d25fa67d5d1b2cb18e2f58485996277da8016cf9566c395ff3266c80b389bea1"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p26/p26.py",
+      "size": 8064,
+      "sha256": "6c5d1f425934c4aace61b295c5d7250747248a4fab50606bea4afe373a3d203d"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p27/opamp.py",
+      "size": 1116,
+      "sha256": "d25fa67d5d1b2cb18e2f58485996277da8016cf9566c395ff3266c80b389bea1"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p27/p27.py",
+      "size": 3448,
+      "sha256": "e08599bcef4b249780d61c85749927fcd9b07da5258ac62617e1f1f212a1fc74"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p28/opamp.py",
+      "size": 1116,
+      "sha256": "d25fa67d5d1b2cb18e2f58485996277da8016cf9566c395ff3266c80b389bea1"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p28/p28.py",
+      "size": 9783,
+      "sha256": "9bec645d871abbc3f4e1ffdd54bb82aceec3378236397af3e6f82ff90ba1c6e0"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p28/p28_waveform.png",
+      "size": 169527,
+      "sha256": "fe2f228564db681a76468523c3bf9589d7352bde5009a5a5b579ccd435daa53e"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p3/p3.py",
+      "size": 3002,
+      "sha256": "2422dd1dc81b86bdcb9596b37e2f5e4166cfadfa88e63ea97bdc2e1b3eb30e4d"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p4/p4.py",
+      "size": 3527,
+      "sha256": "1a57fc14fce15ce51f1c5edfd0e8e66fa4e0c6a3178e206a4062e282554e3918"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p5/p5.py",
+      "size": 3460,
+      "sha256": "192ab5f5fa40f5a095742c6f859c190589e79942cbdab95429d5fa06d1103954"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p6/p6.py",
+      "size": 2770,
+      "sha256": "a1e592b5e1840f75257642253490815d179a3ddba0017071363c4f13143f49c1"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p7/p7.py",
+      "size": 2933,
+      "sha256": "07135c18fa6b8f750e1810ef98229de15dc304cc4821caaf3872fef51ae8d218"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p8/p8.py",
+      "size": 3486,
+      "sha256": "d1b9bc8817de34e71c950f2e98ce45c6d9876833dadcd47b8d24903f84579fb2"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p9/opamp.py",
+      "size": 1116,
+      "sha256": "d25fa67d5d1b2cb18e2f58485996277da8016cf9566c395ff3266c80b389bea1"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p9/p9.py",
+      "size": 3951,
+      "sha256": "dd316420ae10f37957b80712cb5ee395ffd83ec813b28fa5a3ab5f7f8c6eae08"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/sample_design/p9/p9_waveform.png",
+      "size": 35581,
+      "sha256": "7d2392643185eda228bab775921c1cebdcdd07df2a3903ca634123ed070893e0"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/simulation_error.md",
+      "size": 246,
+      "sha256": "3bdba262b1c03caa93002ee49ce387ab3039bede53122c13b5c57135bd439d38"
+    },
+    {
+      "path": "analogcoder/AnalogCoderPro-master/vlm_debug_prompt.md",
+      "size": 568,
+      "sha256": "e2d0972f51d42534d7ef0e3fca86d35293b5a72dd54d0b2fb40226c8c5024dea"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/acp28_manifest.yaml",
+      "size": 7745,
+      "sha256": "a86783edaa0f68e61210641c03b790c036c0faced89e4c5e6998526b89d3fd80"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p01_amplifier.cir",
+      "size": 407,
+      "sha256": "34bb6f66e70c454b0870b7bff11eef89c6b70a807bfc13f1c186a100e9bdfb6d"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p02_amplifier.cir",
+      "size": 626,
+      "sha256": "8ea62ebb8cf6aa61dcf303a491eace7da1086082c89cb11af3703f77a7b799b6"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p03_amplifier.cir",
+      "size": 439,
+      "sha256": "6cdcf8da3156c2a747c22f430453243ae3774753d831715285723866297f8d02"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p04_amplifier.cir",
+      "size": 495,
+      "sha256": "dc232e0832db3d29ccac12a20858a2ff4a6ffd722fb036f0ce00b45ed5ab57c0"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p05_amplifier.cir",
+      "size": 533,
+      "sha256": "47d0f1321538a22d9464d4b55379f1c34bc2755075e86d39ee9327c2c12a48d4"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p06_inverter.cir",
+      "size": 341,
+      "sha256": "4169486f35384c778e8a8179bc7adb6124d4d1305cec48c76c01cf746b0d355f"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p07_inverter.cir",
+      "size": 430,
+      "sha256": "d2846b9031cad7f8f2e941d0b7695ab692bb2ddfe353c5c371d31538541db70a"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p08_currentmirror.cir",
+      "size": 396,
+      "sha256": "979262d6b52f240093d99cb90d214f717755a4a0dd00eb55a2cc4eb3335999f3"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p09_comparator.cir",
+      "size": 845,
+      "sha256": "7c8266dddbe42819163463abfab75752cf3b9e7e145b84413fe453871bb14dec"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p10_lowpass.cir",
+      "size": 260,
+      "sha256": "6051b20abdae27ed489e01671145745fc4b1a3d2d77cb7da7a3929cf5355651c"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p11_highpass.cir",
+      "size": 262,
+      "sha256": "3cb43d6f040585cb8992478bc513dbfe8f1fad98bec4aebdcca8acc58cac8b2c"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p12_bandpass.cir",
+      "size": 289,
+      "sha256": "1261b3966542f7bdc31a22f7c24b33180cf8c73607aeb14f2997e9d7d4b3cd43"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p13_bandstop.cir",
+      "size": 275,
+      "sha256": "78a5e2e58453f80a1226de60b46305a1158b12110df67fbbe79a3971ce63acf9"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p14_amplifier.cir",
+      "size": 564,
+      "sha256": "92d5aba991ea6a017c6969fd8c63ab8a42025a6747dca8dc1d524fa077bda966"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p15_amplifier.cir",
+      "size": 529,
+      "sha256": "c71ee7338961b017984254953ff9660178ff31789f3080e4eedbfa23d173d84e"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p16_opamp.cir",
+      "size": 760,
+      "sha256": "2c13a8e0aaf4730cf7fc1f228287f37342eaecc3455d9277f1b7a84ce2709c8c"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p17_currentmirror.cir",
+      "size": 668,
+      "sha256": "1fabf7ca549dc5090b8245e186ed970e6f811965f90ad5b84ae5f5867956ffa2"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p18_opamp.cir",
+      "size": 661,
+      "sha256": "116d7197d1a118c6567ab1c76a8729d7c1e7aeaae98c94db8140112723df9088"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p19_mixer.cir",
+      "size": 847,
+      "sha256": "481b17bfcecf5525e57a024d76e2d201f7c233498f7ee416de2e7b400a18acea"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p20_opamp.cir",
+      "size": 1023,
+      "sha256": "4be8d0cf8b361ca8adc1392c9b7d8af8694bf3a06d4c2a91600cda708c7b8339"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p21_opamp.cir",
+      "size": 1073,
+      "sha256": "0861363c66d00fa9bfbf716d17e5f67584a1c76b0896a2ef50183972d0741d95"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p22_oscillator.cir",
+      "size": 903,
+      "sha256": "060c0dc5b6e4b187e05faa579f430ea19b0ad2ce490288d324c174fc2df573cb"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p23_oscillator.cir",
+      "size": 871,
+      "sha256": "40baa4c71ac492520192f553a6e07b7d3ab78dd7e5b6360843e88d1ad0fcceda"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p24_integrator.cir",
+      "size": 958,
+      "sha256": "607bd54b1c7b7151c31838ba762ee0a31cab7af9f7486d4fc74785cf1f5fa132"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p25_differentiator.cir",
+      "size": 880,
+      "sha256": "a61f56123119e1dfe52afca3d2c2118c101b08d97ef67ddc6de58ecb57063766"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p26_adder.cir",
+      "size": 883,
+      "sha256": "4fab0d850fcbb6b37ef62e090cf059ce64b419f43c6d50210a32afcbecc1f50d"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p27_subtractor.cir",
+      "size": 915,
+      "sha256": "12ba0942e85b0ac9d858a747baee9a6ebf01d24b3f8478f1b7369235d8b7048c"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/p28_schmitt.cir",
+      "size": 871,
+      "sha256": "dd5a9bdc610783a493b34668ac937a9751207d452dc80939f0242f597d88e51e"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p01_amplifier.yaml",
+      "size": 4025,
+      "sha256": "7b1b46e345951f32c32ce89161d5cd57049181f6a510d32e61d20e3d7e311261"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p02_amplifier.yaml",
+      "size": 4134,
+      "sha256": "93b04458e45849fc8afe6f189d81135676b98a14bd020c2daecec2706ab952e8"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p03_amplifier.yaml",
+      "size": 4109,
+      "sha256": "d2fcfe2a7f59241aa75c1ed06895c84d7fcdf1b6924d6c04fc3aea34d50a5013"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p04_amplifier.yaml",
+      "size": 4171,
+      "sha256": "9a94ec8c8aa2b3a7bf3e773a76d91764434a04b3198dd580d1116a4601c8e63f"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p05_amplifier.yaml",
+      "size": 4171,
+      "sha256": "a70e043e4c49eda15b1754961b2426fd97ed9e00bddfe64ee9137ac1b2236e08"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p06_inverter.yaml",
+      "size": 4266,
+      "sha256": "92e9f85732920e898a26b8a9e0d13e4289c943d1d598256db98d86d1ef9c96e0"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p07_inverter.yaml",
+      "size": 4274,
+      "sha256": "9cd83fc29c88621234d770fc6140afa19f577d908abb27214907df06fd90ca3a"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p08_currentmirror.yaml",
+      "size": 3802,
+      "sha256": "18dd78bf4864ddb61267e871ecc957fe5ffde413f169f838f197a3fd1a762d08"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p09_comparator.yaml",
+      "size": 4018,
+      "sha256": "a4a210c9663de58c44a28bda20545ee4a156439e19ae48701ec1c0d4b4682df1"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p10_lowpass.yaml",
+      "size": 3825,
+      "sha256": "9c87e7241af4b301d0962677eec970e1fdb1aa4580bf42893ec0c07f2df04949"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p11_highpass.yaml",
+      "size": 3840,
+      "sha256": "850f7e41b96b170605ac0b20d4afc9436e473f28cb6c10fccfa7f1718b5433f3"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p12_bandpass.yaml",
+      "size": 3200,
+      "sha256": "72eeb7d77c8d4b994ae78f9f4e0caeaa81db1d3b2860d15859e11389365d9c50"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p13_bandstop.yaml",
+      "size": 3182,
+      "sha256": "5d81e6fed7e8bc93029e882f0608fa601f181c9cf5f227c2182021ad867389d9"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p14_amplifier.yaml",
+      "size": 4035,
+      "sha256": "72b8fb1816612dd3b913b4c959940f7008ebd87b860fbff582e2704151a6fd27"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p15_amplifier.yaml",
+      "size": 4110,
+      "sha256": "56c774a7b208f8c540a5e6311ceb7343fb01be46974f19eef1ccc552bdb1bae2"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p16_opamp.yaml",
+      "size": 4667,
+      "sha256": "cb13cc78d1362043efa3440e02c6cb27ee389b811962a2f91c4dc107592e7c41"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p17_currentmirror.yaml",
+      "size": 4651,
+      "sha256": "a5d351fea7f1f88cb6317d888c674afa45ce0e34ce0602bb856d31fb6031c339"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p18_opamp.yaml",
+      "size": 4656,
+      "sha256": "e114fa9f499210859da87b4a1967593798833b475de5af03304e70d00b402249"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p19_mixer.yaml",
+      "size": 3594,
+      "sha256": "69ab784a2f37e63a4c8b06b32f764fe8d74b56123410b7f922a71e90eb886240"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p20_opamp.yaml",
+      "size": 4837,
+      "sha256": "e4fbfdbf7c485ca6536d5a74618188e8756697a98f6850f5c90389a5f8f6572a"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p21_opamp.yaml",
+      "size": 4846,
+      "sha256": "ca199e6c3c39ea78cd16051972624a838111f437b701c49f4716738c07d5963e"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p22_oscillator.yaml",
+      "size": 4225,
+      "sha256": "ef2086f2e08eff08cb55fb62bc54fad929cc41ea83ef903043784a36ab02641d"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p23_oscillator.yaml",
+      "size": 4217,
+      "sha256": "40710277bfaafdbc4dcfde82aad7d66f5ea2b819d8e4c969e88dad569f116093"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p24_integrator.yaml",
+      "size": 3978,
+      "sha256": "0e6e5c139ffe697ff2f8fd393872b2a00a1154cea54149f19c9076a3f2383f5a"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p25_differentiator.yaml",
+      "size": 4033,
+      "sha256": "1f30fac5b25b8ead23ca28d9b058e249d92d5647dc4bd462acfb805f8a774acd"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p26_adder.yaml",
+      "size": 4209,
+      "sha256": "50e3cc4bcfa06bb94a5d38beeb3428dcc2875401873be28fc1d13422104d7147"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p27_subtractor.yaml",
+      "size": 2874,
+      "sha256": "673a04c69d7e2d5211769c69a13b6479f4df164b42370160190c9c8d0b425f9e"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/specs/p28_schmitt.yaml",
+      "size": 3797,
+      "sha256": "609771c6e9adbef36b98ddca5ac2ca12e54641eebe03510a6fb8101d2516fdd8"
+    },
+    {
+      "path": "benchmark/analogcoder_pro/upstream_manifest.csv",
+      "size": 6145,
+      "sha256": "14b10858a77d68ec37df9ff69aad5538cc2270b119281fe731fb950632ebb0c7"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/manifest.csv",
+      "size": 6145,
+      "sha256": "14b10858a77d68ec37df9ff69aad5538cc2270b119281fe731fb950632ebb0c7"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p01_amplifier.cir",
+      "size": 407,
+      "sha256": "34bb6f66e70c454b0870b7bff11eef89c6b70a807bfc13f1c186a100e9bdfb6d"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p02_amplifier.cir",
+      "size": 626,
+      "sha256": "8ea62ebb8cf6aa61dcf303a491eace7da1086082c89cb11af3703f77a7b799b6"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p03_amplifier.cir",
+      "size": 439,
+      "sha256": "6cdcf8da3156c2a747c22f430453243ae3774753d831715285723866297f8d02"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p04_amplifier.cir",
+      "size": 495,
+      "sha256": "dc232e0832db3d29ccac12a20858a2ff4a6ffd722fb036f0ce00b45ed5ab57c0"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p05_amplifier.cir",
+      "size": 533,
+      "sha256": "47d0f1321538a22d9464d4b55379f1c34bc2755075e86d39ee9327c2c12a48d4"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p06_inverter.cir",
+      "size": 341,
+      "sha256": "4169486f35384c778e8a8179bc7adb6124d4d1305cec48c76c01cf746b0d355f"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p07_inverter.cir",
+      "size": 430,
+      "sha256": "d2846b9031cad7f8f2e941d0b7695ab692bb2ddfe353c5c371d31538541db70a"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p08_currentmirror.cir",
+      "size": 396,
+      "sha256": "979262d6b52f240093d99cb90d214f717755a4a0dd00eb55a2cc4eb3335999f3"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p09_comparator.cir",
+      "size": 845,
+      "sha256": "7c8266dddbe42819163463abfab75752cf3b9e7e145b84413fe453871bb14dec"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p10_lowpass.cir",
+      "size": 260,
+      "sha256": "6051b20abdae27ed489e01671145745fc4b1a3d2d77cb7da7a3929cf5355651c"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p11_highpass.cir",
+      "size": 262,
+      "sha256": "3cb43d6f040585cb8992478bc513dbfe8f1fad98bec4aebdcca8acc58cac8b2c"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p12_bandpass.cir",
+      "size": 289,
+      "sha256": "1261b3966542f7bdc31a22f7c24b33180cf8c73607aeb14f2997e9d7d4b3cd43"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p13_bandstop.cir",
+      "size": 275,
+      "sha256": "78a5e2e58453f80a1226de60b46305a1158b12110df67fbbe79a3971ce63acf9"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p14_amplifier.cir",
+      "size": 564,
+      "sha256": "92d5aba991ea6a017c6969fd8c63ab8a42025a6747dca8dc1d524fa077bda966"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p15_amplifier.cir",
+      "size": 529,
+      "sha256": "c71ee7338961b017984254953ff9660178ff31789f3080e4eedbfa23d173d84e"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p16_opamp.cir",
+      "size": 760,
+      "sha256": "2c13a8e0aaf4730cf7fc1f228287f37342eaecc3455d9277f1b7a84ce2709c8c"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p17_currentmirror.cir",
+      "size": 668,
+      "sha256": "1fabf7ca549dc5090b8245e186ed970e6f811965f90ad5b84ae5f5867956ffa2"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p18_opamp.cir",
+      "size": 661,
+      "sha256": "116d7197d1a118c6567ab1c76a8729d7c1e7aeaae98c94db8140112723df9088"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p19_mixer.cir",
+      "size": 847,
+      "sha256": "481b17bfcecf5525e57a024d76e2d201f7c233498f7ee416de2e7b400a18acea"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p20_opamp.cir",
+      "size": 1023,
+      "sha256": "4be8d0cf8b361ca8adc1392c9b7d8af8694bf3a06d4c2a91600cda708c7b8339"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p21_opamp.cir",
+      "size": 1073,
+      "sha256": "0861363c66d00fa9bfbf716d17e5f67584a1c76b0896a2ef50183972d0741d95"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p22_oscillator.cir",
+      "size": 903,
+      "sha256": "060c0dc5b6e4b187e05faa579f430ea19b0ad2ce490288d324c174fc2df573cb"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p23_oscillator.cir",
+      "size": 871,
+      "sha256": "40baa4c71ac492520192f553a6e07b7d3ab78dd7e5b6360843e88d1ad0fcceda"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p24_integrator.cir",
+      "size": 958,
+      "sha256": "607bd54b1c7b7151c31838ba762ee0a31cab7af9f7486d4fc74785cf1f5fa132"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p25_differentiator.cir",
+      "size": 880,
+      "sha256": "a61f56123119e1dfe52afca3d2c2118c101b08d97ef67ddc6de58ecb57063766"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p26_adder.cir",
+      "size": 883,
+      "sha256": "4fab0d850fcbb6b37ef62e090cf059ce64b419f43c6d50210a32afcbecc1f50d"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p27_subtractor.cir",
+      "size": 915,
+      "sha256": "12ba0942e85b0ac9d858a747baee9a6ebf01d24b3f8478f1b7369235d8b7048c"
+    },
+    {
+      "path": "benchmark_analogcoder_pro_28/p28_schmitt.cir",
+      "size": 871,
+      "sha256": "dd5a9bdc610783a493b34668ac937a9751207d452dc80939f0242f597d88e51e"
+    },
+    {
+      "path": "benchmark_netlists/active_load_amplifier.cir",
+      "size": 358,
+      "sha256": "d29fd354197639bea37bdde5d455c2fb9ca44c8f456b440ea613f2c36a3ce3c5"
+    },
+    {
+      "path": "benchmark_netlists/bandgap_reference.cir",
+      "size": 252,
+      "sha256": "145159a87a3002b2dfda2525b6f9b04fa91abe5a993e0d42ed7859d4022a2a3c"
+    },
+    {
+      "path": "benchmark_netlists/bandpass_filter.cir",
+      "size": 182,
+      "sha256": "a5cf59a09283a27f20352e6737a7d0881669f66376bd5a1ccfe13d73c56de7a8"
+    },
+    {
+      "path": "benchmark_netlists/cascode_current_mirror.cir",
+      "size": 314,
+      "sha256": "6f0fc34388c012d280fb2866bd35ea77f1a57c4cd610f4bd05bf13ebb7d7a890"
+    },
+    {
+      "path": "benchmark_netlists/charge_pump.cir",
+      "size": 242,
+      "sha256": "bab58e9acd931d14e55843f56ea0478f2f8ad5bf52e4e8531471c28be23a91c4"
+    },
+    {
+      "path": "benchmark_netlists/common_drain_amplifier.cir",
+      "size": 260,
+      "sha256": "06561717caac8a2c9b77c168717d9ba012c4806ea95568cc5d592eb5e4253184"
+    },
+    {
+      "path": "benchmark_netlists/common_gate_amplifier.cir",
+      "size": 286,
+      "sha256": "9e450185e6b1ed18a3ab0f964b1a4e99c2b98a443da7cf7016a4c439f2f37063"
+    },
+    {
+      "path": "benchmark_netlists/common_source_amplifier.cir",
+      "size": 153,
+      "sha256": "8129f73d944f20c0d236b47d813ac2b26b2305915590c9292e1c750133e5f6ca"
+    },
+    {
+      "path": "benchmark_netlists/comparator.cir",
+      "size": 188,
+      "sha256": "aac528f8f7d63029d72d7c2a1502bac4f9592089fd519a56dca7aa47d1cac167"
+    },
+    {
+      "path": "benchmark_netlists/current_mirror.cir",
+      "size": 263,
+      "sha256": "1561700443f5bd4cf081b392901ad5b61f6ec29d7c6d90a61a1b42f0bc38ec86"
+    },
+    {
+      "path": "benchmark_netlists/differential_amplifier.cir",
+      "size": 356,
+      "sha256": "7fc0cdbbe48941da491217cd2c2ca6154ba031388307ec3402c61425d5b024e6"
+    },
+    {
+      "path": "benchmark_netlists/folded_cascode_opamp.cir",
+      "size": 251,
+      "sha256": "72a79b6cf4547cdb6890b3ba2e3e63d8147662ecba6164c61081232be47691c6"
+    },
+    {
+      "path": "benchmark_netlists/highpass_filter.cir",
+      "size": 172,
+      "sha256": "b0c3103d996b30152423786d2f7e0d1b81b6854ea56417ef4f9ac0cefb25db59"
+    },
+    {
+      "path": "benchmark_netlists/instrumentation_amplifier.cir",
+      "size": 217,
+      "sha256": "80a8a5d78cb9089f5dda0cb303edb3840eea00014e9d3870e41658eab3bfd58c"
+    },
+    {
+      "path": "benchmark_netlists/lc_oscillator.cir",
+      "size": 195,
+      "sha256": "aa11d083cf7d7a58bb9fb7f58f06dbab5466e5d8ab20af37c7055d6dbf30480f"
+    },
+    {
+      "path": "benchmark_netlists/lna.cir",
+      "size": 300,
+      "sha256": "e75eeff0b0dc9811838609ecb9585f71ac2e7a161cde3df18d1549433c60e1b1"
+    },
+    {
+      "path": "benchmark_netlists/lowpass_filter.cir",
+      "size": 171,
+      "sha256": "234914fa1802f3b60ebe99f657fc95c481b0d59d443ad4caee1efdb25f9ffe17"
+    },
+    {
+      "path": "benchmark_netlists/mixer.cir",
+      "size": 213,
+      "sha256": "e4bbc7f08d163049d0b12d453e32fed764760aec3c5e06b5c3641fbe74993626"
+    },
+    {
+      "path": "benchmark_netlists/notch_filter.cir",
+      "size": 235,
+      "sha256": "a3a4bcf6855afeb836e062380dba89271d6b189970815b67d0699397466311cf"
+    },
+    {
+      "path": "benchmark_netlists/operational_amplifier.cir",
+      "size": 290,
+      "sha256": "4511d2b7144dd6fd3da11e09c5c40955c016374ea9e8ddee139b776364a41f1f"
+    },
+    {
+      "path": "benchmark_netlists/ota.cir",
+      "size": 236,
+      "sha256": "f41db213f3be3cb527e31e9e6673600a5350ee39d51aca6d672075636d93dcdb"
+    },
+    {
+      "path": "benchmark_netlists/peak_detector.cir",
+      "size": 187,
+      "sha256": "cd07d6d424aed02baf6fcd0d0ac8d3be621c8725fe8ccc18c7723b7b2bb9923d"
+    },
+    {
+      "path": "benchmark_netlists/rc_differentiator.cir",
+      "size": 157,
+      "sha256": "3b7479ab98dc7f881c1cc8b8bb8dee994476120439a4a120926a2695e25fff90"
+    },
+    {
+      "path": "benchmark_netlists/rc_integrator.cir",
+      "size": 154,
+      "sha256": "05558a59d5da10c07e3bede038b59fd46f514557baa324531bf9234408dd1f68"
+    },
+    {
+      "path": "benchmark_netlists/rectifier.cir",
+      "size": 177,
+      "sha256": "852a9949aafdee25dc1d34c843be4408c119d448428a6e3af2a00167e1d9a813"
+    },
+    {
+      "path": "benchmark_netlists/relaxation_oscillator.cir",
+      "size": 260,
+      "sha256": "43f908418f1222e356d2b4c7dbea6a4be7283218f11f5e0e187ebcd1461aa430"
+    },
+    {
+      "path": "benchmark_netlists/ring_oscillator.cir",
+      "size": 217,
+      "sha256": "6572702d03cf03525e0c4c7fdb3741b5053a2175361a51227aa579288e38a8ef"
+    },
+    {
+      "path": "benchmark_netlists/sample_and_hold.cir",
+      "size": 264,
+      "sha256": "1f462dc01b47627cb47a1dcbe4517afc991bb2c05bca84c62be6c47bafef322f"
+    },
+    {
+      "path": "benchmark_netlists/schmitt_trigger.cir",
+      "size": 196,
+      "sha256": "cdad1c7fe0acf4200840167215c95a709355779f998b8486e133dc3002b5d547"
+    },
+    {
+      "path": "benchmark_netlists/source_follower.cir",
+      "size": 236,
+      "sha256": "f54387f4d3679bbb9337acb051f11727b49d1294301646c397c92c72743a53ff"
+    },
+    {
+      "path": "benchmark_netlists/transimpedance_amplifier.cir",
+      "size": 214,
+      "sha256": "bfe228589b8e3c00971371528f369413fa7a7240777bb775e1a4118e99b74629"
+    },
+    {
+      "path": "benchmark_netlists/two_stage_opamp.cir",
+      "size": 280,
+      "sha256": "93ec4e5ec3e2d54b7d923f08c40624907fbcbe87301623d4043fa15e1837f0ec"
+    },
+    {
+      "path": "benchmark_netlists/vco.cir",
+      "size": 210,
+      "sha256": "0ea07e6e6cd925e811a1d3d5e4008b5a82ead1885087a2e5bea5bb955ca3bbff"
+    },
+    {
+      "path": "benchmark_netlists/voltage_reference.cir",
+      "size": 213,
+      "sha256": "87d7f5c30a7e2271e2b1bd4aecde8c5b00476f76ffb78834fafb5c560893db2a"
+    },
+    {
+      "path": "benchmark_netlists/widlar_current_source.cir",
+      "size": 275,
+      "sha256": "8a9d3bece1c66eef2a40a2a9f6309eb4f7e7e898e4a4197a16b5f7452c08cc4b"
+    },
+    {
+      "path": "benchmark_reference_28/cascode_current_mirror.cir",
+      "size": 239,
+      "sha256": "5de98223358ed441ae6b121069b84c7d7aa0cf1ce0801aa06d08fa59ba30ee05"
+    },
+    {
+      "path": "benchmark_reference_28/cascode_opamp_cascode_loads.cir",
+      "size": 193,
+      "sha256": "008b808173ac53085487b74d057f4ca745edee82fa0b12ff8208063e4af3b576"
+    },
+    {
+      "path": "benchmark_reference_28/cascode_resistive_load_amplifier.cir",
+      "size": 227,
+      "sha256": "5f88ac87f6ac3d9c9b07355e419cb0f9efa93742d490e8656b83067577d8e5b9"
+    },
+    {
+      "path": "benchmark_reference_28/cmos_logical_inverter.cir",
+      "size": 225,
+      "sha256": "f153ecf1bd0ca5ff6a45d291b710f657caa561958b8e0bf853ce0e12d4572a43"
+    },
+    {
+      "path": "benchmark_reference_28/common_drain_resistive_load_amplifier.cir",
+      "size": 215,
+      "sha256": "1079fa1a51cb7b1e6aabfa1f9261bc168c51933514d700e93c51630ed90062c1"
+    },
+    {
+      "path": "benchmark_reference_28/common_gate_resistive_load_amplifier.cir",
+      "size": 231,
+      "sha256": "14ae0b30495a1d826e9443196d46ec41fb024c4dc8a099083437fe572e50e403"
+    },
+    {
+      "path": "benchmark_reference_28/common_source_diode_connected_load_amplifier.cir",
+      "size": 248,
+      "sha256": "f1c68a02c97ca2aa6a3b5d3665b522ab2171c3b1ff41159f22d42d36c1b6cd0f"
+    },
+    {
+      "path": "benchmark_reference_28/common_source_resistive_load_amplifier.cir",
+      "size": 221,
+      "sha256": "e3964d3117971fee78559e96b7d6f80a4027518ba9e63909f1b37f2dd4c1289e"
+    },
+    {
+      "path": "benchmark_reference_28/common_source_resistive_load_opamp.cir",
+      "size": 280,
+      "sha256": "46f95225c251d5e35a09b2c4c5141db5bf2196904fdc17e246ba01c6cc9d31cd"
+    },
+    {
+      "path": "benchmark_reference_28/gilbert_cell_mixer.cir",
+      "size": 157,
+      "sha256": "6cbad54222340f0a125a8d4dcfa5f56452182ff8412fba594109252d74c12a66"
+    },
+    {
+      "path": "benchmark_reference_28/manifest.csv",
+      "size": 2177,
+      "sha256": "9fe8973ce688ab76ab9ddcce951379010dd620ce2866b4da1582d8473328680b"
+    },
+    {
+      "path": "benchmark_reference_28/nmos_constant_current_source_resistive_load.cir",
+      "size": 217,
+      "sha256": "fdb67ac6a40528feffc6eba01f67e16efc2b7f7580e58673d2a58719ce66ee03"
+    },
+    {
+      "path": "benchmark_reference_28/nmos_resistive_load_inverter.cir",
+      "size": 186,
+      "sha256": "a0e95ae6dad326c4f3e8feb1d99f1d867fc624621336c9efe8ad998fe5fc0ba0"
+    },
+    {
+      "path": "benchmark_reference_28/non_inverting_schmitt_trigger.cir",
+      "size": 164,
+      "sha256": "8e5cb84dbd4a0f11fa9b367f5c43b3d187158bdbc648ffc44065fa5deb495bdf"
+    },
+    {
+      "path": "benchmark_reference_28/opamp_active_current_mirror_loads.cir",
+      "size": 329,
+      "sha256": "ca34dbb28495efcd9527b0f5031fa30c60847470ee13c2c61f74d34eec33fc5c"
+    },
+    {
+      "path": "benchmark_reference_28/opamp_adder.cir",
+      "size": 207,
+      "sha256": "a6f5d16bdf7a9fe24b5c6f5e3fcf756d2c707041ae2a208a8fef3924995f5c14"
+    },
+    {
+      "path": "benchmark_reference_28/opamp_comparator.cir",
+      "size": 136,
+      "sha256": "5a4e1b30940fbc6ce33c49f8a0f0b336f30803d876a2702744371b07098f0b1a"
+    },
+    {
+      "path": "benchmark_reference_28/opamp_differentiator.cir",
+      "size": 163,
+      "sha256": "801d1317f199d7bade59129a26c8a0ce5ce0d5e14dce4ca27fd693a1169b15d1"
+    },
+    {
+      "path": "benchmark_reference_28/opamp_integrator.cir",
+      "size": 160,
+      "sha256": "719e7450af600b785b6a8fd344cac85d8343d3bc11e8cddd8e389a573f2f55a6"
+    },
+    {
+      "path": "benchmark_reference_28/opamp_subtractor.cir",
+      "size": 210,
+      "sha256": "bff92d4014fe96ef4b2e0727d1c15b74e8326a88ff870b2da516d25cbd598aeb"
+    },
+    {
+      "path": "benchmark_reference_28/passive_bandpass_filter.cir",
+      "size": 126,
+      "sha256": "40e24ccd2884279cf2924b966db29220d805a3b9c46fcb75939bed28452b55da"
+    },
+    {
+      "path": "benchmark_reference_28/passive_bandstop_filter.cir",
+      "size": 173,
+      "sha256": "57e51bd424b061866d3a344613acdd88fa40ef93d0de1901acbec3677242bee2"
+    },
+    {
+      "path": "benchmark_reference_28/passive_highpass_filter.cir",
+      "size": 124,
+      "sha256": "d8ee79c170d4e0d2f5a29008d3b925917b4e6a9de314a260dbb82e773cacba58"
+    },
+    {
+      "path": "benchmark_reference_28/passive_lowpass_filter.cir",
+      "size": 123,
+      "sha256": "f87685148884f8ebfcb840d2d3de00f7c06150fd40e6bf5c97311e065d914294"
+    },
+    {
+      "path": "benchmark_reference_28/rc_shift_oscillator.cir",
+      "size": 197,
+      "sha256": "d21e78c776ecf74ca42999682e00aab5800b3434069df7f4a1bcead9972ed233"
+    },
+    {
+      "path": "benchmark_reference_28/three_stage_common_source_resistive_load_amplifier.cir",
+      "size": 297,
+      "sha256": "359defc55d175fc72940b6ec21ba4a145df54dd1a603bbf257fe84f631aec41b"
+    },
+    {
+      "path": "benchmark_reference_28/two_stage_miller_compensated_amplifier.cir",
+      "size": 242,
+      "sha256": "219e8e1d42186658bd5a808f25c429fe4028fcf642433c0d1b859f299f8ef0b7"
+    },
+    {
+      "path": "benchmark_reference_28/two_stage_opamp_active_loads.cir",
+      "size": 222,
+      "sha256": "bf5e57910e4463b75c15e177e690b7f0e476f940f402fe4683cd50c07c90b375"
+    },
+    {
+      "path": "benchmark_reference_28/wien_bridge_oscillator.cir",
+      "size": 198,
+      "sha256": "76abb3b0adfacf53ef7830e52b5ef3a584b369b331ce2d3013e83af883c3a157"
+    },
+    {
+      "path": "docs/llm_evaluation_protocol.md",
+      "size": 2302,
+      "sha256": "8578d4b14316ff1dbaecea42a38bc1ce74c953bce451fff3e92e7d7ba26d26ab"
+    },
+    {
+      "path": "docs/paper_draft.md",
+      "size": 7952,
+      "sha256": "e5c8b53622f7399d9efb00523d3a67d3380c06f840adbad4806a00b6fb612516"
+    },
+    {
+      "path": "docs/paper_minimal_finish_plan.md",
+      "size": 6502,
+      "sha256": "88439103d0b53e725220aacf1314f60c9ef781ad066aaf34d0fdbdf3a7c9a9f3"
+    },
+    {
+      "path": "docs/requirements_gap_matrix.md",
+      "size": 10408,
+      "sha256": "06331da13a7ae54461b3893692c619c61d1ce934e0b875b3cc65db56578fdbc4"
+    },
+    {
+      "path": "docs/spec2testbench_ieee_conference.tex",
+      "size": 35690,
+      "sha256": "7f0d5dd35d7f6343537572934cdde5a381f17906b7600a86535c7950a355d48e"
+    },
+    {
+      "path": "docs/spec2testbench_refs.bib",
+      "size": 3196,
+      "sha256": "1c33812eac7239263f40975cd3604d509b454a740c437b2e7300c158bc3db8aa"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p01_amplifier.yaml",
+      "size": 750,
+      "sha256": "7694fb7a13de62038c4e1fcd432622e9c94571d02b7e2fe38745eb0decdd1141"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p02_amplifier.yaml",
+      "size": 791,
+      "sha256": "13ca53f56c3f29544be0ac2c4e3723330de2334cbe5a20ddd334a5a281baba93"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p03_amplifier.yaml",
+      "size": 791,
+      "sha256": "a11a85b3bbc86c615e074919d190ae35b7267018ef87972eed7a79a27e4d6f4e"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p04_amplifier.yaml",
+      "size": 812,
+      "sha256": "64c2b0192a7f6e663cf72850b6152a304232ddaf56c00580e8c9feda3428e9fb"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p05_amplifier.yaml",
+      "size": 820,
+      "sha256": "162f191079c11ccd57f45fb259f0f693b3a6b0d1ae0d1de82e69b10d6c2d5e56"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p06_inverter.yaml",
+      "size": 672,
+      "sha256": "ced1e7d7e0dcd25d91336b41bb2f51906b3d7de09cfe81d94943adb6e9f2606c"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p07_inverter.yaml",
+      "size": 679,
+      "sha256": "958e930fb0df82a11a44192983bb905db4b1dedae2dd4c62ec5a6a54c9cd4834"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p08_currentmirror.yaml",
+      "size": 728,
+      "sha256": "fdfead49b1fcaa54887081929ae088aa760cb3882e265ca1f664fdd46174a1c3"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p09_comparator.yaml",
+      "size": 840,
+      "sha256": "80b518d4b239c5aa4ee78184d1cea8ecba0894439d57b0fbcbe9e15a0550ebff"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p10_lowpass.yaml",
+      "size": 796,
+      "sha256": "16e1680d226569daa73ddd45ea3b6acca66f024ddb9ec0eead385bcb5af7d68a"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p11_highpass.yaml",
+      "size": 795,
+      "sha256": "90a25f12c22e2a335f9ed2bf703bb23f888d5d33ca6ed7b327c2fd9271e7b110"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p12_bandpass.yaml",
+      "size": 812,
+      "sha256": "946c27f893a41ea788821ce900f1ce4d79fa0e1def0b0317f68cff29737df002"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p13_bandstop.yaml",
+      "size": 815,
+      "sha256": "0e86c7d74d07dfe1b5e5a8bdbb198a90fe77d3b8821e5f991742dc808ce4d468"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p14_amplifier.yaml",
+      "size": 756,
+      "sha256": "62a07d15d85fe21d036caabfb50fde2e2e4d2910be7d5517cd42f54001e35110"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p15_amplifier.yaml",
+      "size": 803,
+      "sha256": "65b91ff3ebf1b7b89b5ad859edf2235be1da5f88e1cf33d9bc2f8f796dede784"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p16_opamp.yaml",
+      "size": 785,
+      "sha256": "fcc2f6a7b91705292ccbd3aea2c99dd7f0fe2c4c3dfb5a83fe7d97063b866bae"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p17_currentmirror.yaml",
+      "size": 855,
+      "sha256": "75108a842b30a2803535d365bc6e14d84b6de57daed7c7d217319ba42630a1f4"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p18_opamp.yaml",
+      "size": 795,
+      "sha256": "20dbae6ce5859ef2a0647da5e8e5263a65162b6af26535bf16a9aa694737d212"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p19_mixer.yaml",
+      "size": 1088,
+      "sha256": "3f4513a3f547e22fc50f5d528e63e5f5cf7e623f38ccf18833d76c04cb049974"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p20_opamp.yaml",
+      "size": 852,
+      "sha256": "6bf64d32527f4940195ef54b942a194af46da9397e0be74ad266bed8da9f473f"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p21_opamp.yaml",
+      "size": 844,
+      "sha256": "4903d4d6427f4ff03c8d30d8ed744241ba8cff08271f880758b6a8f1fbdbe0fa"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p22_oscillator.yaml",
+      "size": 810,
+      "sha256": "5446f528d65c72a6990fe3175c99cb0e95b977cca1bd5b99ad25a82db588a2b5"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p23_oscillator.yaml",
+      "size": 806,
+      "sha256": "cfec6ad1862d1d8919c8e9f29d19ef9724e1aa5716fcda249ffadaff3a7bfc8e"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p24_integrator.yaml",
+      "size": 736,
+      "sha256": "52c2370cccb0b86a90e6e83418d4d94906828307b0a9c0ef33eb4bcd673c0737"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p25_differentiator.yaml",
+      "size": 711,
+      "sha256": "c79d5c36a49446a8875ae89f8e7184a6ca42dfa4a7de37ef2c27112c6563e04a"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p26_adder.yaml",
+      "size": 618,
+      "sha256": "2380341cc97adc42a66bb4cbdc7006245e13f30e7e7387e2b8506e0c76d3d3b6"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p27_subtractor.yaml",
+      "size": 636,
+      "sha256": "12908eed62c1f0d645c0770a718954c024f62160da18f814510562eaaf0c63e1"
+    },
+    {
+      "path": "examples/analogcoder_pro_28_specs/p28_schmitt.yaml",
+      "size": 700,
+      "sha256": "4eb6c98cbb89d9c6280b6a77c44ffc612ea768146ab9114d5172cf800753447d"
+    },
+    {
+      "path": "examples/benchmark_specs/bandpass_filter.yaml",
+      "size": 208,
+      "sha256": "ea31d9af33c2322ee42303b3489c6506a07a55e1866d356e422209ab5ceeb32d"
+    },
+    {
+      "path": "examples/benchmark_specs/comparator.yaml",
+      "size": 195,
+      "sha256": "8834b4d46edaccaa3886a97013231b18960952a6b4c08791a78edfb74e4133bf"
+    },
+    {
+      "path": "examples/benchmark_specs/current_mirror.yaml",
+      "size": 206,
+      "sha256": "61dcd2e735f731227a0913567ef3498528277e5b462f09ba9e7b03e37e2d5a90"
+    },
+    {
+      "path": "examples/benchmark_specs/llm_eval_cases.json",
+      "size": 1308,
+      "sha256": "ca8091f5c5465eaf2e18959c3d8aba2fb8bafa3263b0ac13f5f16b6890bcc2c0"
+    },
+    {
+      "path": "examples/benchmark_specs/lowpass_filter.yaml",
+      "size": 273,
+      "sha256": "5de2748e87b81d7625d1c2ea3bcaeaac7be787a1125b58090a5f394c4d977489"
+    },
+    {
+      "path": "examples/benchmark_specs/relaxation_oscillator.yaml",
+      "size": 271,
+      "sha256": "cc3a0cc5cbbea932781c4849569bb958beba82ec722c8cb7560b3fe91f5c7f2a"
+    },
+    {
+      "path": "examples/benchmark_specs/ring_oscillator.yaml",
+      "size": 272,
+      "sha256": "4b6b35a5e50907185c977d6f016822488cb46e8c16df0e6e9999b30b8dec6f38"
+    },
+    {
+      "path": "examples/benchmark_specs/two_stage_opamp.yaml",
+      "size": 234,
+      "sha256": "db177773a284734cf1814894e55ae6ad2c781c0b6ab939b2256e7063af6c28f4"
+    },
+    {
+      "path": "examples/benchmark_specs/voltage_reference.yaml",
+      "size": 266,
+      "sha256": "cc931ba4d8438dccb5326243bd7a52ce894c350819346e0b1c96d3fc4e200a43"
+    },
+    {
+      "path": "examples/benchmark_specs/voltage_reference_llm.yaml",
+      "size": 203,
+      "sha256": "ae8768faeb28ce4189c5d2ab13a73889e39ef793dbf3435af0d50030c52a4d87"
+    },
+    {
+      "path": "examples/reference_28_specs/cascode_current_mirror.yaml",
+      "size": 316,
+      "sha256": "edb825b54251181380c82d499aa5636034ca5d2047b78bee6f81effc671b9c0b"
+    },
+    {
+      "path": "examples/reference_28_specs/cascode_opamp_cascode_loads.yaml",
+      "size": 359,
+      "sha256": "bfe0f25c0c89512d68cf32f7db2105bfcf4e5f66f03d62dcb7bcff14cff91c3f"
+    },
+    {
+      "path": "examples/reference_28_specs/cascode_resistive_load_amplifier.yaml",
+      "size": 357,
+      "sha256": "74fbf12a7fa9bd78146fa03f4aa3d7c444fc3fe96dfd2bec9beadf0eb58b34ef"
+    },
+    {
+      "path": "examples/reference_28_specs/cmos_logical_inverter.yaml",
+      "size": 268,
+      "sha256": "a6500cca056d0da2a1e1713512bd5ab7e6a5e72985cf43e207faf8ef3b46c1a2"
+    },
+    {
+      "path": "examples/reference_28_specs/common_drain_resistive_load_amplifier.yaml",
+      "size": 380,
+      "sha256": "49ba3cedf96f45a6c439a6eac17403d1d6abfbb1ea46375264e6e7df63a55ae7"
+    },
+    {
+      "path": "examples/reference_28_specs/common_gate_resistive_load_amplifier.yaml",
+      "size": 376,
+      "sha256": "d0e557c73780fab508a2ab83166d0c770b3cfc433a5fd23c20c780c12db99fe0"
+    },
+    {
+      "path": "examples/reference_28_specs/common_source_diode_connected_load_amplifier.yaml",
+      "size": 388,
+      "sha256": "38c8ce40ac11821192b2645580d64ec38c64710c433284b6531ebdca774956e5"
+    },
+    {
+      "path": "examples/reference_28_specs/common_source_resistive_load_amplifier.yaml",
+      "size": 379,
+      "sha256": "f02e01081f16ef92d7ab02b0e61635b762d2f89073ad4fbf962cd64675de7698"
+    },
+    {
+      "path": "examples/reference_28_specs/common_source_resistive_load_opamp.yaml",
+      "size": 255,
+      "sha256": "4f0a62c557671191a3cdfa12b5fd6b19da67259230cd6fb73b291e658be7d471"
+    },
+    {
+      "path": "examples/reference_28_specs/gilbert_cell_mixer.yaml",
+      "size": 316,
+      "sha256": "66793951088a1126449639507c20126d879516e002b5380e6c5f47f889194716"
+    },
+    {
+      "path": "examples/reference_28_specs/nmos_constant_current_source_resistive_load.yaml",
+      "size": 359,
+      "sha256": "897bd825381ca9ca7b1c1bbc4341d1b9da58dd1fcbf33ee7ee9d54e2dd0f6918"
+    },
+    {
+      "path": "examples/reference_28_specs/nmos_resistive_load_inverter.yaml",
+      "size": 283,
+      "sha256": "dd30300fe970780dafb15414f9803ef3f4575064ae072195c358203d59d653fa"
+    },
+    {
+      "path": "examples/reference_28_specs/non_inverting_schmitt_trigger.yaml",
+      "size": 291,
+      "sha256": "81ec6cbd6b2ea5a684e4bcfbd32b08f1ed11a995bc054798e9d7ecb406152f95"
+    },
+    {
+      "path": "examples/reference_28_specs/opamp_active_current_mirror_loads.yaml",
+      "size": 253,
+      "sha256": "512567b65263529228cfd321db6e64b60ea403a248df999efd52c5df28a3dc3a"
+    },
+    {
+      "path": "examples/reference_28_specs/opamp_adder.yaml",
+      "size": 252,
+      "sha256": "38380fe9014c4332b71e3a9e87c18215ab5ba1fa408d3d15c51ef2019b24ad42"
+    },
+    {
+      "path": "examples/reference_28_specs/opamp_comparator.yaml",
+      "size": 226,
+      "sha256": "29f1ec0f977b421e8d8870243400157353c1d3d6b3f15bb16ee3e2c4ad157546"
+    },
+    {
+      "path": "examples/reference_28_specs/opamp_differentiator.yaml",
+      "size": 277,
+      "sha256": "83291b941d4c6644ca00660fc0d623229fbfc82f9d66176ba4ecddeea3dbc2e3"
+    },
+    {
+      "path": "examples/reference_28_specs/opamp_integrator.yaml",
+      "size": 264,
+      "sha256": "36184667e0403f1612ccbdfb7baeb60aa92526d441eb3fa9e5423285a59c1d9f"
+    },
+    {
+      "path": "examples/reference_28_specs/opamp_subtractor.yaml",
+      "size": 262,
+      "sha256": "2030a6726a5439929bd893f36b2ac9c42f60ca0ea9a0a4de07027c0b6e410bae"
+    },
+    {
+      "path": "examples/reference_28_specs/passive_bandpass_filter.yaml",
+      "size": 354,
+      "sha256": "ccd1c5cb020c13eb563a3fd4f5450fd8db8649cc700eb4a75b7af34b8086241c"
+    },
+    {
+      "path": "examples/reference_28_specs/passive_bandstop_filter.yaml",
+      "size": 261,
+      "sha256": "d2e75cfbdbc2c6670cae97594ca6d3b3c690853dd4141fab44716ae83ae96ab7"
+    },
+    {
+      "path": "examples/reference_28_specs/passive_highpass_filter.yaml",
+      "size": 241,
+      "sha256": "ddf5d19feb05773d9c3b179dba0ca6bdd047a0c43de61a8f549ecdf6f16524cc"
+    },
+    {
+      "path": "examples/reference_28_specs/passive_lowpass_filter.yaml",
+      "size": 333,
+      "sha256": "d1c6cb6c2286423a2c57035e32764103e543b114136e18d8be82966fdae73399"
+    },
+    {
+      "path": "examples/reference_28_specs/rc_shift_oscillator.yaml",
+      "size": 337,
+      "sha256": "ca9a169e738097d23f246e79591a114ebbaf568f2332aee53f3425c2f8824f19"
+    },
+    {
+      "path": "examples/reference_28_specs/three_stage_common_source_resistive_load_amplifier.yaml",
+      "size": 379,
+      "sha256": "d762edba63cc0fe54e20ce38f2ebe6b59d28529b2d0de664af487782feef8f79"
+    },
+    {
+      "path": "examples/reference_28_specs/two_stage_miller_compensated_amplifier.yaml",
+      "size": 393,
+      "sha256": "7d7e4de7478c86361e8e8dada3fadc09859cbc78ec9281959583c540b71e7218"
+    },
+    {
+      "path": "examples/reference_28_specs/two_stage_opamp_active_loads.yaml",
+      "size": 373,
+      "sha256": "f2298ce6c4d70e3ecdd05172e53836c4d17c7d967a393ca077501ed6e2abf0fb"
+    },
+    {
+      "path": "examples/reference_28_specs/wien_bridge_oscillator.yaml",
+      "size": 329,
+      "sha256": "3f3ec7d330ca25b1fc2c0ce422d6b7b978e50c7a53d6656117792ada26d708ad"
+    },
+    {
+      "path": "lowpass_specs.yaml",
+      "size": 199,
+      "sha256": "c771d2bd50b9d1e85b3d7ce226be1a97df14b7766627db36a31c883281da6043"
+    },
+    {
+      "path": "netlist/bandpass_rlc.spice",
+      "size": 286,
+      "sha256": "dfb381e9c295837dde28298cb57209ebee237ad4ca962dd5ec0dad50065c23b1"
+    },
+    {
+      "path": "netlist/bandpass_rlc_final.spice",
+      "size": 268,
+      "sha256": "160b4d958c1c130e228fa8021edb85304ce8cfb668d39005b2c0e898f2474b67"
+    },
+    {
+      "path": "netlist/bandpass_rlc_simple.spice",
+      "size": 256,
+      "sha256": "219e9f80f31a864bedac8fb2b5b5266a5090c3e6bbc432151c4089e2722d89cc"
+    },
+    {
+      "path": "netlist/highpass_rc.spice",
+      "size": 194,
+      "sha256": "42989c513215bd7aa2f12976f65b366ba5c3a65ab4a6a6ad8bacaafd374bbbbd"
+    },
+    {
+      "path": "netlist/lowpass_rc.spice",
+      "size": 193,
+      "sha256": "a0846d062d3bb5dcddd2bafbc382c65c99f562352763869e920fe6414cab75c3"
+    },
+    {
+      "path": "netlist/sallen_key_lowpass.spice",
+      "size": 423,
+      "sha256": "0616147872cff0b3778f35198774a53e4a2077c3024930d6d97eee819a2a7794"
+    },
+    {
+      "path": "netlists/amplifier.cir",
+      "size": 129,
+      "sha256": "b1dc2036c781386d2e1f7a88fd558ead950ac8b42459c5bc933927e50e2688d2"
+    },
+    {
+      "path": "netlists/current_mirror.cir",
+      "size": 146,
+      "sha256": "e057adafee00e8caaccaf8ea85abbc676d20d12397832490181ac801c6a1fd29"
+    },
+    {
+      "path": "netlists/differential_amp.cir",
+      "size": 265,
+      "sha256": "c8bb606c98b8a93a057e4be0cab61b899ffe4ec5452794e2814047df0e812a25"
+    },
+    {
+      "path": "netlists/lowpass_filter.cir",
+      "size": 132,
+      "sha256": "b47a1ceddfb7295896269dbea2a39c3b41f049a4eee246b8e8e65b5bc6c041f1"
+    },
+    {
+      "path": "netlists/ring_oscillator.cir",
+      "size": 227,
+      "sha256": "8ea21def3396a4b34b2b6b7e974fd41506a55375ec96825563a6e3c965a98ee0"
+    },
+    {
+      "path": "pyproject.toml",
+      "size": 637,
+      "sha256": "19ea74584e47defee2c2f65185cd9c3eecc2409409fe3fcf5274bd189abe476e"
+    },
+    {
+      "path": "pytest.ini",
+      "size": 29,
+      "sha256": "ddfcf6e0017476e9b9e8e55559c80e166c21f4f1ac242c7468dc85ad9dc69e52"
+    },
+    {
+      "path": "recovery/SHA256SUMS.txt",
+      "size": 1605,
+      "sha256": "0c9a3a31582cb0fa1af4f3f474949cb7e8e302a00959cb6d59468d193d20cb68"
+    },
+    {
+      "path": "recovery/apply_op_bias_support.zip",
+      "size": 5415,
+      "sha256": "fe881b70b86fa812f132dd15f841fd32745b6634dfcc33c7593b9a344942f563"
+    },
+    {
+      "path": "recovery/s2t_v0.5.0_dc_wrdata_hydration_fix.patch",
+      "size": 5349,
+      "sha256": "8654de9da3f778642b01ba44b339dc901b0d793c3dc2edc1a4f75bb7b4a1b888"
+    },
+    {
+      "path": "recovery/s2t_v0.5.0_deterministic_multimode_source_fix.patch",
+      "size": 2576,
+      "sha256": "ab97a4ec4d515e9a7a960599c00f3ed168e7208bd36fc86ecc98a57de7a21ed9"
+    },
+    {
+      "path": "recovery/s2t_v0.5.0_final_deterministic_freeze_fix.patch",
+      "size": 1384,
+      "sha256": "a160f1191544a69da94f1d9eefca1eb30afa51aaca3fafdf646aec2ca9ecacc6"
+    },
+    {
+      "path": "recovery/s2t_v0.5.0_integrator_ramp_and_slew_fix.patch",
+      "size": 8808,
+      "sha256": "b1437a90c8ccba4b1d2b700714632a83f42cddb6b3189abc8ce813a444075ac4"
+    },
+    {
+      "path": "recovery/s2t_v0.5.0_measure_domain_and_p28_test_fix.patch",
+      "size": 4926,
+      "sha256": "0ecfbd2ffa5f17e857cd99b4f5defe343b2308bb1dfb42215cdfec67f7c6329d"
+    },
+    {
+      "path": "recovery/s2t_v0.5.0_transient_abort_guard.patch",
+      "size": 11926,
+      "sha256": "cc4b217a5378d8f34dee53ac6710defd5d2baae1d242797debb89096c4c03508"
+    },
+    {
+      "path": "recovery/s2t_v0.5.0_ubuntu_ac_wrdata_mos_fix.patch",
+      "size": 8453,
+      "sha256": "1b32f95af860d53979e1bea7e87fb637f92dd8d47dfb11478cb698d8603db3bd"
+    },
+    {
+      "path": "recovery/s2t_v0.5.0_ubuntu_integration_fix.patch",
+      "size": 6946,
+      "sha256": "62a8bedc0cb6b8a957af91ba689fe24e4d959333f4b8afd0d200c9ea8f671a56"
+    },
+    {
+      "path": "scripts/aggregate_metrics.py",
+      "size": 30610,
+      "sha256": "59049e40464f785208792a915fd886e595779fc7ef4086749384f5f027da5b20"
+    },
+    {
+      "path": "scripts/analyze_metrics.py",
+      "size": 3661,
+      "sha256": "2dc2fbb5e8182f564c7a5059138c8af56ff7d943cfaa736a793272ad164b878b"
+    },
+    {
+      "path": "scripts/apply_node_overrides.py",
+      "size": 1108,
+      "sha256": "315fcc9304e209c3796a9aaabed8dd01ea8cb525b4b656761e465773eab88bab"
+    },
+    {
+      "path": "scripts/check_35_netlists_ngspice.py",
+      "size": 1374,
+      "sha256": "4df4a72450dda491cff5a9d5106b992fa663b286526606fc4f15a0e40b84be44"
+    },
+    {
+      "path": "scripts/create_35_netlists.py",
+      "size": 7918,
+      "sha256": "0de51ead259aa0a5e33a5f11782fc32433fa11c121f959b8b490c35d22f3925a"
+    },
+    {
+      "path": "scripts/create_reference_28_netlists.py",
+      "size": 10808,
+      "sha256": "70bdee4c4188c478a75a0394a7b26c8653bbb8e7fad9746a692f80bc1aab8e87"
+    },
+    {
+      "path": "scripts/draw_35_auto.py",
+      "size": 708,
+      "sha256": "71322015516ced00f47afcbb8a8fb571b8772c58a45492ba9c349b15b23a6be0"
+    },
+    {
+      "path": "scripts/evaluate_benchmark_specs.py",
+      "size": 5469,
+      "sha256": "76afe72035aefcda786d6703fd8ba54f8472be0c47bde6ceabaa34c216f936e2"
+    },
+    {
+      "path": "scripts/freeze_deterministic_baseline.sh",
+      "size": 778,
+      "sha256": "5367e809eda337e6291bf98ee1df115e1e1bb212b9ce5ac43d038e303b083afc"
+    },
+    {
+      "path": "scripts/generate_analogcoder_pro_28_testbenches.py",
+      "size": 3324,
+      "sha256": "837312e9a96a6603d399071ee593ab199f91ed6c8db86417a0710cc6a2425791"
+    },
+    {
+      "path": "scripts/generate_benchmark_detailed_table.py",
+      "size": 5693,
+      "sha256": "6dbce2d0302f100d04c2181b99cfa7e8f9d1aa2d7b001fb55c7debf6b2116d09"
+    },
+    {
+      "path": "scripts/generate_benchmark_report.py",
+      "size": 3084,
+      "sha256": "cf1fccfe6601a739be38d2a0b411df8203aa520203253e983a5174f9ed36bf5f"
+    },
+    {
+      "path": "scripts/generate_coverage_matrix.py",
+      "size": 1512,
+      "sha256": "8e9f392172b1517a97810c708700d559e3db84260af7da338237cd381b506b4c"
+    },
+    {
+      "path": "scripts/generate_paper_table.py",
+      "size": 2283,
+      "sha256": "e190f6584b481f017857365298bae089e8a9abab88864622e5336dd21580b5eb"
+    },
+    {
+      "path": "scripts/generate_reference_28_paper_table.py",
+      "size": 2196,
+      "sha256": "cb10343bed61cd36d2bc5645d75b18f59551b0d01489226fd3a76b0584dc5b25"
+    },
+    {
+      "path": "scripts/generate_reference_28_specs.py",
+      "size": 9222,
+      "sha256": "e2af3e7d518cb622b1e79f37b35357ccad955dfb53854f2a98b1bf6b6fd673c7"
+    },
+    {
+      "path": "scripts/import_analogcoder_pro_28.py",
+      "size": 18866,
+      "sha256": "e0e5c13b0ef4a50ef6217b1328fc8dbceaafae7035aed59711b5564814c46957"
+    },
+    {
+      "path": "scripts/inspect_raw.py",
+      "size": 179,
+      "sha256": "b407a8d9d56d291669f5716a8f9974d7542f48a46a4513094e9f8e627b3d4953"
+    },
+    {
+      "path": "scripts/patch_control_save_all.py",
+      "size": 409,
+      "sha256": "8404b740bc4642b8d7a26a9cbddf0220f8c7c828f734d78fb322739373e9d050"
+    },
+    {
+      "path": "scripts/patch_mos_models.py",
+      "size": 672,
+      "sha256": "3c01feb56901260fe1c94bd759d1772050070729b39cbf502da4ff00fde5c75d"
+    },
+    {
+      "path": "scripts/patch_netlists_for_batch.py",
+      "size": 392,
+      "sha256": "364040c3cbb96663f1893cc7afeda2449d2dae5932090c6996b268793956a8ed"
+    },
+    {
+      "path": "scripts/run_all.ps1",
+      "size": 2973,
+      "sha256": "6caf86c1c6d22e82ea839ee40bb16c861cbd8b5bdbd847454433c4eab6a5f998"
+    },
+    {
+      "path": "scripts/run_benchmark_campaign.py",
+      "size": 14346,
+      "sha256": "908c2d751a55f0528a5e7e719d50822df11f3197110223b95e7f6649b216f939"
+    },
+    {
+      "path": "scripts/run_llm_mode_comparison.py",
+      "size": 7076,
+      "sha256": "ae1fa2ea60540902ec5966bee854e2e827594f1761ab9d85b94d52699c2411f9"
+    },
+    {
+      "path": "scripts/run_reference_28_campaign.py",
+      "size": 3284,
+      "sha256": "da110b4ad490d202a61c6d2a5dd41f95a36dfcf4ebced495f7b7b1b05dcbcdea"
+    },
+    {
+      "path": "scripts/run_reference_28_framework_campaign.py",
+      "size": 3558,
+      "sha256": "92f6d9a14eaf6f2cad575e723af880b7896ceb36cff923e13575d0526305c192"
+    },
+    {
+      "path": "scripts/suggest_node_corrections.py",
+      "size": 5439,
+      "sha256": "977a9b43c99172d9d2e4d1c09cfadf3fb42239ce192b4352e20c3745a88c91c8"
+    },
+    {
+      "path": "scripts/test_clean_lowpass.py",
+      "size": 186,
+      "sha256": "59ae7369fc3a8fbdac05b97170ad12e57502c45c919d16449a4dc04563eef10f"
+    },
+    {
+      "path": "scripts/test_connected_drawer.py",
+      "size": 364,
+      "sha256": "cb18db6e9364b23080f8e582c3e95776877915fd0bff2f4450020d70eca57349"
+    },
+    {
+      "path": "scripts/test_graph.py",
+      "size": 1335,
+      "sha256": "7369493407b9f93ff7ba7b0d94e14ee44673823c8b142764e3893c1299ce5e97"
+    },
+    {
+      "path": "scripts/test_graph_drawer.py",
+      "size": 331,
+      "sha256": "aabafed7581fcda7281e3f844672c7316a203ab19e786c3a5e0d4444bf219a29"
+    },
+    {
+      "path": "scripts/test_layout_engine.py",
+      "size": 171,
+      "sha256": "dbd0193135b9153c12df409edb5cb52e341f680982a17b11d354ceaf170af7c1"
+    },
+    {
+      "path": "scripts/test_networkx_drawer.py",
+      "size": 344,
+      "sha256": "e05c34299057a7d031d0dedf674b2c83cc38e526dd15f5e1a13fcf870454b524"
+    },
+    {
+      "path": "scripts/test_renderer_factory_35.py",
+      "size": 1256,
+      "sha256": "5aca85e59a6ad66ad4cfd527133057557de9b7c83ca8cd532c7214db08ef89ae"
+    },
+    {
+      "path": "scripts/test_schematic_synthesizer_35.py",
+      "size": 1000,
+      "sha256": "76ae7f4207b7237a98d074cb0de92bf1a751818dcb2bd46adeed9a469058c221"
+    },
+    {
+      "path": "scripts/test_topology_detector.py",
+      "size": 746,
+      "sha256": "0d1a617b838974c6e26eb6c3b740fb413300ccf950cc6f299133d4885a76297d"
+    },
+    {
+      "path": "setup.py",
+      "size": 650,
+      "sha256": "172b42e610f6a2e34ebb87f53644c3d8eea692d0102c8e657c7a1b316537e76b"
+    },
+    {
+      "path": "spec/bandpass_rlc.yaml",
+      "size": 257,
+      "sha256": "71ffa03453632950a9c8762509218c911fb7fdb9a6409497a76813f7490c9b00"
+    },
+    {
+      "path": "spec/bandpass_rlc_final.yaml",
+      "size": 195,
+      "sha256": "27ca48f5e861bd07055ae9b9f8e2cb4cae039d22709da8ea05677ccb3f10d15b"
+    },
+    {
+      "path": "spec/bandpass_rlc_simple.yaml",
+      "size": 143,
+      "sha256": "f536d17958b64e49be7d4f204bdeed2cf714259f8dabf05ee9fa9f4ab929dbed"
+    },
+    {
+      "path": "spec/highpass_rc.yaml",
+      "size": 198,
+      "sha256": "786fecf6271928129c2c28ad3e1e9f7ae200ae32b929ed109b9feb8255c7109e"
+    },
+    {
+      "path": "spec/lowpass_rc.yaml",
+      "size": 196,
+      "sha256": "ada73901c3aefa6ee2b0e48af9db9e10b16b90ab6f0b921e63a941bfe2229c6a"
+    },
+    {
+      "path": "spec/sallen_key_lowpass.yaml",
+      "size": 263,
+      "sha256": "9de99746687210062caec15145335f132b24a8c338ca2c3aa36c643a58367f8c"
+    },
+    {
+      "path": "spec2testbench/__init__.py",
+      "size": 83,
+      "sha256": "37700e2dad8e6d2628f9906c4894f91d1c0f7713dba465a64f4ff86e2cb7ff28"
+    },
+    {
+      "path": "spec2testbench/application/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/application/ports/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/application/ports/llm_provider.py",
+      "size": 172,
+      "sha256": "d67321653f1924ddfd1341766cf9791aa4649ba36208cafe4021e171bbfc101f"
+    },
+    {
+      "path": "spec2testbench/application/services/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/application/services/acp_benchmark_runner.py",
+      "size": 14778,
+      "sha256": "35938e7dd80dbf06ef6ea18dd7e041d37a658068a3ea573bde633ab91fbf60b9"
+    },
+    {
+      "path": "spec2testbench/application/services/benchmark_deck_normalizer.py",
+      "size": 2000,
+      "sha256": "a0361b6dbaf7cbd51f7a5a7082bb5b8a5a2d54a02e5ae246952eee55d13e29fa"
+    },
+    {
+      "path": "spec2testbench/application/services/canonical_harness.py",
+      "size": 759,
+      "sha256": "53ad6fc1a112137cf057c000248f4e5bb0e8780c40c8092a60a4beca32db02fe"
+    },
+    {
+      "path": "spec2testbench/application/services/llm_generation_service.py",
+      "size": 2145,
+      "sha256": "4a5444ab2d9f0ce14566a98325faf0083181333635b05da8394dcfc7ed7d2d14"
+    },
+    {
+      "path": "spec2testbench/application/services/llm_metric_registry.py",
+      "size": 1953,
+      "sha256": "d6455fc06891dbf515995fac315eb04f0617de8978499bbfcfc0ae4714e89404"
+    },
+    {
+      "path": "spec2testbench/application/services/llm_testbench_plan_validator.py",
+      "size": 1857,
+      "sha256": "7554c8fd6cb0208fa16ede8faeb7400b01c21485d1fa404394decf5ccf9c6ddd"
+    },
+    {
+      "path": "spec2testbench/application/services/testbench_plan_compiler.py",
+      "size": 4000,
+      "sha256": "7597c703dd3913ebcdcf0bc3ee5ff4cf16e998433e21f992215ea289f0f2adbb"
+    },
+    {
+      "path": "spec2testbench/application/usecases/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/application/usecases/run_verification.py",
+      "size": 20304,
+      "sha256": "e0a425f746efeb69e4128c5de7eafcc4b05a243d0473d89f69a331fb548cbab1"
+    },
+    {
+      "path": "spec2testbench/config/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/config/settings.py",
+      "size": 3158,
+      "sha256": "c77a59c0c4fd524e8df02bf565d9476e7b88d641657441cc2973d59764425cd8"
+    },
+    {
+      "path": "spec2testbench/domain/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/domain/entities/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/domain/entities/metric_coverage.py",
+      "size": 1974,
+      "sha256": "c763fe3f4b7adc8ddfa768ae2f1704ecd1f219e02772ca055052021df7ae46b5"
+    },
+    {
+      "path": "spec2testbench/domain/entities/specification.py",
+      "size": 13067,
+      "sha256": "fd5cdcb961f9d96b7c8a5004cbfe66c77f251901a83e915217bb78718ba9697f"
+    },
+    {
+      "path": "spec2testbench/domain/entities/testbench.py",
+      "size": 23420,
+      "sha256": "704d03d5d540d9e4b7d97c63ce16a509ebf751505dd66f44c0f91a3078cb4781"
+    },
+    {
+      "path": "spec2testbench/domain/entities/testbench_plan.py",
+      "size": 1983,
+      "sha256": "c7ec476c778d9e1f4c8c52ea37c97add39296675fd0b65c0c139dc9d6a07ea5d"
+    },
+    {
+      "path": "spec2testbench/domain/interfaces/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/domain/interfaces/icircuit_simulator.py",
+      "size": 3453,
+      "sha256": "993cd0e774adb13e2159cfbd7206d3ca14cfefe66ca3763b02e847d6d3a0ab87"
+    },
+    {
+      "path": "spec2testbench/domain/interfaces/ispec_checker.py",
+      "size": 3690,
+      "sha256": "5fa6c118005aa6de848b805a0cdd099b8efd68415a0ad57270d20664fd2faad6"
+    },
+    {
+      "path": "spec2testbench/domain/interfaces/itestbench_generator.py",
+      "size": 3205,
+      "sha256": "d837c33479a402870d2e2f35bd59128aa4d9e58a89c88cbef6a8a8673eb2656a"
+    },
+    {
+      "path": "spec2testbench/domain/interfaces/iwaveform_analyzer.py",
+      "size": 3709,
+      "sha256": "8f5afef3ed2b8b151c5f9c941e492f285b9516236b83dd5e6e6cdb04135dcdd3"
+    },
+    {
+      "path": "spec2testbench/domain/registry/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/domain/registry/circuit_kb.py",
+      "size": 5181,
+      "sha256": "e804c633ecc05f140e71c9cfc80935d7cafebf583c755000fc1c463e7e941aa7"
+    },
+    {
+      "path": "spec2testbench/domain/registry/supported_circuits.py",
+      "size": 1053,
+      "sha256": "77312a3ff475a360f1b158433ec21fea59e0e75889de3e81c4e9a9031882ef51"
+    },
+    {
+      "path": "spec2testbench/domain/registry/supported_tests.py",
+      "size": 1336,
+      "sha256": "d773f9ee32584efb9bba75ee57128e783c1c215ad60ba528a6fe6545fdfa0f27"
+    },
+    {
+      "path": "spec2testbench/domain/specification_schema_v2.py",
+      "size": 6478,
+      "sha256": "474747d68999cdf62802542170af03f098c33ad83226404ff5659f0b2976b2c4"
+    },
+    {
+      "path": "spec2testbench/domain/value_objects/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/domain/value_objects/circuit_type.py",
+      "size": 14074,
+      "sha256": "3e519d82bdb6c56d39c221aebcb5363188e6b8d8afeb732314e266e7dd0d121a"
+    },
+    {
+      "path": "spec2testbench/domain/value_objects/multimodal_result.py",
+      "size": 3922,
+      "sha256": "38fb7597603e9b0b883db5cebdfae42db7bc681790503532eb7a9ddccc097d14"
+    },
+    {
+      "path": "spec2testbench/domain/value_objects/scientific_status.py",
+      "size": 554,
+      "sha256": "317efd9aa7f77a3e5c62e0816d36b87c689152b919e37ca25fd9eb1a2e558f08"
+    },
+    {
+      "path": "spec2testbench/domain/value_objects/test_category.py",
+      "size": 15219,
+      "sha256": "f773edd492bdc986bf990079dd203a3b0c9c3a779a64efdaa8d5f731f0670f14"
+    },
+    {
+      "path": "spec2testbench/domain/value_objects/verdict.py",
+      "size": 13405,
+      "sha256": "c647abc5312022cd9c9c600d554c8ff7c9ce47beed33136f05ab8447a0ab9649"
+    },
+    {
+      "path": "spec2testbench/infrastructure/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/infrastructure/llm/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/infrastructure/llm/llm_client.py",
+      "size": 13410,
+      "sha256": "95bac61ca0edca5c1ecf8e25be321b0e486514253eb0d1c91b93b7f787079223"
+    },
+    {
+      "path": "spec2testbench/infrastructure/llm/stub_provider.py",
+      "size": 308,
+      "sha256": "69192011e4c18b0ae72cb22817eac3c7c7b3085bc0c81da401270d9e53f08a39"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/__init__.py",
+      "size": 85,
+      "sha256": "cee8ab4b75c62abdfb4ae9bb9166ea08ff7878c8e860cc7f64555ef0bf97e749"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/connected_drawer.py",
+      "size": 3688,
+      "sha256": "55f70f179a02e267221bba7c8f3b63a70e7657b97622845ecea5513ca598663c"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/generic_drawer.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/graph/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/graph/electrical_graph.py",
+      "size": 776,
+      "sha256": "10ab11c0ed5ac02210258a4ab9364dd95e475312320e121cdc3d1b5f43788aeb"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/graph/graph_builder.py",
+      "size": 759,
+      "sha256": "ac19fb0fe60b273847e967e57f78fb027d26b7863b2615c4fa6728a717560e21"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/graph/graph_drawer.py",
+      "size": 3617,
+      "sha256": "f38fc5f71bf7b7e663f21e9332d9a858343ed69685a203f8895239b7dd38f53c"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/graph/networkx_builder.py",
+      "size": 913,
+      "sha256": "0848c626e366dfb3e7f413a59fe1b47b043db345fe228b46b305f883ddaead10"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/graph/networkx_drawer.py",
+      "size": 1508,
+      "sha256": "4777414e34aaafb76a52c3f8999a0c77c780325ecfc767f5bc0b40f3e503eabd"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/graph_builder.py",
+      "size": 6063,
+      "sha256": "a1a00cbdd71c6c2c8c2ebd4ee70c30698c3f120a500c559a8739113964d4ddb5"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/layout/layout_drawer.py",
+      "size": 902,
+      "sha256": "b686cda654f01eef8715ff72a839ddf22c27800ffa2cdcce4da158da891d319e"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/layout/placement_engine.py",
+      "size": 223,
+      "sha256": "b6e2c47da0871bd401dc50164df616464978eeedaa2cd70cc84c67593f4ecd18"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/netlist_parser.py",
+      "size": 6499,
+      "sha256": "ce4dd6b0a1b0571c4e5df01a6fb6e2c952e61ed025b4701be4224b4783c3aefa"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/renderer_factory.py",
+      "size": 1742,
+      "sha256": "5f287fdb192dccaddeb8f7f0819c073edd0439c54edbfd28baffc9d33c42f205"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/renderers/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/renderers/amplifier_renderer.py",
+      "size": 676,
+      "sha256": "c1a0646bff71a8f8bb4d09f580f2def80054df1b9499ac09e07ed1dab1b68f7e"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/renderers/base_renderer.py",
+      "size": 162,
+      "sha256": "7b1a01bcfd3aac4723fe29a0f9a67ba7a3822706abcc3b95ba5592ba91b8cdbd"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/renderers/behavioral_renderer.py",
+      "size": 584,
+      "sha256": "b9d7f275a83c436c93f10868ab8f589bdd8b19d69d4e5afd36e2f6aefaad990d"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/renderers/current_mirror_renderer.py",
+      "size": 737,
+      "sha256": "9276c899623aeafbee5f574dc62913a891db4a8e528a3f3d10e7c61c179aadb9"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/renderers/differential_renderer.py",
+      "size": 1025,
+      "sha256": "c1434afae1cfe4e7d8843abcfce8ce72dea2649428826d1131fec7268444997d"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/renderers/diode_circuit_renderer.py",
+      "size": 753,
+      "sha256": "68fc22f9c3982db0494746f8ef10a3a597303a625774848b6159e28820bdbea9"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/renderers/generic_renderer.py",
+      "size": 345,
+      "sha256": "46776b8a449cdf5c18fddec07b8a7d268aa090ebef90958078d4d15a5ff13ece"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/renderers/opamp_macro_renderer.py",
+      "size": 618,
+      "sha256": "51312780f0825ec2c6d023aaadc798365d678e62e6556925461f400f2f2bb92f"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/renderers/oscillator_renderer.py",
+      "size": 733,
+      "sha256": "35cb2a2eded51addaf040bf32efb7aef2a74949882f965d25564bcae70431c3c"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/renderers/rc_filter_renderer.py",
+      "size": 787,
+      "sha256": "1ee9873e85a33376be3a0d63ad5e0922c7db95b006ffa5c4e79788c07d1be31f"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/schematic_router.py",
+      "size": 1835,
+      "sha256": "3341d9d601f2af066d42b736d90ce921687ce249fdd4e5024faaf02f23291bbc"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/simple_drawer.py",
+      "size": 5171,
+      "sha256": "60eea8b75438abb52e12abf8eb04a7bc934dc9b23e29f071f378ed07ed0d51d6"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/symbol_models.py",
+      "size": 2935,
+      "sha256": "beffee9d91e0281eacdd863fb3f36eadb1d9f216e7b3c667fa14539ef054883b"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/synthesis/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/synthesis/autorouter.py",
+      "size": 2034,
+      "sha256": "cc5bffec894e69c679c4051e563e29bea594bb1c108dd2a3fd4e6ba73195a135"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/synthesis/constraint_engine.py",
+      "size": 1872,
+      "sha256": "3c85f2c1565c770498284c5c1fb75066d86339d9b01352fd3d4cb4910350c830"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/synthesis/graph_builder.py",
+      "size": 1382,
+      "sha256": "768e7d837d3eb47e7e649f6cb3a7262d0ea8312c0884c8016ee7da4dbe59073a"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/synthesis/placement_solver.py",
+      "size": 5067,
+      "sha256": "59f6c54c9397aee9570f70b7ed3f636bb3b58fc059dc85302afa3d3eebe747ef"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/synthesis/render_engine.py",
+      "size": 5668,
+      "sha256": "bba74447c118a64c69c10c5fa511c62068a092de7bbb2d45393f30e40e6c1377"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/synthesis/schematic_synthesizer.py",
+      "size": 1279,
+      "sha256": "be5fb526d87ff43602e94c0fb607dd0035741a4fb7a7c5542a7606960d2c902b"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/synthesis/symbol_mapper.py",
+      "size": 1040,
+      "sha256": "b448f040fde5237d67119341b5c11819dcf359667a8a591a9999fb0e95e24ab8"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/synthesis/topology_matcher.py",
+      "size": 3289,
+      "sha256": "89e4884e164847006649af5d7719031876045774740d42673e5f04cfd921ff76"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/topology_detector.py",
+      "size": 11008,
+      "sha256": "27a05d9d3704340d90f46ec443e8873a4732367eeabc07f390d2d0257d4c9d58"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/topology_drawers/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/topology_drawers/current_mirror_drawer.py",
+      "size": 648,
+      "sha256": "65ace2e196de06b1103dab0444e65ab6fb675192674f4e63b4a0b8ba766654b0"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/topology_drawers/differential_pair_drawer.py",
+      "size": 811,
+      "sha256": "aaa6c357db33b74968733688c71473eaed2f7613c98818c8d6e75d6ede1120eb"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/topology_drawers/lowpass_filter_drawer.py",
+      "size": 599,
+      "sha256": "e78c6ef783c8858be2608b2b5603f8fb00361fee51633570594e4df07a5a2b2d"
+    },
+    {
+      "path": "spec2testbench/infrastructure/schematic/topology_drawers/oscillator_drawer.py",
+      "size": 530,
+      "sha256": "be5fd0402ffd3d5d1bb5db1e306c57e4f37f199747b6eec4941cff54e8ebd62d"
+    },
+    {
+      "path": "spec2testbench/infrastructure/simulator/__init__.py",
+      "size": 298,
+      "sha256": "77e05f1b53c35e6c30da3633265bac0285842bad9a030843fa282842eac346eb"
+    },
+    {
+      "path": "spec2testbench/infrastructure/simulator/netlist_parser.py",
+      "size": 4421,
+      "sha256": "b39505cbc7440a719d4bd2f2b45a51c5a38e4c476a685a3442df5e4df2c71160"
+    },
+    {
+      "path": "spec2testbench/infrastructure/simulator/ngspice_simulator.py",
+      "size": 2907,
+      "sha256": "433619d740195d3a9180ede5275c289284cb7fb57dea4a8871816643c775d315"
+    },
+    {
+      "path": "spec2testbench/infrastructure/simulator/op_bias_probe.py",
+      "size": 6111,
+      "sha256": "b8a129185d1e4895f085ede6fdfa62c75a1d05e3e28e4f6a37ab4a821f5d35bc"
+    },
+    {
+      "path": "spec2testbench/infrastructure/simulator/pyspice_simulator.py",
+      "size": 46148,
+      "sha256": "49aad982c2ca8da2f1eaaaa15b66df0228b3787d730097386915e10422e38e61"
+    },
+    {
+      "path": "spec2testbench/infrastructure/simulator/result_backends.py",
+      "size": 3533,
+      "sha256": "94279b2f7f7ff93851c9b668a89ddac548e98203f5bbab319741c256be7710c3"
+    },
+    {
+      "path": "spec2testbench/infrastructure/simulator/simple_simulator.py",
+      "size": 3461,
+      "sha256": "275611a9582038ad311cd25f382c1215362a539cf407cf9d8b468458c16df509"
+    },
+    {
+      "path": "spec2testbench/infrastructure/simulator/wsl_simulator.py",
+      "size": 3573,
+      "sha256": "1bbab6e8d2e00d3058131bf661e19f9e6c16d607519a5b469da8468e78ac8877"
+    },
+    {
+      "path": "spec2testbench/infrastructure/spec_checker/__init__.py",
+      "size": 287,
+      "sha256": "65ff8ba9cfe11a953474b68492825fc0260ed23e853782a36cdc00aabf26360e"
+    },
+    {
+      "path": "spec2testbench/infrastructure/spec_checker/metric_extractor.py",
+      "size": 29391,
+      "sha256": "a8dc1aed70794b6a99f1d01d58b9fd82334af6d32be32a432a4b2abf6ab58230"
+    },
+    {
+      "path": "spec2testbench/infrastructure/spec_checker/spec_checker.py",
+      "size": 13604,
+      "sha256": "9f7a8534cdba683733deec2a82da4df29bd93ac8d673dbc152e7420c8d054dd3"
+    },
+    {
+      "path": "spec2testbench/infrastructure/testbench/__init__.py",
+      "size": 276,
+      "sha256": "763642c8989cebcf61a22f2e22c3691cf04041f79420089e839106260d06c1b7"
+    },
+    {
+      "path": "spec2testbench/infrastructure/testbench/llm_guided_synthesis.py",
+      "size": 3318,
+      "sha256": "83f94a311677f200d16e12889c7702e638e06c259a1f7ec7b7bc3e6dad7f07b6"
+    },
+    {
+      "path": "spec2testbench/infrastructure/testbench/prompts/testbench_prompts.py",
+      "size": 5351,
+      "sha256": "a325e66226f8fa99e26823c9497d071523e31edf34f5a3a94c3d85d607e5842b"
+    },
+    {
+      "path": "spec2testbench/infrastructure/testbench/template_engine.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/infrastructure/testbench/testbench_generator.py",
+      "size": 33030,
+      "sha256": "aab8d9f31c84c5b6b328920ff93d80e5aebfe848fdb10231140bbd658f168b70"
+    },
+    {
+      "path": "spec2testbench/infrastructure/waveform_checker/README_MULTIMODAL.md",
+      "size": 8606,
+      "sha256": "a983df3957aea62bc6cb1942b05b7669d7aca2ab218061b614c86b4b56504960"
+    },
+    {
+      "path": "spec2testbench/infrastructure/waveform_checker/__init__.py",
+      "size": 300,
+      "sha256": "9208c6d379d509cf73c9a2f572891a781f007e359996414c81fa24db59846551"
+    },
+    {
+      "path": "spec2testbench/infrastructure/waveform_checker/llm_multimodal_client.py",
+      "size": 22107,
+      "sha256": "01f4249d1f8afcd9f417535dab1d001c1ab820cf0623c44cc66bbe3605c14eb0"
+    },
+    {
+      "path": "spec2testbench/infrastructure/waveform_checker/waveform_checker.py",
+      "size": 26527,
+      "sha256": "93f7c96c96bc72c91e43e72c0c4aa83028a2ab7c0efa3de460ea4e9fd53ebf5a"
+    },
+    {
+      "path": "spec2testbench/infrastructure/waveform_checker/waveform_plotter.py",
+      "size": 19209,
+      "sha256": "90a9944e042d08380b6f55980bca54c7c7ac375b207e125d1d4cc96d89cdf85f"
+    },
+    {
+      "path": "spec2testbench/presentation/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/presentation/cli/__init__.py",
+      "size": 159,
+      "sha256": "d5c1505cf61ef3bbd6470f497007f234521f2013fc054a748f6dc57a0f12c93c"
+    },
+    {
+      "path": "spec2testbench/presentation/cli/main.py",
+      "size": 21571,
+      "sha256": "a62c6aa765513a362b75c0ebe527eb87bfd677e8f8f2ffd31d75789bf02eaf03"
+    },
+    {
+      "path": "spec2testbench/presentation/formatters/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/presentation/formatters/report_formatter.py",
+      "size": 9678,
+      "sha256": "e85da238aabc27a07a99a605601ca1c3a62a5f944bf258ce51c06e2c37da6619"
+    },
+    {
+      "path": "spec2testbench/schematic/__init__.py",
+      "size": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "spec2testbench/schematic/autorouter.py",
+      "size": 2550,
+      "sha256": "6eead9b0639333aa9ce4a3d3824a16820e83648e4972d52aa03ae2fdc7147f40"
+    },
+    {
+      "path": "spec2testbench/schematic/graph_builder.py",
+      "size": 5909,
+      "sha256": "bbcc5fbb07b4aeeeed8ea0c33abf7c55a130e50aa51a17984944a87fd40fea49"
+    },
+    {
+      "path": "spec2testbench/schematic/placement_solver.py",
+      "size": 3499,
+      "sha256": "3ab07ac3ed977f1c9ddde69d3dcbe486a028f70987eed9179411bacb7b0b9b88"
+    },
+    {
+      "path": "spec2testbench/schematic/render_engine.py",
+      "size": 15871,
+      "sha256": "6b5148f6e40e5fb4a80e12f0d9f474715343a2ea4627aa75e70009486d47be9a"
+    },
+    {
+      "path": "spec2testbench/schematic/symbol_models.py",
+      "size": 3482,
+      "sha256": "77dfad4800c74e7d42523fb75238eacb8e24a041911706244717b582edb5ff95"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/manifest.csv",
+      "size": 8796,
+      "sha256": "ddc62fb125d2b6bce9fc0208c25f07351a4b8c96e4625a7d5f817fcd10d1a044"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p01_amplifier_tb.cir",
+      "size": 584,
+      "sha256": "0c5c97e0b106f86cf2604fe5efa1e6c8eea81f7767657ac6750c96a1f61128a4"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p01_amplifier_tb.py",
+      "size": 2247,
+      "sha256": "114b46736921476d0d7bfc4448c1c97df3007980a6acfd0ae7be4c7e8b36b19e"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p02_amplifier_tb.cir",
+      "size": 803,
+      "sha256": "3c28fed535f8999e2ddda174a0f4a8633bbefdf317193b614113d4335fae600e"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p02_amplifier_tb.py",
+      "size": 2247,
+      "sha256": "f7f65868d2b9db71b740280cbc4bb962a8ed294cd2d8d5d1ac1d62ae8b0a27e7"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p03_amplifier_tb.cir",
+      "size": 616,
+      "sha256": "3f3e3178e0f8085c184343bc7c9e4e1910f106d7abb3f094af4cc475025cb9f4"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p03_amplifier_tb.py",
+      "size": 2247,
+      "sha256": "a692d18ce8fdee1356fcc42ca62f237e2319623aa9c2ce5a7e7814998ede28ab"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p04_amplifier_tb.cir",
+      "size": 672,
+      "sha256": "ad0ea4ac9b9cdb6fd122404b6185d8fe5811a2912d7cb0b7494d0831a1c6df7f"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p04_amplifier_tb.py",
+      "size": 2247,
+      "sha256": "6381fcdda802bbfd0acefc097d769682e3879cd71635ac473399ca1f6d163b8f"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p05_amplifier_tb.cir",
+      "size": 710,
+      "sha256": "bb043f83c0584996511b0da158bcbddf4789399e403badc8c94c02677dd71a67"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p05_amplifier_tb.py",
+      "size": 2247,
+      "sha256": "149c1c29c642f77004c74ea656d138f80936110ab961a8bf4d61f9cd99b9470a"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p06_inverter_tb.cir",
+      "size": 500,
+      "sha256": "5d71ebda5ac12af43fc6b79be07cbdd6983f1503924bb5cb442827c9ddee10fc"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p06_inverter_tb.py",
+      "size": 1590,
+      "sha256": "1e649c87f8849d0188f9c29144dc98f28b20cd259f2e0b4faed86b418c9de5dd"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p07_inverter_tb.cir",
+      "size": 589,
+      "sha256": "cf6660f6b5e2066a7b24599292effc1a6ff23b9b3b1593bf9bc09a01b1e32d5d"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p07_inverter_tb.py",
+      "size": 1590,
+      "sha256": "8d9a610b5602bc190f0b44615ce3cccb76d1e18d97ce27fbbb256c19427b2d9b"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p08_currentmirror_tb.cir",
+      "size": 581,
+      "sha256": "4a46db8480036ceb762d23f251f67b6fb6d72462cfcea77f44c97b1cfa720b25"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p08_currentmirror_tb.py",
+      "size": 1643,
+      "sha256": "bacf0407619db5063f39a0910c7231f5413e292bb792975ca9bf53d350ef6d93"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p09_comparator_tb.cir",
+      "size": 1008,
+      "sha256": "d4175f55a740c67d7f602a498d485408eec35bdff9325e84988bc8d4889dd5f9"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p09_comparator_tb.py",
+      "size": 1382,
+      "sha256": "d3ee6ab5a9fb2ac80f049a4c5d6629117de91b3ab37b3806504701af333e4d83"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p10_lowpass_tb.cir",
+      "size": 433,
+      "sha256": "5297ccc68183300cebedf6626d3cab10625d239f3682fa529309b0dee16582d8"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p10_lowpass_tb.py",
+      "size": 1785,
+      "sha256": "7475afc2467bd7391d248b5da78b2a92b46c825c6fc1129c7b5228aff592e5e3"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p11_highpass_tb.cir",
+      "size": 437,
+      "sha256": "6e79444189b0a312c2ef3cf6ff1ffeefd6a74a579b211ab1dd7478c35cae1871"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p11_highpass_tb.py",
+      "size": 1790,
+      "sha256": "5fa4cd6a6b574ce53903ef436e71bbc55bccba73f5c5030626bd86decaf84164"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p12_bandpass_tb.cir",
+      "size": 464,
+      "sha256": "01f000408ac51262e02bb20bd59226e7c097989f66028d67d64e6dec767f0cfc"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p12_bandpass_tb.py",
+      "size": 1790,
+      "sha256": "2612dcec68ddf5e873df024119e43a5aaa397577ffb67080f63c0107d054028f"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p13_bandstop_tb.cir",
+      "size": 450,
+      "sha256": "fecb420bd634f1ada25f95dcad7a02cfde4b1a890236f17eb6d2a556fa4e6a53"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p13_bandstop_tb.py",
+      "size": 1790,
+      "sha256": "4b5d0e68982f3fe5e6c2710f1258d23097d5e41fa079da2639eb26e04f277123"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p14_amplifier_tb.cir",
+      "size": 741,
+      "sha256": "e602af38039a7d04be99882bd9652fd32b1410fef1c8a06f03ba43ba34bec9aa"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p14_amplifier_tb.py",
+      "size": 2247,
+      "sha256": "da806c90604ca3117ab4f420b6d699cf59a2e2f03e1294efc3e7309f116c489a"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p15_amplifier_tb.cir",
+      "size": 706,
+      "sha256": "2c179e6e4fc5c1d6aec2a41f1dcb11859ae2e91d48c5054fc1941fb5e865bc46"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p15_amplifier_tb.py",
+      "size": 2247,
+      "sha256": "d5db1da7a8810a53c6ea0a81819246de9f3c8ae54075d5366504af976356e571"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p16_opamp_tb.cir",
+      "size": 929,
+      "sha256": "086e10285abda449264ea1782af33ce34bdae31c0f77efe4336c7934eefc1b2f"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p16_opamp_tb.py",
+      "size": 2211,
+      "sha256": "a89f35af79acd1d04b70059eb9a23ef77fea6444530b2f3127c331ca6b6b9e98"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p17_currentmirror_tb.cir",
+      "size": 853,
+      "sha256": "2b4c9bd153cfefd4d8c113290f4505377b289f2b343e0798050a1fde10ed15e0"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p17_currentmirror_tb.py",
+      "size": 1643,
+      "sha256": "d1805b8cf00bdde8862199c6a3fa9561733b7a84032e96ba3b8625819173a72f"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p18_opamp_tb.cir",
+      "size": 830,
+      "sha256": "1e892f759cd4ab0b3be32b9dca6286a3d213194ea9eff4dbad1c8f497d6c36a8"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p18_opamp_tb.py",
+      "size": 2211,
+      "sha256": "9c24be771144b118d143e17c0daf7e2a7d38ef753063e4bcac420964592647fa"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p19_mixer_tb.cir",
+      "size": 1040,
+      "sha256": "49c6464db8a80d2978a55b4a167a74d2a61c6a6e9f26c872199acc7501833979"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p19_mixer_tb.py",
+      "size": 1647,
+      "sha256": "cc0eb664fffe630ad966f41f085bb47efefba5706ba520a59326c6ab9240a466"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p20_opamp_tb.cir",
+      "size": 1192,
+      "sha256": "36eed4317df6bad3f440efde1d6472b95b360d143cee5161e2d9b1cee7e1ae43"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p20_opamp_tb.py",
+      "size": 2211,
+      "sha256": "03b375846b1ff2e68c44a67405597d823783e825b34f06f835a1ea9a82b28ed2"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p21_opamp_tb.cir",
+      "size": 1242,
+      "sha256": "1d97fd27f97e83807559dc45d8acb627fc35142fcdab214b6db166bb99b2b159"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p21_opamp_tb.py",
+      "size": 2211,
+      "sha256": "da7fb6bda38f6aca0404feb81e4e6693b86d98cf3457e85bcadc225f9de011ea"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p22_oscillator_tb.cir",
+      "size": 1106,
+      "sha256": "ec298df1c1a3d64a2f05acd3a415db734fe7b389b999ac8e0a10e2a56f21eec7"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p22_oscillator_tb.py",
+      "size": 1907,
+      "sha256": "421214e47c8f7d44a105ea09dbd01ab77900fe26df22b11514f8af3a7a7d24bc"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p23_oscillator_tb.cir",
+      "size": 1074,
+      "sha256": "d3960efd304710ab40ca2139622c85f592a4ed109335891990e57ae6846e2da0"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p23_oscillator_tb.py",
+      "size": 1907,
+      "sha256": "a843044e28e6b33a82134b9f8b8c65dee9a83b87bc1331b0b93ecafc6a601060"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p24_integrator_tb.cir",
+      "size": 1121,
+      "sha256": "e221c9c10800fc8ed1086deec25e31f449fa988a6b6fbdfd1d654453295652c0"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p24_integrator_tb.py",
+      "size": 1265,
+      "sha256": "8a3adf8fa72eeab70c2cba1317ef752c6dde472c43e07e488f8bd24da10e7bf3"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p25_differentiator_tb.cir",
+      "size": 1051,
+      "sha256": "d1ee5bebedcead267b0ed21ac0faa31803c6830d810313f0b3f21b77a413755c"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p25_differentiator_tb.py",
+      "size": 1285,
+      "sha256": "f83ff99bdf801e288efaec51e23f02c4b4f563bdbf850930d9a79c4ea7cf320c"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p26_adder_tb.cir",
+      "size": 1036,
+      "sha256": "14937df146fed58d2c4d8e377ea982826b6cb78270c078ea5b2027b98ab6154a"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p26_adder_tb.py",
+      "size": 1575,
+      "sha256": "ea4a3d4ad6b018bbf7bd166b58595db612679d1a36bc00c3a896d4b71cf14b71"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p27_subtractor_tb.cir",
+      "size": 1078,
+      "sha256": "a917cb81b32306107b3df1589fb854d5db28e5a54e74b8358dd0b731a89cb00b"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p27_subtractor_tb.py",
+      "size": 1600,
+      "sha256": "dbc77ff5d4f453f16ab084a08d24c2d563ef8ec6fcc80e60bc4d0948a3bd76fe"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p28_schmitt_tb.cir",
+      "size": 1028,
+      "sha256": "db48a4f0c28c5104fcf4ef755785968286bb0c32cd1464836f236b93a5dafe88"
+    },
+    {
+      "path": "testbenches/analogcoder_pro_28/p28_schmitt_tb.py",
+      "size": 1367,
+      "sha256": "dd90d6a53a72061b46799db569078b69872eb1712b0809d626094aa1242b95a9"
+    },
+    {
+      "path": "tests/__init__.py",
+      "size": 33,
+      "sha256": "f47a3fd3b3cc0a0e9ccb89b45eabcd2c7df1db5a612ed414f1e9bf838484962d"
+    },
+    {
+      "path": "tests/test_acp28_reconstructed_contract.py",
+      "size": 2088,
+      "sha256": "8c3aea7343f65dbf5b8c8a9dc61520d8fb6f49878b550230775976d2f1a9abd1"
+    },
+    {
+      "path": "tests/test_acp_runner_semantics.py",
+      "size": 1463,
+      "sha256": "9891893518375fd00a56ccd45a4ffc09d883a4777e2aed4029e9541a2908dbc0"
+    },
+    {
+      "path": "tests/test_acp_semantic_metrics.py",
+      "size": 2560,
+      "sha256": "89e01f4b2b491bf74fe4839f6e1c9e283106e8b07efbd265ed2258fc7b195e82"
+    },
+    {
+      "path": "tests/test_dc_raw_hydration.py",
+      "size": 533,
+      "sha256": "032eefd5c496c3f441a4874538e0709fd41703a1939660b6d5179f79f97cd41c"
+    },
+    {
+      "path": "tests/test_llm_planning_reconstruction.py",
+      "size": 2301,
+      "sha256": "d17345bc74cee4953f18fc097aba02bbdbb8a2429234d6141432efcba1e69b6c"
+    },
+    {
+      "path": "tests/test_multimodal_client.py",
+      "size": 12079,
+      "sha256": "8cb408ee850b0cda2703dddbd2490b7439c6437d24ed2fcb982d4dd135cc7ada"
+    },
+    {
+      "path": "tests/test_native_wrdata_reconstruction.py",
+      "size": 1682,
+      "sha256": "7814754721dc5f558c3bb31ad7f29852c2f79cac00702f3c3200ade2915708c2"
+    },
+    {
+      "path": "tests/test_reconstructed_simulator_guards.py",
+      "size": 2391,
+      "sha256": "956295c1ed44bc7ed58858c46d652a7433344b6dff3d13d482df8b891fe634b2"
+    },
+    {
+      "path": "tests/test_supported_registry.py",
+      "size": 633,
+      "sha256": "92ebaf597db51c381d5216fa804ecb96bd3549766561031e328671081c396c45"
+    },
+    {
+      "path": "tests/test_verification_pipeline.py",
+      "size": 8424,
+      "sha256": "507812253355bd13dc4d3c753bcb7e2dbe0f4da949835646a773ac5879771818"
+    },
+    {
+      "path": "tests/unit/__init__.py",
+      "size": 38,
+      "sha256": "331d09ee0e4525ead3287dc22eea4cab0b49f1c54ef035aa57a9a928de7c0730"
+    },
+    {
+      "path": "tools_generate_acp28_specs.py",
+      "size": 18752,
+      "sha256": "f3acc9c45bd7b72e14d93a1e3f6e1c147d2c88066d84b3f5ec3b4876029b0d16"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_085745.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_085847.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_090027.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_090041.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_090053.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_090141.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_090320.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_090414.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_090439.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_090451.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_090605.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_090648.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_090943.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/ac_response_20260818_091000.png",
+      "size": 87782,
+      "sha256": "848a3b40271ff41b46417cfdfcf71da835cf6054ca775b57b99de67554039330"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_085745.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_085848.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_090028.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_090041.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_090053.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_090141.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_090320.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_090415.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_090440.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_090451.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_090605.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_090649.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_090944.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/fft_20260818_091000.png",
+      "size": 66003,
+      "sha256": "d40d2de824b9f164ba142aa5685fefcc3707c72446e78dd267cee310e391c6cd"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_085744.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_085847.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_090027.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_090041.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_090052.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_090141.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_090319.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_090414.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_090439.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_090451.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_090605.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_090648.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_090943.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    },
+    {
+      "path": "waveforms_test/transient_20260818_090959.png",
+      "size": 74870,
+      "sha256": "67a2d5c2ba23128c5e1bdaadf0ed3275695a24f9ef2d500e5cb3973833dca252"
+    }
+  ]
+}

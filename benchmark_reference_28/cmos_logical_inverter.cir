@@ -1,0 +1,10 @@
+* CMOS logical inverter
+Vdd vdd 0 DC 5
+Vin in 0 PULSE(0 5 0 1n 1n 0.5u 1u)
+Mp out in vdd vdd PMOS
+Mn out in 0 0 NMOS
+.model NMOS NMOS LEVEL=1 VTO=1 KP=1m
+.model PMOS PMOS LEVEL=1 VTO=-1 KP=0.5m
+.op
+.tran 1n 5u
+.end

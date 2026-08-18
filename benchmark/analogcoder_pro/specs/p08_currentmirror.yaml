@@ -1,0 +1,144 @@
+schema_version: '2.0'
+case_id: acp28-p08
+name: analogcoder_pro_p08_currentmirror
+circuit_type: current_mirror
+technology: AnalogCoder-Pro generic Level-1 benchmark models
+description: A simple NMOS constant current source with resistive load R
+provenance:
+  benchmark: AnalogCoder-Pro
+  benchmark_subset: ACP-28
+  upstream_repository: https://github.com/laiyao1/AnalogCoderPro
+  upstream_task_id: 8
+  upstream_level: Easy
+  upstream_type: CurrentMirror
+  upstream_task_description: A simple NMOS constant current source with resistive
+    load R
+  upstream_testbench_description: NA
+  official_checker:
+    path: problem_check/CurrentMirror.py
+    criterion_summary:
+    - Output current must remain approximately constant across the compliance sweep.
+    - Output current must remain above 10 uA.
+    upstream_mutates_dut: true
+    notes: Criterion semantics reconstructed from the local pinned AnalogCoder-Pro
+      checker shipped with the uploaded base.
+  dut:
+    path: benchmark/analogcoder_pro/p08_currentmirror.cir
+    sha256: 979262d6b52f240093d99cb90d214f717755a4a0dd00eb55a2cc4eb3335999f3
+    canonicalization: Uploaded ACP-28 DUT bytes preserved; embedded analyses/output
+      directives are externalized at execution.
+    topology_and_values_preserved: true
+ports:
+  input: &id001
+  - Vbias
+  output: &id002
+  - Vout
+  differential_positive: []
+  differential_negative: []
+  common_mode: []
+  supply_positive:
+  - Vdd
+  supply_negative:
+  - '0'
+  bias:
+  - Vbias
+  reference: []
+  loop_break: []
+  loop_injection: []
+  current_probe: []
+operating_conditions:
+  nominal_temperature: 25.0
+  nominal_supply: 5.0
+  process_corner: tt
+stimuli: []
+analyses:
+- id: dc_compliance
+  type: DC
+  parameters:
+    source: Vdd
+    start: 0.5
+    stop: 4.5
+    step: 0.5
+  purpose: Immutable-DUT compliance sweep using the existing supply source; avoids
+    modifying the DUT load.
+functional_requirements:
+- id: ACP_CM_STABILITY
+  description: Output current must remain approximately constant across the compliance
+    sweep.
+  metric: current_stability_delta_a
+  analysis: dc_compliance
+  operator: <
+  threshold: 1.0e-06
+  minimum: null
+  maximum: null
+  unit: A
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: adapted
+  implementation_status: executable
+  executable_metric: current_stability_delta_a
+  notes: Immutable-DUT adaptation of the official resistive-load sweep.
+- id: ACP_CM_FLOOR
+  description: Output current must remain above 10 uA.
+  metric: minimum_output_current_a
+  analysis: dc_compliance
+  operator: '>'
+  threshold: 1.0e-05
+  minimum: null
+  maximum: null
+  unit: A
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: adapted
+  implementation_status: executable
+  executable_metric: minimum_output_current_a
+  notes: Evaluated on the immutable-DUT compliance sweep.
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+    diagnostic_only: true
+    requirement_ids: []
+  current_stability_delta_a:
+    unit: A
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_CM_STABILITY
+    max: 1.0e-06
+  minimum_output_current_a:
+    unit: A
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_CM_FLOOR
+    min: 1.0e-05
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: *id001
+  output_nodes: *id002
+  temperature: 25.0
+  original_source_dc_values:
+    vdd: 5.0
+    vbias: 1.0
+measurement:
+  backend: AUTO
+  allow_fallback: true
+verification:
+  auto_select: true
+  include_tests: []
+  exclude_tests: []
+  required_policy: all
+  immutable_dut: true
+  not_evaluated_on_missing_mandatory_metric: true
+  require_full_contract_for_compliance: true
+test_requirements:
+  dc_sweep_step_v: 0.01
+test_categories:
+- dc
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.0

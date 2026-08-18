@@ -1,0 +1,139 @@
+schema_version: '2.0'
+case_id: acp28-p19
+name: analogcoder_pro_p19_mixer
+circuit_type: mixer
+technology: AnalogCoder-Pro generic Level-1 benchmark models
+description: "A Gilbert cell mixer to make Voutp - Voutn \u221D (Vrfp - Vrfn) \xD7\
+  \ (Vlop - Vlon)"
+provenance:
+  benchmark: AnalogCoder-Pro
+  benchmark_subset: ACP-28
+  upstream_repository: https://github.com/laiyao1/AnalogCoderPro
+  upstream_task_id: 19
+  upstream_level: Hard
+  upstream_type: Mixer
+  upstream_task_description: "A Gilbert cell mixer to make Voutp - Voutn \u221D (Vrfp\
+    \ - Vrfn) \xD7 (Vlop - Vlon)"
+  upstream_testbench_description: 'The testbench provides two sets of differential
+    input signals to the Gilbert Cell mixer: 1.2kHz LO signals (Vlop-Vlon) and 1kHz
+    RF signals (Vrfp-Vrfn).'
+  official_checker:
+    path: problem_check/Mixer.py
+    criterion_summary:
+    - Down-conversion IF magnitude near 200 Hz must exceed 1 mV.
+    - Up-conversion IF magnitude near 2.2 kHz must exceed 1 mV.
+    upstream_mutates_dut: false
+    notes: Criterion semantics reconstructed from the local pinned AnalogCoder-Pro
+      checker shipped with the uploaded base.
+  dut:
+    path: benchmark/analogcoder_pro/p19_mixer.cir
+    sha256: 481b17bfcecf5525e57a024d76e2d201f7c233498f7ee416de2e7b400a18acea
+    canonicalization: Uploaded ACP-28 DUT bytes preserved; embedded analyses/output
+      directives are externalized at execution.
+    topology_and_values_preserved: true
+ports:
+  input: &id001
+  - Vrfp
+  - Vrfn
+  - Vlop
+  - Vlon
+  output: &id002
+  - Voutp
+  - Voutn
+  differential_positive: []
+  differential_negative: []
+  common_mode: []
+  supply_positive:
+  - Vdd
+  supply_negative:
+  - '0'
+  bias: []
+  reference: []
+  loop_break: []
+  loop_injection: []
+  current_probe: []
+operating_conditions:
+  nominal_temperature: 25.0
+  nominal_supply: 5.0
+  process_corner: tt
+stimuli: []
+analyses:
+- id: fft_mix
+  type: TRAN
+  parameters:
+    step_time: 4.1666666666666665e-05
+    end_time: 0.02
+    start_time: 0.0
+  purpose: Mixer transient followed by FFT.
+functional_requirements:
+- id: ACP_MIX_IF_DOWN
+  description: Down-conversion IF magnitude near 200 Hz must exceed 1 mV.
+  metric: mixer_if_down_magnitude_v
+  analysis: fft_mix
+  operator: '>'
+  threshold: 0.001
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: metadata_only
+  executable_metric: null
+  notes: ''
+- id: ACP_MIX_IF_UP
+  description: Up-conversion IF magnitude near 2.2 kHz must exceed 1 mV.
+  metric: mixer_if_up_magnitude_v
+  analysis: fft_mix
+  operator: '>'
+  threshold: 0.001
+  minimum: null
+  maximum: null
+  unit: V
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: metadata_only
+  executable_metric: null
+  notes: ''
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+    diagnostic_only: true
+    requirement_ids: []
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: *id001
+  output_nodes: *id002
+  temperature: 25.0
+  original_source_dc_values:
+    vdd: 5.0
+    vbias: 1.5
+    vrfp: 2.5
+    vrfn: 2.5
+    vlop: 3.0
+    vlon: 2.0
+measurement:
+  backend: AUTO
+  allow_fallback: true
+verification:
+  auto_select: true
+  include_tests: []
+  exclude_tests: []
+  required_policy: all
+  immutable_dut: true
+  not_evaluated_on_missing_mandatory_metric: true
+  require_full_contract_for_compliance: true
+test_requirements:
+  dc_sweep_step_v: 0.01
+test_categories:
+- tran
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.0

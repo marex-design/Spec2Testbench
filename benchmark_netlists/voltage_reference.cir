@@ -1,0 +1,17 @@
+* Zener Voltage Reference Approximation
+Vin in 0 DC 10
+R1 in vref 1k
+D1 0 vref ZD
+Rload vref 0 10k
+.model ZD D BV=5.1 IBV=1m
+.op
+.dc Vin 5 12 0.5
+
+.control
+set noaskquit
+save all
+run
+.endc
+
+.end
+

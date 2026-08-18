@@ -1,0 +1,19 @@
+* Common Source Amplifier with Active Load
+Vdd vdd 0 DC 5
+Vin in 0 DC 1.5 AC 1
+M1 out in 0 0 NMOS
+M2 out bias vdd vdd PMOS
+Vbias bias 0 DC 3.5
+.model NMOS NMOS LEVEL=1 VTO=1 KP=1m LAMBDA=0.02 KF=0 AF=1
+.model PMOS PMOS LEVEL=1 VTO=-1 KP=0.5m LAMBDA=0.02 KF=0 AF=1
+.op
+.ac dec 100 10 10Meg
+
+.control
+set noaskquit
+save all
+run
+.endc
+
+.end
+

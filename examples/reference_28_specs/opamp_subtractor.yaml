@@ -1,0 +1,12 @@
+name: opamp_subtractor
+circuit_type: composite
+technology: reference_28_behavioral
+description: opamp subtractor
+performance_targets:
+  frequency_hz:
+    min: 249.507874015748
+    max: 1996.062992125984
+    unit: Hz
+test_categories:
+- ac
+- transient

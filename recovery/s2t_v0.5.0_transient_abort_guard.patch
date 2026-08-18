@@ -1,0 +1,251 @@
+--- a/spec2testbench/infrastructure/simulator/pyspice_simulator.py	2026-08-16 16:05:41.549273901 +0000
++++ b/spec2testbench/infrastructure/simulator/pyspice_simulator.py	2026-08-16 16:06:09.261720052 +0000
+@@ -302,16 +302,33 @@
+                     pvt_analysis.parameters,
+                 )
+             
+-            # Extract metrics
++            # Validate transient completeness before metric extraction.  ngspice can
++            # leave partial WRDATA data after a convergence abort.
++            transient_completion = self._transient_completion_status(simulation_results, testbench)
++            simulation_results['transient_completion'] = transient_completion
++            if transient_completion.get('requested') and transient_completion.get('complete') is False:
++                simulation_results['success'] = False
++                simulation_results['execution_status'] = ExecutionStatus.ERROR.value
++                simulation_results['error_type'] = 'transient_incomplete'
++                expected = transient_completion.get('expected_stop_s')
++                observed = transient_completion.get('observed_stop_s')
++                ratio = transient_completion.get('completion_ratio')
++                simulation_results['error_message'] = (
++                    f"Transient analysis incomplete: observed_stop={observed} s, "
++                    f"expected_stop={expected} s, completion_ratio={ratio}"
++                )
++
++            # Extract electrical metrics only from a complete successful run.
+             has_structured_results = any(
+                 simulation_results.get(key) for key in ('dc', 'ac', 'tran', 'transient', 'fourier')
+             ) or bool(simulation_results.get("native_metrics"))
+-            if result['success'] or has_structured_results:
+-                if has_structured_results:
+-                    simulation_results['success'] = True
+-                    simulation_results['execution_status'] = ExecutionStatus.SUCCESS.value
++            if simulation_results.get('success') and simulation_results.get('execution_status') == ExecutionStatus.SUCCESS.value:
+                 metrics = self.extract_metrics(simulation_results, testbench)
+                 simulation_results['metrics'] = metrics
++            elif has_structured_results:
++                # Retain partial waveform data as diagnostic evidence, but do not
++                # let it create PASS/FAIL compliance metrics.
++                simulation_results['metrics'] = {}
+             
+             return simulation_results
+             
+@@ -464,11 +481,58 @@
+         if result.get("success"):
+             return None
+         joined_errors = "\n".join(result.get("errors", []))
+-        if "timed out" in joined_errors.lower():
++        lowered = joined_errors.lower()
++        if "timed out" in lowered:
+             return "timeout"
++        if "timestep too small" in lowered or "run simulation(s) aborted" in lowered:
++            return "transient_incomplete"
+         if joined_errors:
+             return "ngspice_error"
+         return "simulation_error"
++
++    def _transient_completion_status(self, results: Dict[str, Any], testbench: TestBench) -> Dict[str, Any]:
++        """Check that a transient analysis reached its requested stop time.
++
++        ngspice may leave a partial WRDATA file after a convergence abort and
++        may even exit with return code 0.  Partial waveform evidence is useful
++        for diagnostics but must never be promoted to a scientifically valid
++        SUCCESS.
++        """
++        transient_analysis = next(
++            (analysis for analysis in testbench.analyses if analysis.type == AnalysisType.TRANSIENT),
++            None,
++        )
++        if transient_analysis is None:
++            return {"requested": False, "complete": True}
++
++        expected_stop = self._parse_spice_numeric(transient_analysis.parameters.get("end_time"))
++        if expected_stop is None or expected_stop <= 0:
++            return {"requested": True, "complete": None, "expected_stop_s": expected_stop}
++
++        transient = results.get("transient") or results.get("tran") or {}
++        try:
++            time_values = np.asarray(transient.get("time", []), dtype=float)
++        except (TypeError, ValueError):
++            time_values = np.asarray([], dtype=float)
++        finite = time_values[np.isfinite(time_values)] if time_values.size else time_values
++        if finite.size == 0:
++            return {
++                "requested": True,
++                "complete": False,
++                "expected_stop_s": float(expected_stop),
++                "observed_stop_s": None,
++                "completion_ratio": 0.0,
++            }
++
++        observed_stop = float(np.max(finite))
++        completion_ratio = observed_stop / float(expected_stop)
++        return {
++            "requested": True,
++            "complete": bool(observed_stop >= 0.99 * float(expected_stop)),
++            "expected_stop_s": float(expected_stop),
++            "observed_stop_s": observed_stop,
++            "completion_ratio": float(completion_ratio),
++        }
+     
+     def _generate_spice_deck(self, netlist_path: Path, testbench: TestBench) -> str:
+         """Generate complete SPICE deck."""
+@@ -847,7 +911,15 @@
+             all_output_lower = all_output.lower()
+             
+             success = result.returncode == 0
+-            if 'error' in all_output_lower or 'no convergence' in all_output_lower:
++            fatal_indicators = (
++                'error',
++                'no convergence',
++                'timestep too small',
++                'run simulation(s) aborted',
++                'singular matrix',
++                'fatal',
++            )
++            if any(indicator in all_output_lower for indicator in fatal_indicators):
+                 success = False
+             
+             return {
+@@ -1354,7 +1426,7 @@
+             "pyspice_required": False,
+             "measurement_source": source,
+             "measurement_command": " ".join(run_result.get("command", [])),
+-            "measurement_status": "SUCCESS" if backend != "UNAVAILABLE" and run_result.get("returncode") == 0 else "UNAVAILABLE",
++            "measurement_status": "SUCCESS" if backend != "UNAVAILABLE" and run_result.get("success") else "UNAVAILABLE",
+             "compiled_plan_sha256": compiled_plan_sha256,
+             "serialized_deck_sha256": serialized_deck_sha256,
+             "executed_file_sha256": executed_file_sha256,
+--- a/spec2testbench/application/usecases/run_verification.py	2026-08-16 05:44:20.000000000 +0000
++++ b/spec2testbench/application/usecases/run_verification.py	2026-08-16 16:06:09.263002166 +0000
+@@ -576,12 +576,17 @@
+             'measurement_requests': (testbench.metadata or {}).get('measurement_requests', []),
+         }
+ 
+-        # Treat extracted structured data as a successful simulation even if an
+-        # upstream wrapper returned a conservative success flag.
++        # Partial structured data may exist after an aborted ngspice run.
++        # Never promote an explicit ERROR/TIMEOUT to SUCCESS merely because
++        # vectors were parsed.
+         has_structured_results = any(
+             simulation_results.get(key) for key in ('dc', 'ac', 'transient', 'fourier', 'pvt')
+         ) or bool(simulation_results.get('metrics')) or bool(simulation_results.get('native_metrics'))
+-        if has_structured_results:
++        explicit_failure = str(simulation_results.get('execution_status') or '').upper() in {
++            ExecutionStatus.ERROR.value,
++            ExecutionStatus.TIMEOUT.value,
++        }
++        if has_structured_results and not explicit_failure:
+             simulation_results['success'] = True
+             simulation_results['execution_status'] = ExecutionStatus.SUCCESS.value
+ 
+--- a/tests/test_pyspice_native_backend_selection.py	2026-08-16 16:05:41.537941348 +0000
++++ b/tests/test_pyspice_native_backend_selection.py	2026-08-16 16:06:09.547300310 +0000
+@@ -202,3 +202,57 @@
+     assert extractor.extract(results, "comparator_output_separation_v") is not None
+     assert extractor.extract(results, "comparator_monotonicity_percent") == 100.0
+     assert abs(extractor.extract(results, "current_stability_delta_a") - 2.0e-7) < 1e-15
++
++
++def _tran_testbench(end_time: str = "50m") -> TestBench:
++    return TestBench(
++        name="tran_completion_tb",
++        category="tran",
++        circuit_name="demo",
++        analyses=[
++            AnalysisConfig(
++                type=AnalysisType.TRANSIENT,
++                parameters={"step_time": "10u", "end_time": end_time, "start_time": 0},
++            )
++        ],
++        measurements=[Measurement(name="output_swing_v", expression="max(vout)-min(vout)", unit="V")],
++    )
++
++
++def test_transient_completion_rejects_partial_waveform():
++    simulator = PySpiceSimulator(allow_mock=True)
++    status = simulator._transient_completion_status(
++        {"transient": {"time": [0.0, 50e-6, 99.7289e-6], "vout": [2.5, 2.2, 1.95]}},
++        _tran_testbench("50m"),
++    )
++
++    assert status["requested"] is True
++    assert status["complete"] is False
++    assert status["expected_stop_s"] == 0.05
++    assert status["observed_stop_s"] == 99.7289e-6
++    assert status["completion_ratio"] < 0.01
++
++
++def test_transient_completion_accepts_requested_horizon():
++    simulator = PySpiceSimulator(allow_mock=True)
++    status = simulator._transient_completion_status(
++        {"transient": {"time": [0.0, 0.025, 0.05], "vout": [0.0, 1.0, 0.0]}},
++        _tran_testbench("50m"),
++    )
++
++    assert status["complete"] is True
++    assert status["completion_ratio"] == 1.0
++
++
++def test_ngspice_abort_text_is_classified_as_transient_incomplete():
++    simulator = PySpiceSimulator(allow_mock=True)
++    result = {
++        "success": False,
++        "errors": [
++            'doAnalyses: TRAN: Timestep too small; time = 9.97289e-05, timestep = 1.25e-17',
++            'run simulation(s) aborted',
++        ],
++    }
++
++    assert simulator._execution_status_from_result(result) == "ERROR"
++    assert simulator._error_type_from_result(result) == "transient_incomplete"
+--- a/tests/test_verification_pipeline.py	2026-08-16 03:59:14.000000000 +0000
++++ b/tests/test_verification_pipeline.py	2026-08-16 16:06:09.563300310 +0000
+@@ -937,3 +937,38 @@
+     assert extractor.extract(results, "v_t_plus") == 3.0
+     assert extractor.extract(results, "v_t_minus") == 2.2
+     assert abs(extractor.extract(results, "hysteresis_width") - 0.8) < 1e-12
++
++
++def test_structured_partial_results_do_not_promote_explicit_error(monkeypatch):
++    pipeline = VerificationPipeline(use_llm=False, allow_mock=False)
++    pipeline.simulator = type(
++        "SimulatorStub",
++        (),
++        {
++            "is_available": True,
++            "run": lambda self, netlist_path, testbench, output_dir=None: {
++                "success": False,
++                "simulation_mode": SimulationMode.REAL.value,
++                "execution_status": ExecutionStatus.ERROR.value,
++                "error_type": "transient_incomplete",
++                "error_message": "Transient analysis incomplete",
++                "metrics": {},
++                "logs": [],
++                "errors": ["run simulation(s) aborted"],
++                "transient": {"time": [0.0, 1e-4], "vout": [2.5, 1.95]},
++            },
++        },
++    )()
++    testbench = TestBench(
++        name="partial_tran",
++        category="tran",
++        circuit_name="demo",
++        analyses=[AnalysisConfig(type=AnalysisType.TRANSIENT, parameters={"step_time": "10u", "end_time": "50m"})],
++        measurements=[],
++    )
++
++    result = pipeline._run_simulation_with_ngspice(Path("dummy.cir"), testbench)
++
++    assert result["execution_status"] == ExecutionStatus.ERROR.value
++    assert result["success"] is False
++    assert result["error_type"] == "transient_incomplete"

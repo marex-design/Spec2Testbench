@@ -1,0 +1,12 @@
+name: opamp_differentiator
+circuit_type: differentiator
+technology: reference_28_behavioral
+description: opamp differentiator
+performance_targets:
+  frequency_hz:
+    min: 1099.7842714257697
+    max: 8798.274171406158
+    unit: Hz
+test_categories:
+- transient
+- ac

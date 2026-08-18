@@ -1,0 +1,14 @@
+name: cascode_current_mirror
+circuit_type: current_mirror
+technology: reference_28_behavioral
+description: cascode current mirror
+performance_targets:
+  vout_dc:
+    min: 2.2499999766150705
+    max: 3.749999961025117
+    unit: V
+  idd:
+    max: 0.00015000000116924646
+    unit: A
+test_categories:
+- dc

@@ -1,0 +1,14 @@
+* Voltage Controlled Oscillator Approximation
+Vctrl ctrl 0 DC 1
+Bosc out 0 V = sin(2*3.14159*(1e6+1e6*V(ctrl))*time)
+Rload out 0 1k
+.tran 10n 20u
+
+.control
+set noaskquit
+save all
+run
+.endc
+
+.end
+

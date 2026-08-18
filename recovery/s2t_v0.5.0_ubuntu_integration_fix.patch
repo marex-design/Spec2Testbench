@@ -1,0 +1,128 @@
+--- a/spec2testbench/infrastructure/simulator/netlist_parser.py
++++ b/spec2testbench/infrastructure/simulator/netlist_parser.py
+@@ -157,8 +157,13 @@
+             part = parts[i]
+             if part.startswith('+'):
+                 continue
+-            if part.startswith('='):
+-                # Parameter
++            if '=' in part:
++                # SPICE instance parameter (for example W=10u or L=1u).
++                # Parameters are not electrical nodes and must never enter the
++                # LLM capability/validator node whitelist.
++                key, val = part.split('=', 1)
++                if key:
++                    params[key.upper()] = val
+                 continue
+             if part.upper() in ['DC', 'AC', 'PULSE', 'SIN', 'PWL', 'EXP', 'SFFM']:
+                 # Source function
+--- a/spec2testbench/infrastructure/testbench/llm_guided_synthesis.py
++++ b/spec2testbench/infrastructure/testbench/llm_guided_synthesis.py
+@@ -171,9 +171,16 @@
+ 
+     @classmethod
+     def inspect_text(cls, text: str, path: Optional[str] = None) -> NetlistInspectionResult:
++        # Inspect active SPICE statements only. Canonical ACP DUTs intentionally
++        # preserve upstream analyses as comments for provenance; those comments
++        # must never be mistaken for executable .OP/.AC/.TRAN/.DC directives.
++        active_text = "\n".join(
++            line for line in text.splitlines()
++            if line.strip() and not line.lstrip().startswith("*")
++        )
+         sources: List[SourceRecord] = []
+         supply_nodes: List[str] = []
+-        for match in cls.SOURCE_PATTERN.finditer(text):
++        for match in cls.SOURCE_PATTERN.finditer(active_text):
+             raw_name = match.group("name").strip()
+             name = raw_name[1:] if raw_name.lower().startswith("v") else raw_name
+             pos = match.group("pos").strip()
+@@ -193,8 +200,9 @@
+             if pos.lower().startswith("vdd") and pos not in supply_nodes:
+                 supply_nodes.append(pos)
+         analyses = []
++        active_lower = active_text.lower()
+         for token, label in ((".op", "op"), (".ac", "ac"), (".tran", "tran"), (".dc", "dc"), (".four", "fourier")):
+-            if token in text.lower():
++            if token in active_lower:
+                 analyses.append(label)
+         return NetlistInspectionResult(
+             path=path,
+@@ -483,15 +491,18 @@
+     @staticmethod
+     def _analysis_for_measurement(name: str, analyses: List[AnalysisConfig]) -> str:
+         lower = name.lower()
+-        if any(token in lower for token in ("gain", "bandwidth", "ugbw", "phase", "cmrr", "psrr")):
++        available = {analysis.type.value for analysis in analyses}
++        if any(token in lower for token in ("gain", "bandwidth", "ugbw", "phase", "cmrr", "psrr")) and "ac" in available:
+             return "ac"
+-        if any(token in lower for token in ("slew", "settling", "delay", "frequency", "startup", "hysteresis")):
++        if any(token in lower for token in ("slew", "settling", "delay", "frequency", "startup", "hysteresis")) and "tran" in available:
+             return "tran"
+-        if "thd" in lower or "sfdr" in lower:
++        if ("thd" in lower or "sfdr" in lower) and "fourier" in available:
+             return "fourier"
+-        available = {analysis.type.value for analysis in analyses}
+-        if "dc" in available:
+-            return "op"
++        # AnalysisType.DC represents both .OP and real .DC sweeps in the legacy
++        # TestBench entity. Distinguish them using the rendered directive.
++        for analysis in analyses:
++            if analysis.type.value == "dc":
++                return "op" if analysis.to_spice().strip().upper() == ".OP" else "dc"
+         return next(iter(available), "op")
+ 
+ 
+--- a/tests/integration/test_llm_stub_pipeline.py
++++ b/tests/integration/test_llm_stub_pipeline.py
+@@ -23,11 +23,11 @@
+ @pytest.mark.parametrize(
+     ("spec_path", "netlist_path", "required_metric"),
+         [
+-            ("benchmark/analogcoder_pro/specs/p07_inverter.yaml", "benchmark/analogcoder_pro/p07_inverter.cir", "operating_point"),
++            ("benchmark/analogcoder_pro/specs/p07_inverter.yaml", "benchmark/analogcoder_pro/p07_inverter.cir", "inverter_low_input_output_v"),
+             ("benchmark/analogcoder_pro/specs/p01_amplifier.yaml", "benchmark/analogcoder_pro/p01_amplifier.cir", "dc_gain_db"),
+-            ("benchmark/analogcoder_pro/specs/p10_lowpass.yaml", "benchmark/analogcoder_pro/p10_lowpass.cir", "cutoff_frequency_hz"),
+-            ("benchmark/analogcoder_pro/specs/p09_comparator.yaml", "benchmark/analogcoder_pro/p09_comparator.cir", "propagation_delay"),
+-            ("benchmark/analogcoder_pro/specs/p22_oscillator.yaml", "benchmark/analogcoder_pro/p22_oscillator.cir", "oscillator_frequency"),
++            ("benchmark/analogcoder_pro/specs/p10_lowpass.yaml", "benchmark/analogcoder_pro/p10_lowpass.cir", "lowpass_attenuation_db"),
++            ("benchmark/analogcoder_pro/specs/p09_comparator.yaml", "benchmark/analogcoder_pro/p09_comparator.cir", "comparator_output_separation_v"),
++            ("benchmark/analogcoder_pro/specs/p22_oscillator.yaml", "benchmark/analogcoder_pro/p22_oscillator.cir", "oscillation_cycle_count"),
+             ("benchmark/analogcoder_pro/specs/p28_schmitt.yaml", "benchmark/analogcoder_pro/p28_schmitt.cir", "hysteresis_width"),
+         ],
+     )
+@@ -36,9 +36,8 @@
+         pytest.skip("ngspice executable is not available")
+     specification = Specification.from_yaml(Path(spec_path))
+     specification.case_id = Path(spec_path).stem
+-    specification.performance_targets = {
+-        required_metric: specification.performance_targets[required_metric]
+-    }
++    specification = specification.project_verification_metrics([required_metric])
++    assert specification.verification_metric_names() == [required_metric]
+     deterministic_tb = FrameworkGenerator(use_llm=False).generate(specification, netlist_path=Path(netlist_path))
+ 
+     outcome = LLMGenerationService(DeterministicStubProvider()).generate_plan(
+--- /dev/null
++++ b/tests/test_netlist_parser_parameters.py
+@@ -0,0 +1,21 @@
++from pathlib import Path
++
++from spec2testbench.infrastructure.simulator.netlist_parser import NetlistParser
++
++
++def test_mos_instance_parameters_are_not_nodes():
++    parsed = NetlistParser().parse_content(
++        "M1 d g s b nmos W=10u L=1u\n.MODEL nmos NMOS (LEVEL=1)\n"
++    )
++    mos = parsed.components[0]
++    assert mos.nodes == ["d", "g", "s", "b"]
++    assert mos.model == "nmos"
++    assert mos.parameters == {"W": "10u", "L": "1u"}
++    assert all("=" not in node for node in parsed.nodes)
++
++
++def test_acp_p07_node_whitelist_contains_no_instance_parameters():
++    parsed = NetlistParser().parse(Path("benchmark/analogcoder_pro/p07_inverter.cir"))
++    assert "Vout" in parsed.nodes
++    assert "Vin" in parsed.nodes
++    assert all("=" not in node for node in parsed.nodes)

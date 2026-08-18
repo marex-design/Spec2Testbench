@@ -1,0 +1,15 @@
+name: gilbert_cell_mixer
+circuit_type: mixer
+technology: reference_28_behavioral
+description: gilbert cell mixer
+performance_targets:
+  frequency_hz:
+    min: 249950.07987220446
+    max: 1999600.6389776357
+    unit: Hz
+  thd_percent:
+    max: 5.0
+    unit: '%'
+test_categories:
+- transient
+- spectral

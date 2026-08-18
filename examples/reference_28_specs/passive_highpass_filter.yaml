@@ -1,0 +1,11 @@
+name: passive_highpass_filter
+circuit_type: high_pass_filter
+technology: reference_28_behavioral
+description: passive highpass filter
+performance_targets:
+  thd_percent:
+    max: 5.0
+    unit: '%'
+test_categories:
+- ac
+- spectral

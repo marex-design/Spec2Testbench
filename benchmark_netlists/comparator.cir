@@ -1,0 +1,15 @@
+* Ideal Comparator
+Vin_p inp 0 PULSE(0 2 0 1u 1u 1m 2m)
+Vref inn 0 DC 1
+Ecmp out 0 inp inn 1e6
+Rload out 0 10k
+.tran 1u 5m
+
+.control
+set noaskquit
+save all
+run
+.endc
+
+.end
+

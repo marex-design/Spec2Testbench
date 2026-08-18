@@ -1,0 +1,150 @@
+schema_version: '2.0'
+case_id: acp28-p10
+name: analogcoder_pro_p10_lowpass
+circuit_type: low_pass_filter
+technology: AnalogCoder-Pro generic Level-1 benchmark models
+description: a passive low-pass filter
+provenance:
+  benchmark: AnalogCoder-Pro
+  benchmark_subset: ACP-28
+  upstream_repository: https://github.com/laiyao1/AnalogCoderPro
+  upstream_task_id: 10
+  upstream_level: Hard
+  upstream_type: LowPass
+  upstream_task_description: a passive low-pass filter
+  upstream_testbench_description: The testbench applies a 1Hz-1GHz frequency sweep
+    signal to Vin.
+  official_checker:
+    path: problem_check/LowPass.py
+    criterion_summary:
+    - High-frequency attenuation relative to low-frequency gain must exceed 2 dB.
+    - Low-pass response must be at least 90% monotonically decreasing.
+    upstream_mutates_dut: false
+    notes: Criterion semantics reconstructed from the local pinned AnalogCoder-Pro
+      checker shipped with the uploaded base.
+  dut:
+    path: benchmark/analogcoder_pro/p10_lowpass.cir
+    sha256: 6051b20abdae27ed489e01671145745fc4b1a3d2d77cb7da7a3929cf5355651c
+    canonicalization: Uploaded ACP-28 DUT bytes preserved; embedded analyses/output
+      directives are externalized at execution.
+    topology_and_values_preserved: true
+ports:
+  input: &id001
+  - Vin
+  output: &id002
+  - Vout
+  differential_positive: []
+  differential_negative: []
+  common_mode: []
+  supply_positive: []
+  supply_negative:
+  - '0'
+  bias: []
+  reference: []
+  loop_break: []
+  loop_injection: []
+  current_probe: []
+operating_conditions:
+  nominal_temperature: 25.0
+  nominal_supply: 5.0
+  process_corner: tt
+stimuli:
+- id: ac_input
+  kind: AC
+  source: Vin
+  node_positive: Vin
+  node_negative: '0'
+  parameters:
+    magnitude: 1.0
+    phase: 0
+    dc_value: 2.5
+  purpose: Official filter AC excitation.
+analyses:
+- id: ac_filter
+  type: AC
+  parameters:
+    sweep_type: dec
+    points_per_decade: 100
+    start_freq: 1.0
+    stop_freq: 1000000000.0
+  purpose: Filter magnitude response.
+functional_requirements:
+- id: ACP_LP_ATTENUATION
+  description: High-frequency attenuation relative to low-frequency gain must exceed
+    2 dB.
+  metric: lowpass_attenuation_db
+  analysis: ac_filter
+  operator: '>'
+  threshold: 2.0
+  minimum: null
+  maximum: null
+  unit: dB
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: executable
+  executable_metric: lowpass_attenuation_db
+  notes: ''
+- id: ACP_LP_MONOTONIC
+  description: Low-pass response must be at least 90% monotonically decreasing.
+  metric: lowpass_monotonicity_percent
+  analysis: ac_filter
+  operator: '>='
+  threshold: 90.0
+  minimum: null
+  maximum: null
+  unit: '%'
+  mandatory: true
+  criterion_source: official_checker
+  equivalence: exact
+  implementation_status: executable
+  executable_metric: lowpass_monotonicity_percent
+  notes: ''
+performance_targets:
+  operating_point:
+    min: 0.0
+    max: 5.0
+    unit: V
+    diagnostic_only: true
+    requirement_ids: []
+  lowpass_attenuation_db:
+    unit: dB
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_LP_ATTENUATION
+    min: 2.0
+  lowpass_monotonicity_percent:
+    unit: '%'
+    diagnostic_only: false
+    requirement_ids:
+    - ACP_LP_MONOTONIC
+    min: 90.0
+input_conditions:
+  vdd: 5.0
+  vss: 0.0
+  vcm: 2.5
+  input_nodes: *id001
+  output_nodes: *id002
+  temperature: 25.0
+  original_source_dc_values:
+    vin: 1.0
+measurement:
+  backend: AUTO
+  allow_fallback: true
+verification:
+  auto_select: true
+  include_tests: []
+  exclude_tests: []
+  required_policy: all
+  immutable_dut: true
+  not_evaluated_on_missing_mandatory_metric: true
+  require_full_contract_for_compliance: true
+test_requirements:
+  dc_sweep_step_v: 0.01
+test_categories:
+- ac
+pvt_config:
+  corners:
+  - tt
+  temperature_range: commercial
+  supply_variation: 0.0

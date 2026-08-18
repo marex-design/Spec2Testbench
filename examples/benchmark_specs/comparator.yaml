@@ -1,0 +1,9 @@
+name: "comparator"
+circuit_type: "comparator"
+technology: "benchmark_behavioral"
+performance_targets:
+  propagation_delay_s:
+    max: 1e-6
+    unit: "s"
+test_categories:
+  - "transient"

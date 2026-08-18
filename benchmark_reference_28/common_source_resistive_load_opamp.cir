@@ -1,0 +1,13 @@
+* Common-source op-amp with resistive loads
+Vdd vdd 0 DC 5
+Vin_p inp 0 AC 0.5
+Vin_n inn 0 AC -0.5
+M1 outp inp tail 0 NMOS
+M2 outn inn tail 0 NMOS
+R1 vdd outp 20k
+R2 vdd outn 20k
+Itail tail 0 DC 200u
+.model NMOS NMOS LEVEL=1 VTO=1 KP=1m
+.op
+.ac dec 100 10 100Meg
+.end

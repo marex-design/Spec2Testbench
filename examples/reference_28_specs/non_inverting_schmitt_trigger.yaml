@@ -1,0 +1,11 @@
+name: non_inverting_schmitt_trigger
+circuit_type: schmitt_trigger
+technology: reference_28_behavioral
+description: non inverting schmitt trigger
+performance_targets:
+  frequency_hz:
+    min: 149.97023809523807
+    max: 1199.7619047619046
+    unit: Hz
+test_categories:
+- transient

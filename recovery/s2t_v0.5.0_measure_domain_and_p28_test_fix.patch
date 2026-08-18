@@ -1,0 +1,97 @@
+--- a/spec2testbench/infrastructure/simulator/pyspice_simulator.py
++++ b/spec2testbench/infrastructure/simulator/pyspice_simulator.py
+@@ -5,20 +5,73 @@
+         input_node = measurement_context.get("input_node", "vin")
+         output_node = measurement_context.get("output_node", "vout")
+         output_threshold = measurement_context.get("output_threshold", 2.5)
++
++        # Native .meas directives are auxiliary evidence. They must never
++        # reference a point outside the analysis domain, otherwise ngspice
++        # reports a real error even when the WRDATA evidence is valid.
++        dc_analysis = next(
++            (analysis for analysis in testbench.analyses if analysis.type == AnalysisType.DC),
++            None,
++        )
++        ac_analysis = next(
++            (analysis for analysis in testbench.analyses if analysis.type == AnalysisType.AC),
++            None,
++        )
++
++        dc_start = 0.0
++        dc_stop = 0.0
++        dc_is_sweep = False
++        if dc_analysis is not None:
++            try:
++                dc_start = float(dc_analysis.parameters.get("start", 0.0))
++                dc_stop = float(dc_analysis.parameters.get("stop", dc_start))
++                dc_is_sweep = bool(dc_analysis.parameters.get("force_sweep")) or dc_start != dc_stop
++            except (TypeError, ValueError):
++                dc_start = 0.0
++                dc_stop = 0.0
++                dc_is_sweep = False
++
++        ac_measure_frequency = 1.0
++        if ac_analysis is not None:
++            try:
++                candidate = float(
++                    ac_analysis.parameters.get(
++                        "start_freq",
++                        ac_analysis.parameters.get("frequency_start_hz", 1.0),
++                    )
++                )
++                if candidate > 0:
++                    ac_measure_frequency = candidate
++            except (TypeError, ValueError):
++                pass
++
+         for measurement in testbench.measurements:
+             name = measurement.name
+             if required_metrics and name not in required_metrics:
+                 continue
+             if name in {"operating_point", "vout_dc"}:
+-                commands.append(f".meas dc operating_point FIND v({output_node}) AT=0")
+-                commands.append(f".meas dc vout_dc FIND v({output_node}) AT=0")
++                # A real DC sweep is hydrated from WRDATA. Do not inject an
++                # AT=0 measure that may lie outside the sweep.
++                if dc_is_sweep:
++                    continue
++                commands.append(f".meas dc operating_point FIND v({output_node}) AT={dc_start:g}")
++                commands.append(f".meas dc vout_dc FIND v({output_node}) AT={dc_start:g}")
+             elif name in {"quiescent_current", "idd"}:
+-                commands.append(".meas dc quiescent_current FIND i(vdd) AT=0")
+-                commands.append(".meas dc idd FIND i(vdd) AT=0")
++                # Current-mirror compliance tests use the full supply-current
++                # waveform from WRDATA. A point measure is both redundant and
++                # unsafe when zero is outside the sweep.
++                if dc_is_sweep:
++                    continue
++                commands.append(f".meas dc quiescent_current FIND i(vdd) AT={dc_start:g}")
++                commands.append(f".meas dc idd FIND i(vdd) AT={dc_start:g}")
+             elif name == "power":
+                 commands.append(".meas dc power param='abs(v(vdd)*i(vdd))'")
+             elif name in {"dc_gain", "dc_gain_db"}:
+-                commands.append(f".meas ac vin_mag FIND vm({input_node}) AT=1")
+-                commands.append(f".meas ac vout_mag FIND vm({output_node}) AT=1")
++                commands.append(
++                    f".meas ac vin_mag FIND vm({input_node}) AT={ac_measure_frequency:g}"
++                )
++                commands.append(
++                    f".meas ac vout_mag FIND vm({output_node}) AT={ac_measure_frequency:g}"
++                )
+                 commands.append(".meas ac dc_gain_db param='20*log10(vout_mag/vin_mag)'")
+             elif name == "startup_amplitude":
+--- a/tests/integration/test_llm_stub_pipeline.py
++++ b/tests/integration/test_llm_stub_pipeline.py
+@@ -1,3 +1,12 @@
+         report = pipeline.verify(specification, netlist_path=Path(netlist_path), simulation_results=simulation_results)
+ 
++        # p28 is a deliberate negative integration case: ngspice aborts the
++        # transient with "timestep too small" and the hardened simulator must
++        # preserve that as TRANSIENT_INCOMPLETE instead of promoting partial
++        # WRDATA to SUCCESS.
++        if Path(spec_path).stem == "p28_schmitt":
++            assert report.execution_status.value == "ERROR"
++            assert simulation_results.get("error_type") == "transient_incomplete"
++            return
++
+         assert report.execution_status.value == "SUCCESS"
