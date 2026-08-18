@@ -328,6 +328,126 @@ def deepseek_plan(
     raise typer.Exit(0 if outcome.validation['status']=="VALID" else 1)
 
 
+@app.command("deepseek-verify")
+def deepseek_verify(
+    specs: Path = typer.Option(..., "--specs", "-s", help="Strict schema-v2 specification YAML"),
+    netlist: Path = typer.Option(..., "--netlist", "-n", help="Immutable DUT SPICE netlist"),
+    output: Path = typer.Option(Path("results/deepseek_h1_verify"), "--output", "-o", help="Hybrid evidence output directory"),
+    model: str = typer.Option("deepseek-v4-pro", "--model", help="deepseek-v4-pro or deepseek-v4-flash"),
+    max_plan_retries: int = typer.Option(1, "--max-plan-retries", min=0, max=3),
+    thinking: bool = typer.Option(False, "--thinking/--no-thinking", help="Enable DeepSeek thinking mode for planning"),
+    ngspice_path: Optional[str] = typer.Option(None, "--ngspice-path", help="Explicit ngspice executable"),
+    timeout: float = typer.Option(300.0, "--timeout", help="ngspice timeout in seconds"),
+):
+    """H1.2: live DeepSeek plan, deterministic validation/compilation, real ngspice, deterministic verdict."""
+    import os
+    import hashlib
+    from datetime import datetime, timezone
+    from ...infrastructure.llm.deepseek_plan_provider import DeepSeekPlanProvider
+    from ...infrastructure.testbench.llm_guided_synthesis import FrameworkGenerator
+    from ...application.services.hybrid_verification_service import HybridVerificationService
+
+    if not specs.exists() or not netlist.exists():
+        console.print("[red]Specs and immutable DUT netlist must both exist.[/red]")
+        raise typer.Exit(2)
+    if not os.getenv("DEEPSEEK_API_KEY"):
+        console.print("[red]DEEPSEEK_API_KEY is not set in this shell.[/red]")
+        raise typer.Exit(2)
+
+    specification = Specification.from_yaml(specs)
+    if not specification.is_v2:
+        console.print("[red]H1.2 requires strict schema v2.[/red]")
+        raise typer.Exit(2)
+
+    deterministic_seed = FrameworkGenerator().build_plan(specification)
+    provider_obj = DeepSeekPlanProvider(model=model, thinking=thinking)
+    service = HybridVerificationService(
+        provider_obj,
+        max_plan_retries=max_plan_retries,
+        ngspice_path=ngspice_path,
+        timeout_seconds=timeout,
+    )
+    outcome = service.run(
+        specification,
+        netlist,
+        output,
+        deterministic_seed.model_dump(mode="json"),
+    )
+
+    simulation = outcome.simulation_result or {}
+    criterion_rows = outcome.criteria_dicts()
+    criterion_metrics = {
+        row["metric"]: row["measured_value"]
+        for row in criterion_rows
+        if row.get("measured_value") is not None
+    }
+    compiled_summary = None
+    if outcome.compiled is not None:
+        tb = outcome.compiled.testbench
+        compiled_summary = {
+            "name": tb.name,
+            "analysis_count": len(tb.analyses),
+            "measurement_names": [m.name for m in tb.measurements],
+            "measurement_requests": outcome.compiled.measurement_requests,
+            "compiled_from_llm_plan": bool(tb.metadata.get("compiled_from_llm_plan")),
+        }
+
+    artifact = {
+        "experiment": "H1_DEEPSEEK_SPICE_SMOKE",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "case_id": specification.case_id,
+        "specification_sha256": specification.sha256(),
+        "netlist_sha256": hashlib.sha256(netlist.read_bytes()).hexdigest(),
+        "deterministic_seed_plan": deterministic_seed.model_dump(mode="json"),
+        "raw_response": outcome.plan_outcome.raw_response,
+        "parsed_plan": outcome.plan_outcome.parsed_plan.model_dump(mode="json") if outcome.plan_outcome.parsed_plan else None,
+        "validation": outcome.plan_outcome.validation,
+        "repair_history": outcome.plan_outcome.repair_history,
+        "provider_metadata": outcome.plan_outcome.provider_metadata,
+        "contract_gate": outcome.contract_gate,
+        "compiled_testbench": compiled_summary,
+        "simulation": {
+            "execution_status": simulation.get("execution_status"),
+            "success": bool(simulation.get("success")),
+            "simulation_mode": simulation.get("simulation_mode"),
+            "error_type": simulation.get("error_type"),
+            "error_message": simulation.get("error_message"),
+            "artifact_dir": simulation.get("artifact_dir"),
+            "executed_deck_path": simulation.get("executed_deck_path"),
+            "metrics": simulation.get("metrics", {}),
+            "native_metrics": simulation.get("native_metrics", {}),
+            "criterion_metrics": criterion_metrics,
+        },
+        "criteria": criterion_rows,
+        "compliance_status": outcome.compliance_status,
+        "immutable_inputs": outcome.immutable_inputs,
+        "safety_boundary": {
+            "dut_immutable": bool(outcome.immutable_inputs.get("dut_unchanged", True)),
+            "thresholds_immutable": bool(outcome.immutable_inputs.get("specification_unchanged", True)),
+            "verdict_deterministic_only": True,
+            "spice_executed": outcome.spice_executed,
+            "mock_allowed": False,
+        },
+    }
+    output.mkdir(parents=True, exist_ok=True)
+    evidence_file = output / "hybrid_verification_evidence.json"
+    evidence_file.write_text(json.dumps(artifact, indent=2, default=str) + "\n", encoding="utf-8")
+
+    console.print(f"Plan validation: {outcome.plan_outcome.validation.get('status')}")
+    console.print(f"Contract gate: {outcome.contract_gate.get('status')}")
+    console.print(f"SPICE: {simulation.get('execution_status') or 'NOT_RUN'}")
+    console.print(f"Compliance: {outcome.compliance_status}")
+    console.print(f"Model: {outcome.plan_outcome.provider_metadata.get('response_model') or model}")
+    console.print(f"Evidence: {evidence_file}")
+
+    ok = (
+        outcome.plan_outcome.validation.get("status") == "VALID"
+        and outcome.contract_gate.get("status") == "VALID"
+        and simulation.get("execution_status") == "SUCCESS"
+    )
+    raise typer.Exit(0 if ok else 1)
+
+
 @app.command()
 def diagnose(
     waveform: Path = typer.Option(..., "--waveform", "-w", help="Path to waveform image (PNG)"),
