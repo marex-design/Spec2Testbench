@@ -1,0 +1,365 @@
+{
+  "experiment": "H1_DEEPSEEK_SPICE_SMOKE",
+  "timestamp_utc": "2026-08-18T11:56:12.127744+00:00",
+  "case_id": "acp28-p06",
+  "specification_sha256": "f9ee31569b10ce48dea90c3baf01e96e22a861d3b174e1649bd8a2962c8677dd",
+  "netlist_sha256": "4169486f35384c778e8a8179bc7adb6124d4d1305cec48c76c01cf746b0d355f",
+  "deterministic_seed_plan": {
+    "case_id": "acp28-p06",
+    "analysis_type": "DC",
+    "provider_mode": "DETERMINISTIC",
+    "scientific_llm_evidence": false,
+    "knowledge_version": null,
+    "knowledge_bundle_sha256": null,
+    "stimuli": [
+      {
+        "source_name": "Vin",
+        "target_node": "Vin",
+        "reference_node": "0",
+        "stimulus_type": "DC",
+        "parameters": {
+          "start": 0.0,
+          "stop": 5.0,
+          "step": 0.01
+        }
+      }
+    ],
+    "observed_nodes": [
+      "Vout"
+    ],
+    "measurements": [
+      {
+        "metric_name": "inverter_high_input_output_v",
+        "analysis_type": "DC",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "expected_unit": "V",
+        "backend_preference": "NGSPICE_WRDATA",
+        "measurement_parameters": {}
+      }
+    ],
+    "simulation_parameters": {
+      "start_time_s": null,
+      "stop_time_s": null,
+      "time_step_s": null,
+      "frequency_start_hz": null,
+      "frequency_stop_hz": null,
+      "points_per_decade": null,
+      "dc_source": "Vin",
+      "dc_start": 0.0,
+      "dc_stop": 5.0,
+      "dc_step": 0.01
+    },
+    "concise_rationale": "Deterministic netlist-aware plan generated from the frozen verification contract."
+  },
+  "raw_response": {
+    "case_id": "acp28-p06",
+    "analysis_type": "DC",
+    "concise_rationale": "Plan for DC inverter characterization; metrics sampled from DC sweep.",
+    "knowledge_bundle_sha256": null,
+    "knowledge_version": null,
+    "measurements": [
+      {
+        "metric_name": "inverter_low_input_output_v",
+        "analysis_type": "DC",
+        "backend_preference": "NGSPICE_WRDATA",
+        "expected_unit": "V",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "measurement_parameters": {
+          "sweep_value": 0.0
+        }
+      },
+      {
+        "metric_name": "inverter_high_input_output_v",
+        "analysis_type": "DC",
+        "backend_preference": "NGSPICE_WRDATA",
+        "expected_unit": "V",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "measurement_parameters": {
+          "sweep_value": 5.0
+        }
+      },
+      {
+        "metric_name": "inverter_output_separation_v",
+        "analysis_type": "DC",
+        "backend_preference": "NGSPICE_WRDATA",
+        "expected_unit": "V",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "measurement_parameters": {}
+      }
+    ],
+    "observed_nodes": [
+      "Vout"
+    ],
+    "simulation_parameters": {
+      "dc_source": "Vin",
+      "dc_start": 0.0,
+      "dc_step": 0.01,
+      "dc_stop": 5.0,
+      "frequency_start_hz": null,
+      "frequency_stop_hz": null,
+      "points_per_decade": null,
+      "start_time_s": null,
+      "stop_time_s": null,
+      "time_step_s": null
+    },
+    "stimuli": [
+      {
+        "source_name": "Vin",
+        "target_node": "Vin",
+        "stimulus_type": "DC",
+        "reference_node": "0",
+        "parameters": {
+          "start": 0.0,
+          "step": 0.01,
+          "stop": 5.0
+        }
+      }
+    ]
+  },
+  "parsed_plan": {
+    "case_id": "acp28-p06",
+    "analysis_type": "DC",
+    "provider_mode": "DEEPSEEK_LIVE",
+    "scientific_llm_evidence": true,
+    "knowledge_version": null,
+    "knowledge_bundle_sha256": null,
+    "stimuli": [
+      {
+        "source_name": "Vin",
+        "target_node": "Vin",
+        "reference_node": "0",
+        "stimulus_type": "DC",
+        "parameters": {
+          "start": 0.0,
+          "step": 0.01,
+          "stop": 5.0
+        }
+      }
+    ],
+    "observed_nodes": [
+      "Vout"
+    ],
+    "measurements": [
+      {
+        "metric_name": "inverter_low_input_output_v",
+        "analysis_type": "DC",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "expected_unit": "V",
+        "backend_preference": "NGSPICE_WRDATA",
+        "measurement_parameters": {
+          "sweep_value": 0.0
+        }
+      },
+      {
+        "metric_name": "inverter_high_input_output_v",
+        "analysis_type": "DC",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "expected_unit": "V",
+        "backend_preference": "NGSPICE_WRDATA",
+        "measurement_parameters": {
+          "sweep_value": 5.0
+        }
+      },
+      {
+        "metric_name": "inverter_output_separation_v",
+        "analysis_type": "DC",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "expected_unit": "V",
+        "backend_preference": "NGSPICE_WRDATA",
+        "measurement_parameters": {}
+      }
+    ],
+    "simulation_parameters": {
+      "start_time_s": null,
+      "stop_time_s": null,
+      "time_step_s": null,
+      "frequency_start_hz": null,
+      "frequency_stop_hz": null,
+      "points_per_decade": null,
+      "dc_source": "Vin",
+      "dc_start": 0.0,
+      "dc_stop": 5.0,
+      "dc_step": 0.01
+    },
+    "concise_rationale": "Plan for DC inverter characterization; metrics sampled from DC sweep."
+  },
+  "validation": {
+    "status": "VALID",
+    "issues": [],
+    "expected_case_id": "acp28-p06",
+    "specification_sha256": "f9ee31569b10ce48dea90c3baf01e96e22a861d3b174e1649bd8a2962c8677dd"
+  },
+  "repair_history": [],
+  "provider_metadata": {
+    "provider": "deepseek",
+    "provider_mode": "DEEPSEEK_LIVE",
+    "prompt_version": "h1-plan-v1",
+    "requested_model": "deepseek-v4-flash",
+    "response_model": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "thinking": false,
+    "timestamp_utc": "2026-08-18T11:56:11.739780+00:00",
+    "request_sha256": "5cc4b9e5b2914cb7ad7f5905b1ba2e97bcbfd23751daf73b3dae34adfdfa7ae9",
+    "response_sha256": "593483fd572903f0e5d5829efa4204725eab8972ef59fc6e5c0a7eeb7e6da8d8",
+    "usage": {
+      "prompt_tokens": 2660,
+      "completion_tokens": 504,
+      "total_tokens": 3164
+    }
+  },
+  "contract_gate": {
+    "status": "VALID",
+    "issues": [],
+    "required_executable_metrics": [
+      "inverter_high_input_output_v",
+      "inverter_low_input_output_v",
+      "inverter_output_separation_v"
+    ],
+    "planned_metrics": [
+      "inverter_high_input_output_v",
+      "inverter_low_input_output_v",
+      "inverter_output_separation_v"
+    ],
+    "required_analysis_types": [
+      "DC"
+    ],
+    "plan_analysis_type": "DC"
+  },
+  "compiled_testbench": {
+    "name": "acp28-p06_llm_compiled",
+    "analysis_count": 1,
+    "measurement_names": [
+      "inverter_low_input_output_v",
+      "inverter_high_input_output_v",
+      "inverter_output_separation_v"
+    ],
+    "measurement_requests": [
+      {
+        "metric_name": "inverter_low_input_output_v",
+        "analysis_type": "DC",
+        "backend_preference": "NGSPICE_WRDATA",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "expected_unit": "V"
+      },
+      {
+        "metric_name": "inverter_high_input_output_v",
+        "analysis_type": "DC",
+        "backend_preference": "NGSPICE_WRDATA",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "expected_unit": "V"
+      },
+      {
+        "metric_name": "inverter_output_separation_v",
+        "analysis_type": "DC",
+        "backend_preference": "NGSPICE_WRDATA",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "expected_unit": "V"
+      }
+    ],
+    "compiled_from_llm_plan": true
+  },
+  "simulation": {
+    "execution_status": "SUCCESS",
+    "success": true,
+    "simulation_mode": "REAL",
+    "error_type": null,
+    "error_message": null,
+    "artifact_dir": "results/h1_p06_deepseek_verify/simulation",
+    "executed_deck_path": "results/h1_p06_deepseek_verify/simulation/executed_testbench.ckt",
+    "metrics": {
+      "vout_dc": 0.0573078657,
+      "operating_point": 0.0573078657,
+      "mean_current_a": 0.0,
+      "supply_current_a": 4.94269213e-05,
+      "quiescent_current": 0.0,
+      "idd": 0.0
+    },
+    "native_metrics": {},
+    "criterion_metrics": {
+      "inverter_high_input_output_v": 0.0573078657,
+      "inverter_low_input_output_v": 4.9999995,
+      "inverter_output_separation_v": 4.9426916343
+    }
+  },
+  "criteria": [
+    {
+      "case_id": "acp28-p06",
+      "requirement_id": "ACP_INV_HIGH",
+      "metric": "inverter_high_input_output_v",
+      "analysis": "dc_logic",
+      "implementation_status": "executable",
+      "criterion_status": "PASS",
+      "measured_value": 0.0573078657,
+      "unit": "V",
+      "operator": "<=",
+      "threshold": 2.5,
+      "minimum": null,
+      "maximum": null,
+      "criterion_source": "official_checker",
+      "equivalence": "exact",
+      "message": "inverter_high_input_output_v=0.0573078657 V -> PASS"
+    },
+    {
+      "case_id": "acp28-p06",
+      "requirement_id": "ACP_INV_LOW",
+      "metric": "inverter_low_input_output_v",
+      "analysis": "dc_logic",
+      "implementation_status": "executable",
+      "criterion_status": "PASS",
+      "measured_value": 4.9999995,
+      "unit": "V",
+      "operator": ">=",
+      "threshold": 2.5,
+      "minimum": null,
+      "maximum": null,
+      "criterion_source": "official_checker",
+      "equivalence": "exact",
+      "message": "inverter_low_input_output_v=4.9999995 V -> PASS"
+    },
+    {
+      "case_id": "acp28-p06",
+      "requirement_id": "ACP_INV_SEPARATION",
+      "metric": "inverter_output_separation_v",
+      "analysis": "dc_logic",
+      "implementation_status": "executable",
+      "criterion_status": "PASS",
+      "measured_value": 4.9426916343,
+      "unit": "V",
+      "operator": ">=",
+      "threshold": 1.0,
+      "minimum": null,
+      "maximum": null,
+      "criterion_source": "official_checker",
+      "equivalence": "exact",
+      "message": "inverter_output_separation_v=4.9426916343 V -> PASS"
+    }
+  ],
+  "compliance_status": "COMPLIANT",
+  "immutable_inputs": {
+    "specification_sha256_before": "f9ee31569b10ce48dea90c3baf01e96e22a861d3b174e1649bd8a2962c8677dd",
+    "netlist_sha256_before": "4169486f35384c778e8a8179bc7adb6124d4d1305cec48c76c01cf746b0d355f",
+    "expected_netlist_sha256": "4169486f35384c778e8a8179bc7adb6124d4d1305cec48c76c01cf746b0d355f",
+    "dut_hash_matches_frozen_spec": true,
+    "specification_sha256_after": "f9ee31569b10ce48dea90c3baf01e96e22a861d3b174e1649bd8a2962c8677dd",
+    "netlist_sha256_after": "4169486f35384c778e8a8179bc7adb6124d4d1305cec48c76c01cf746b0d355f",
+    "specification_unchanged": true,
+    "dut_unchanged": true
+  },
+  "safety_boundary": {
+    "dut_immutable": true,
+    "thresholds_immutable": true,
+    "verdict_deterministic_only": true,
+    "spice_executed": true,
+    "mock_allowed": false
+  }
+}
