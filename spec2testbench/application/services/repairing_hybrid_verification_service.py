@@ -90,6 +90,7 @@ class RepairingHybridVerificationService:
             "none",
             "validator_unknown_node_once",
             "contract_missing_metric_once",
+            "spice_invalid_ac_start_once",
         }
         if fault_injection not in allowed_faults:
             raise ValueError(
@@ -214,6 +215,24 @@ class RepairingHybridVerificationService:
                 "stage": "contract_gate",
                 "description": "Drop one executable metric from attempt 0 only.",
                 "removed_metric": removed,
+            }
+        if self.fault_injection == "spice_invalid_ac_start_once":
+            if mutated.analysis_type.value != "AC":
+                raise RuntimeError(
+                    "spice_invalid_ac_start_once requires an AC verification plan"
+                )
+            original = mutated.simulation_parameters.frequency_start_hz
+            mutated.simulation_parameters.frequency_start_hz = 0.0
+            return mutated, {
+                "fault_id": self.fault_injection,
+                "stage": "spice",
+                "description": (
+                    "Set AC start frequency to 0 Hz on attempt 0 only. "
+                    "The structural validator and contract gate intentionally do not "
+                    "repair this; ngspice must expose the execution failure."
+                ),
+                "original_frequency_start_hz": original,
+                "injected_frequency_start_hz": 0.0,
             }
         return mutated, None
 

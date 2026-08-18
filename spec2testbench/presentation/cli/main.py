@@ -461,7 +461,7 @@ def deepseek_repair_verify(
     inject_fault: str = typer.Option(
         "none",
         "--inject-fault",
-        help="Controlled H1.3 fault: none, validator_unknown_node_once, contract_missing_metric_once",
+        help="Controlled H1.3 fault: none, validator_unknown_node_once, contract_missing_metric_once, spice_invalid_ac_start_once",
     ),
 ):
     """H1.3: controlled DeepSeek -> validation -> SPICE -> feedback -> repair loop."""

@@ -224,3 +224,41 @@ def test_controlled_contract_fault_is_applied_once_then_repaired(tmp_path):
     assert out.attempts[0]["repair_trigger"] == "contract_gate_rejection"
     assert out.attempts[1]["fault_injection"] is None
     assert simulator.calls == 1
+
+
+
+def test_controlled_spice_fault_reaches_spice_then_repairs(tmp_path):
+    spec, netlist, seed, plan = p10_context()
+    provider = SequenceProvider([
+        plan.model_dump(mode="json"),
+        plan.model_dump(mode="json"),
+    ])
+    simulator = SequenceSimulator([
+        {
+            "success": False,
+            "execution_status": "ERROR",
+            "simulation_mode": "REAL",
+            "error_type": "ngspice_error",
+            "error_message": "AC start frequency must be greater than zero",
+            "metrics": {},
+            "native_metrics": {},
+        },
+        success_result(),
+    ])
+    out = RepairingHybridVerificationService(
+        provider,
+        simulator=simulator,
+        max_retries=2,
+        fault_injection="spice_invalid_ac_start_once",
+    ).run(spec, netlist, tmp_path, seed.model_dump(mode="json"))
+
+    assert out.stopping_condition == "verification_success"
+    assert len(out.attempts) == 2
+    assert out.attempts[0]["validation_status"] == "VALID"
+    assert out.attempts[0]["contract_gate_status"] == "VALID"
+    assert out.attempts[0]["spice_execution_status"] == "ERROR"
+    assert out.attempts[0]["repair_trigger"] == "spice_execution_error"
+    assert out.attempts[0]["fault_injection"]["stage"] == "spice"
+    assert out.attempts[1]["incoming_repair_trigger"] == "spice_execution_error"
+    assert out.attempts[1]["spice_execution_status"] == "SUCCESS"
+    assert simulator.calls == 2

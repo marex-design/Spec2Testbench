@@ -117,10 +117,25 @@ class PySpiceSimulator(ICircuitSimulator):
         (artifact_dir/"ngspice_stderr.txt").write_text("\n".join(run_result.get("errors",[])),encoding="utf-8")
         parsed=self._parse_results(raw,testbench)
         self._hydrate_results_from_vectors(parsed,testbench,vectors_path)
-        parsed.update({"logs":run_result.get("logs",[]),"errors":run_result.get("errors",[]),
-                       "success":bool(run_result.get("success")),"simulation_mode":SimulationMode.REAL.value,
-                       "execution_status":ExecutionStatus.SUCCESS.value if run_result.get("success") else ExecutionStatus.ERROR.value,
-                       "artifact_dir":str(artifact_dir),"executed_deck_path":str(executed)})
+        parsed.update({
+            "logs": run_result.get("logs", []),
+            "errors": run_result.get("errors", []),
+            "success": bool(run_result.get("success")),
+            "simulation_mode": SimulationMode.REAL.value,
+            "execution_status": (
+                ExecutionStatus.SUCCESS.value
+                if run_result.get("success")
+                else ExecutionStatus.ERROR.value
+            ),
+            "error_type": run_result.get("error_type"),
+            "error_message": run_result.get("error_message"),
+            "returncode": run_result.get("returncode"),
+            "command": run_result.get("command"),
+            "artifact_dir": str(artifact_dir),
+            "executed_deck_path": str(executed),
+            "stdout_path": str(artifact_dir/"ngspice_stdout.txt"),
+            "stderr_path": str(artifact_dir/"ngspice_stderr.txt"),
+        })
         # The OP device-current floor is auxiliary evidence; it never mutates the DUT or thresholds.
         if needs_op_bias_probe(testbench):
             probe=run_op_bias_probe(ngspice_path=self.ngspice_path,executed_deck_path=executed,artifact_dir=artifact_dir,timeout_seconds=self.timeout)
@@ -456,22 +471,61 @@ class PySpiceSimulator(ICircuitSimulator):
             
             logs = result.stdout.splitlines() if result.stdout else []
             errors = result.stderr.splitlines() if result.stderr else []
-            
-            # Check for convergence issues
-            all_output = (result.stdout or "") + (result.stderr or "")
+
+            # ngspice may emit an analysis-level Error:/Fatal: diagnostic
+            # while still returning process code 0. A zero return code alone
+            # is therefore not sufficient evidence of successful execution.
+            stdout_text = result.stdout or ""
+            stderr_text = result.stderr or ""
+            all_output = stdout_text + "\n" + stderr_text
             all_output_lower = all_output.lower()
-            
-            success = result.returncode == 0
-            fatal_indicators = ('no convergence','timestep too small','run simulation(s) aborted','singular matrix','fatal')
-            if any(indicator in all_output_lower for indicator in fatal_indicators):
-                success = False
-            
+
+            fatal_indicators = (
+                "no convergence",
+                "timestep too small",
+                "run simulation(s) aborted",
+                "singular matrix",
+                "fatal",
+            )
+
+            fatal_diagnostic = None
+            for line in (errors + logs):
+                stripped = line.strip()
+                lowered = stripped.lower()
+                if re.match(
+                    r"^(?:\*+\s*)?(?:error|fatal)\s*:",
+                    stripped,
+                    re.IGNORECASE,
+                ):
+                    fatal_diagnostic = stripped
+                    break
+                if any(indicator in lowered for indicator in fatal_indicators):
+                    fatal_diagnostic = stripped
+                    break
+
+            success = result.returncode == 0 and fatal_diagnostic is None
+
+            error_type = None
+            error_message = None
+            if not success:
+                error_type = "ngspice_execution_error"
+                if fatal_diagnostic:
+                    error_message = fatal_diagnostic
+                elif result.returncode != 0:
+                    error_message = f"ngspice exited with return code {result.returncode}"
+                else:
+                    error_message = "ngspice execution failed"
+
             return {
-                'success': success,
-                'logs': logs,
-                'errors': errors
+                "success": success,
+                "logs": logs,
+                "errors": errors,
+                "returncode": result.returncode,
+                "command": cmd,
+                "error_type": error_type,
+                "error_message": error_message,
             }
-            
+
         except subprocess.TimeoutExpired:
             return {
                 'success': False,
