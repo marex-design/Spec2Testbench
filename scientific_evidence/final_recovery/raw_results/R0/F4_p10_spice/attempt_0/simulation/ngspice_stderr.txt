@@ -1,0 +1,7 @@
+Using SPARSE 1.3 as Direct Linear Solver
+ERROR: AC startfreq <= 0
+doAnalyses: parameter value out of range or the wrong type
+
+ac simulation(s) aborted
+Error: no such vector Vin
+  in term: v(Vin)

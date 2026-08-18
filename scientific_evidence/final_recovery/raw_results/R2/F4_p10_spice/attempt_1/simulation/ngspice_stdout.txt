@@ -1,0 +1,11 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * spec2testbench deterministic deck
+
+Doing analysis at TEMP = 25.000000 and TNOM = 27.000000
+
+
+No. of Data Rows : 901
+ngspice-42 done

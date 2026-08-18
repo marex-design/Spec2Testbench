@@ -1,0 +1,37 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * spec2testbench deterministic deck
+
+Doing analysis at TEMP = 25.000000 and TNOM = 27.000000
+
+
+Initial Transient Solution
+--------------------------
+
+Node                                   Voltage
+----                                   -------
+vdd                                          5
+vref                                       2.5
+vin                                          2
+xop.vdd                                      5
+xop.vbias                                  1.5
+xop.voutp                              3.30139
+xop.source3                           0.801928
+vout                                   4.77658
+vinn                                         2
+v.xop.vbias#branch                           0
+v.xop.vdd#branch                   -0.00483627
+vin#branch                                   0
+vref#branch                                  0
+vdd#branch                                   0
+
+ Reference value :  8.00000e-01
+ Reference value :  8.38018e-01
+ Reference value :  8.78013e-01
+ Reference value :  9.18779e-01
+ Reference value :  9.59011e-01
+ Reference value :  9.96449e-01
+No. of Data Rows : 200121
+ngspice-42 done

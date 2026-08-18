@@ -1,0 +1,9 @@
+
+Note: No compatibility mode selected!
+
+
+Circuit: * spec2testbench deterministic deck
+
+Doing analysis at TEMP = 25.000000 and TNOM = 27.000000
+
+ngspice-42 done

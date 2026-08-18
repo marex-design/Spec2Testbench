@@ -1,0 +1,280 @@
+{
+  "experiment": "H1_3_CONTROLLED_REPAIR",
+  "timestamp_utc": "2026-08-18T14:26:05.198206+00:00",
+  "case_id": "acp28-p10",
+  "protocol": {
+    "path": "scientific_evidence/protocol/H1_3_REPAIR_PROTOCOL.json",
+    "sha256": "a3ecb120ad9757ee89d57f0c752d4d449e23bbf0352721e8aa52e54348a3b1ec",
+    "max_retries": 0
+  },
+  "model": "deepseek-v4-flash",
+  "fault_injection": "validator_unknown_node_once",
+  "specification_sha256": "835ff8196290bcd30960e5b297e5d43199f5bfe6dec11c86794c0c225adc9d47",
+  "netlist_sha256": "6051b20abdae27ed489e01671145745fc4b1a3d2d77cb7da7a3929cf5355651c",
+  "deterministic_seed_plan": {
+    "case_id": "acp28-p10",
+    "analysis_type": "AC",
+    "provider_mode": "DETERMINISTIC",
+    "scientific_llm_evidence": false,
+    "knowledge_version": null,
+    "knowledge_bundle_sha256": null,
+    "stimuli": [
+      {
+        "source_name": "Vin",
+        "target_node": "Vin",
+        "reference_node": "0",
+        "stimulus_type": "AC",
+        "parameters": {
+          "magnitude": 1.0,
+          "phase": 0,
+          "dc_value": 2.5
+        }
+      }
+    ],
+    "observed_nodes": [
+      "Vout"
+    ],
+    "measurements": [
+      {
+        "metric_name": "lowpass_attenuation_db",
+        "analysis_type": "AC",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "expected_unit": "dB",
+        "backend_preference": "NGSPICE_WRDATA",
+        "measurement_parameters": {}
+      }
+    ],
+    "simulation_parameters": {
+      "start_time_s": null,
+      "stop_time_s": null,
+      "time_step_s": null,
+      "frequency_start_hz": 1.0,
+      "frequency_stop_hz": 1000000000.0,
+      "points_per_decade": 100,
+      "dc_source": null,
+      "dc_start": null,
+      "dc_stop": null,
+      "dc_step": null
+    },
+    "concise_rationale": "Deterministic netlist-aware plan generated from the frozen verification contract."
+  },
+  "attempts": [
+    {
+      "attempt_id": 0,
+      "request_sha256": "d2cadce6f8c21eff3c33388de3a70010b5229ece93aced4883192daf3bc32376",
+      "response_sha256": "b34d576c9d467b768c9c55017402f7d2cd25a9340506abea7027827ec54e98e3",
+      "plan_sha256": "79ad4239c0c57be241d9b183ed0b5849eb1be6075ef1bb34649d7a1eae92b529",
+      "validation_status": "INVALID",
+      "validation_issues": [
+        {
+          "code": "UNKNOWN_NODE",
+          "node": "H1_CONTROLLED_UNKNOWN_NODE"
+        }
+      ],
+      "contract_gate_status": "NOT_RUN",
+      "contract_gate_issues": [],
+      "spice_execution_status": "NOT_RUN",
+      "spice_error_type": null,
+      "spice_error_message": null,
+      "metrics_obtained": {},
+      "incoming_repair_trigger": null,
+      "repair_trigger": "validator_rejection",
+      "repair_action": null,
+      "tokens": {
+        "prompt_tokens": 2502,
+        "completion_tokens": 412,
+        "total_tokens": 2914
+      },
+      "provider_metadata": {
+        "provider": "deepseek",
+        "provider_mode": "DEEPSEEK_LIVE",
+        "prompt_version": "h1-plan-v1",
+        "request_kind": "propose_testbench_plan",
+        "requested_model": "deepseek-v4-flash",
+        "response_model": "deepseek-v4-flash",
+        "base_url": "https://api.deepseek.com",
+        "thinking": false,
+        "timestamp_utc": "2026-08-18T14:26:05.197195+00:00",
+        "request_sha256": "d2cadce6f8c21eff3c33388de3a70010b5229ece93aced4883192daf3bc32376",
+        "response_sha256": "b34d576c9d467b768c9c55017402f7d2cd25a9340506abea7027827ec54e98e3",
+        "usage": {
+          "prompt_tokens": 2502,
+          "completion_tokens": 412,
+          "total_tokens": 2914
+        }
+      },
+      "fault_injection": {
+        "fault_id": "validator_unknown_node_once",
+        "stage": "validator",
+        "description": "Replace observed_nodes with one non-existent node on attempt 0 only."
+      },
+      "raw_response": {
+        "analysis_type": "AC",
+        "case_id": "acp28-p10",
+        "concise_rationale": "Plan for AC analysis of passive low-pass filter. Measures attenuation and monotonicity using official checker criteria.",
+        "knowledge_bundle_sha256": null,
+        "knowledge_version": null,
+        "measurements": [
+          {
+            "analysis_type": "AC",
+            "backend_preference": "NGSPICE_WRDATA",
+            "expected_unit": "dB",
+            "input_node": "Vin",
+            "measurement_parameters": {},
+            "metric_name": "lowpass_attenuation_db",
+            "output_node": "Vout"
+          },
+          {
+            "analysis_type": "AC",
+            "backend_preference": "NGSPICE_WRDATA",
+            "expected_unit": "%",
+            "input_node": "Vin",
+            "measurement_parameters": {},
+            "metric_name": "lowpass_monotonicity_percent",
+            "output_node": "Vout"
+          }
+        ],
+        "observed_nodes": [
+          "Vout"
+        ],
+        "simulation_parameters": {
+          "dc_source": null,
+          "dc_start": null,
+          "dc_step": null,
+          "dc_stop": null,
+          "frequency_start_hz": 1.0,
+          "frequency_stop_hz": 1000000000.0,
+          "points_per_decade": 100,
+          "start_time_s": null,
+          "stop_time_s": null,
+          "time_step_s": null
+        },
+        "stimuli": [
+          {
+            "parameters": {
+              "dc_value": 2.5,
+              "magnitude": 1.0,
+              "phase": 0
+            },
+            "reference_node": "0",
+            "source_name": "Vin",
+            "stimulus_type": "AC",
+            "target_node": "Vin"
+          }
+        ]
+      },
+      "parsed_plan": {
+        "case_id": "acp28-p10",
+        "analysis_type": "AC",
+        "provider_mode": "DEEPSEEK_LIVE",
+        "scientific_llm_evidence": true,
+        "knowledge_version": null,
+        "knowledge_bundle_sha256": null,
+        "stimuli": [
+          {
+            "source_name": "Vin",
+            "target_node": "Vin",
+            "reference_node": "0",
+            "stimulus_type": "AC",
+            "parameters": {
+              "dc_value": 2.5,
+              "magnitude": 1.0,
+              "phase": 0
+            }
+          }
+        ],
+        "observed_nodes": [
+          "H1_CONTROLLED_UNKNOWN_NODE"
+        ],
+        "measurements": [
+          {
+            "metric_name": "lowpass_attenuation_db",
+            "analysis_type": "AC",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "expected_unit": "dB",
+            "backend_preference": "NGSPICE_WRDATA",
+            "measurement_parameters": {}
+          },
+          {
+            "metric_name": "lowpass_monotonicity_percent",
+            "analysis_type": "AC",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "expected_unit": "%",
+            "backend_preference": "NGSPICE_WRDATA",
+            "measurement_parameters": {}
+          }
+        ],
+        "simulation_parameters": {
+          "start_time_s": null,
+          "stop_time_s": null,
+          "time_step_s": null,
+          "frequency_start_hz": 1.0,
+          "frequency_stop_hz": 1000000000.0,
+          "points_per_decade": 100,
+          "dc_source": null,
+          "dc_start": null,
+          "dc_stop": null,
+          "dc_step": null
+        },
+        "concise_rationale": "Plan for AC analysis of passive low-pass filter. Measures attenuation and monotonicity using official checker criteria."
+      }
+    }
+  ],
+  "stopping_condition": "max_retries_reached",
+  "repair_summary": {
+    "attempt_count": 1,
+    "repair_attempt_count": 0,
+    "plan_validity_rate": 0.0,
+    "execution_success_rate": 0.0,
+    "repair_success_rate": null,
+    "first_repair_success_rate": null,
+    "mean_retries": 0.0,
+    "unsafe_repair_rejection_rate": 0.0
+  },
+  "final": {
+    "validation": {
+      "status": "INVALID",
+      "issues": [
+        {
+          "code": "UNKNOWN_NODE",
+          "node": "H1_CONTROLLED_UNKNOWN_NODE"
+        }
+      ],
+      "expected_case_id": "acp28-p10",
+      "specification_sha256": "835ff8196290bcd30960e5b297e5d43199f5bfe6dec11c86794c0c225adc9d47"
+    },
+    "contract_gate": {
+      "status": "NOT_RUN",
+      "issues": []
+    },
+    "simulation": {
+      "execution_status": null,
+      "success": false,
+      "simulation_mode": null,
+      "error_type": null,
+      "error_message": null,
+      "artifact_dir": null,
+      "executed_deck_path": null,
+      "criterion_metrics": {}
+    },
+    "criteria": [],
+    "compliance_status": "NOT_EVALUATED"
+  },
+  "immutable_inputs": {
+    "specification_sha256_before": "835ff8196290bcd30960e5b297e5d43199f5bfe6dec11c86794c0c225adc9d47",
+    "netlist_sha256_before": "6051b20abdae27ed489e01671145745fc4b1a3d2d77cb7da7a3929cf5355651c",
+    "expected_netlist_sha256": "6051b20abdae27ed489e01671145745fc4b1a3d2d77cb7da7a3929cf5355651c",
+    "dut_hash_matches_frozen_spec": true
+  },
+  "safety_boundary": {
+    "dut_immutable": true,
+    "thresholds_immutable": true,
+    "verdict_deterministic_only": true,
+    "noncompliant_is_not_a_repair_trigger": true,
+    "max_retries_hard_limit": 2,
+    "mock_allowed": false
+  }
+}

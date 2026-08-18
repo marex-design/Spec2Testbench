@@ -1,0 +1,536 @@
+{
+  "experiment": "H1_3_CONTROLLED_REPAIR",
+  "timestamp_utc": "2026-08-18T14:09:55.359613+00:00",
+  "case_id": "acp28-p06",
+  "protocol": {
+    "path": "scientific_evidence/protocol/H1_3_REPAIR_PROTOCOL.json",
+    "sha256": "a3ecb120ad9757ee89d57f0c752d4d449e23bbf0352721e8aa52e54348a3b1ec",
+    "max_retries": 2
+  },
+  "model": "deepseek-v4-flash",
+  "fault_injection": "contract_missing_metric_once",
+  "specification_sha256": "f9ee31569b10ce48dea90c3baf01e96e22a861d3b174e1649bd8a2962c8677dd",
+  "netlist_sha256": "4169486f35384c778e8a8179bc7adb6124d4d1305cec48c76c01cf746b0d355f",
+  "deterministic_seed_plan": {
+    "case_id": "acp28-p06",
+    "analysis_type": "DC",
+    "provider_mode": "DETERMINISTIC",
+    "scientific_llm_evidence": false,
+    "knowledge_version": null,
+    "knowledge_bundle_sha256": null,
+    "stimuli": [
+      {
+        "source_name": "Vin",
+        "target_node": "Vin",
+        "reference_node": "0",
+        "stimulus_type": "DC",
+        "parameters": {
+          "start": 0.0,
+          "stop": 5.0,
+          "step": 0.01
+        }
+      }
+    ],
+    "observed_nodes": [
+      "Vout"
+    ],
+    "measurements": [
+      {
+        "metric_name": "inverter_high_input_output_v",
+        "analysis_type": "DC",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "expected_unit": "V",
+        "backend_preference": "NGSPICE_WRDATA",
+        "measurement_parameters": {}
+      }
+    ],
+    "simulation_parameters": {
+      "start_time_s": null,
+      "stop_time_s": null,
+      "time_step_s": null,
+      "frequency_start_hz": null,
+      "frequency_stop_hz": null,
+      "points_per_decade": null,
+      "dc_source": "Vin",
+      "dc_start": 0.0,
+      "dc_stop": 5.0,
+      "dc_step": 0.01
+    },
+    "concise_rationale": "Deterministic netlist-aware plan generated from the frozen verification contract."
+  },
+  "attempts": [
+    {
+      "attempt_id": 0,
+      "request_sha256": "5cc4b9e5b2914cb7ad7f5905b1ba2e97bcbfd23751daf73b3dae34adfdfa7ae9",
+      "response_sha256": "efbcd4bb9a204f325170aea2c2c0578541d6fac607d8f8fe8dd916256fcb7e92",
+      "plan_sha256": "9c7bd5bbcc3283b866132638b344676cb71457a8dc2750bcd1b5d159e62e19be",
+      "validation_status": "VALID",
+      "validation_issues": [],
+      "contract_gate_status": "INVALID",
+      "contract_gate_issues": [
+        {
+          "code": "H1_MISSING_EXECUTABLE_METRICS",
+          "metrics": [
+            "inverter_output_separation_v"
+          ]
+        }
+      ],
+      "spice_execution_status": "NOT_RUN",
+      "spice_error_type": null,
+      "spice_error_message": null,
+      "metrics_obtained": {},
+      "incoming_repair_trigger": null,
+      "repair_trigger": "contract_gate_rejection",
+      "repair_action": null,
+      "tokens": {
+        "prompt_tokens": 2660,
+        "completion_tokens": 478,
+        "total_tokens": 3138
+      },
+      "provider_metadata": {
+        "provider": "deepseek",
+        "provider_mode": "DEEPSEEK_LIVE",
+        "prompt_version": "h1-plan-v1",
+        "request_kind": "propose_testbench_plan",
+        "requested_model": "deepseek-v4-flash",
+        "response_model": "deepseek-v4-flash",
+        "base_url": "https://api.deepseek.com",
+        "thinking": false,
+        "timestamp_utc": "2026-08-18T14:09:51.719682+00:00",
+        "request_sha256": "5cc4b9e5b2914cb7ad7f5905b1ba2e97bcbfd23751daf73b3dae34adfdfa7ae9",
+        "response_sha256": "efbcd4bb9a204f325170aea2c2c0578541d6fac607d8f8fe8dd916256fcb7e92",
+        "usage": {
+          "prompt_tokens": 2660,
+          "completion_tokens": 478,
+          "total_tokens": 3138
+        }
+      },
+      "fault_injection": {
+        "fault_id": "contract_missing_metric_once",
+        "stage": "contract_gate",
+        "description": "Drop one executable metric from attempt 0 only.",
+        "removed_metric": "inverter_output_separation_v"
+      },
+      "raw_response": {
+        "case_id": "acp28-p06",
+        "analysis_type": "DC",
+        "concise_rationale": "Deterministic netlist-aware plan generated from the frozen verification contract.",
+        "knowledge_bundle_sha256": null,
+        "knowledge_version": null,
+        "measurements": [
+          {
+            "analysis_type": "DC",
+            "backend_preference": "NGSPICE_WRDATA",
+            "expected_unit": "V",
+            "input_node": "Vin",
+            "measurement_parameters": {},
+            "metric_name": "inverter_high_input_output_v",
+            "output_node": "Vout"
+          },
+          {
+            "analysis_type": "DC",
+            "backend_preference": "NGSPICE_WRDATA",
+            "expected_unit": "V",
+            "input_node": "Vin",
+            "measurement_parameters": {},
+            "metric_name": "inverter_low_input_output_v",
+            "output_node": "Vout"
+          },
+          {
+            "analysis_type": "DC",
+            "backend_preference": "NGSPICE_WRDATA",
+            "expected_unit": "V",
+            "input_node": "Vin",
+            "measurement_parameters": {},
+            "metric_name": "inverter_output_separation_v",
+            "output_node": "Vout"
+          }
+        ],
+        "observed_nodes": [
+          "Vout"
+        ],
+        "simulation_parameters": {
+          "dc_source": "Vin",
+          "dc_start": 0.0,
+          "dc_step": 0.01,
+          "dc_stop": 5.0,
+          "frequency_start_hz": null,
+          "frequency_stop_hz": null,
+          "points_per_decade": null,
+          "start_time_s": null,
+          "stop_time_s": null,
+          "time_step_s": null
+        },
+        "stimuli": [
+          {
+            "parameters": {
+              "start": 0.0,
+              "step": 0.01,
+              "stop": 5.0
+            },
+            "reference_node": "0",
+            "source_name": "Vin",
+            "stimulus_type": "DC",
+            "target_node": "Vin"
+          }
+        ]
+      },
+      "parsed_plan": {
+        "case_id": "acp28-p06",
+        "analysis_type": "DC",
+        "provider_mode": "DEEPSEEK_LIVE",
+        "scientific_llm_evidence": true,
+        "knowledge_version": null,
+        "knowledge_bundle_sha256": null,
+        "stimuli": [
+          {
+            "source_name": "Vin",
+            "target_node": "Vin",
+            "reference_node": "0",
+            "stimulus_type": "DC",
+            "parameters": {
+              "start": 0.0,
+              "step": 0.01,
+              "stop": 5.0
+            }
+          }
+        ],
+        "observed_nodes": [
+          "Vout"
+        ],
+        "measurements": [
+          {
+            "metric_name": "inverter_high_input_output_v",
+            "analysis_type": "DC",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "expected_unit": "V",
+            "backend_preference": "NGSPICE_WRDATA",
+            "measurement_parameters": {}
+          },
+          {
+            "metric_name": "inverter_low_input_output_v",
+            "analysis_type": "DC",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "expected_unit": "V",
+            "backend_preference": "NGSPICE_WRDATA",
+            "measurement_parameters": {}
+          }
+        ],
+        "simulation_parameters": {
+          "start_time_s": null,
+          "stop_time_s": null,
+          "time_step_s": null,
+          "frequency_start_hz": null,
+          "frequency_stop_hz": null,
+          "points_per_decade": null,
+          "dc_source": "Vin",
+          "dc_start": 0.0,
+          "dc_stop": 5.0,
+          "dc_step": 0.01
+        },
+        "concise_rationale": "Deterministic netlist-aware plan generated from the frozen verification contract."
+      }
+    },
+    {
+      "attempt_id": 1,
+      "request_sha256": "03253d5ecb0e63c96977fa39400aab2888f7ce7dc7521d7d8f34271c95312808",
+      "response_sha256": "25be36f8b6223f42be3eca240aa8ac212b87140ef453418070593491fe26ace6",
+      "plan_sha256": "343271236fe8fcd2027f5127ab3d1b07530ee01bd63608a1f97d45848866f7f2",
+      "validation_status": "VALID",
+      "validation_issues": [],
+      "contract_gate_status": "VALID",
+      "contract_gate_issues": [],
+      "spice_execution_status": "SUCCESS",
+      "spice_error_type": null,
+      "spice_error_message": null,
+      "metrics_obtained": {
+        "inverter_high_input_output_v": 0.0573078657,
+        "inverter_low_input_output_v": 4.9999995,
+        "inverter_output_separation_v": 4.9426916343
+      },
+      "incoming_repair_trigger": "contract_gate_rejection",
+      "repair_trigger": null,
+      "repair_action": "llm_replan_from_contract_gate_rejection",
+      "tokens": {
+        "prompt_tokens": 3056,
+        "completion_tokens": 482,
+        "total_tokens": 3538
+      },
+      "provider_metadata": {
+        "provider": "deepseek",
+        "provider_mode": "DEEPSEEK_LIVE",
+        "prompt_version": "h1-repair-v1",
+        "request_kind": "repair_testbench_plan",
+        "requested_model": "deepseek-v4-flash",
+        "response_model": "deepseek-v4-flash",
+        "base_url": "https://api.deepseek.com",
+        "thinking": false,
+        "timestamp_utc": "2026-08-18T14:09:55.344129+00:00",
+        "request_sha256": "03253d5ecb0e63c96977fa39400aab2888f7ce7dc7521d7d8f34271c95312808",
+        "response_sha256": "25be36f8b6223f42be3eca240aa8ac212b87140ef453418070593491fe26ace6",
+        "usage": {
+          "prompt_tokens": 3056,
+          "completion_tokens": 482,
+          "total_tokens": 3538
+        }
+      },
+      "fault_injection": null,
+      "raw_response": {
+        "case_id": "acp28-p06",
+        "analysis_type": "DC",
+        "concise_rationale": "Corrected plan: add missing executable metric inverter_output_separation_v and use deterministic provenance.",
+        "knowledge_bundle_sha256": null,
+        "knowledge_version": null,
+        "measurements": [
+          {
+            "metric_name": "inverter_high_input_output_v",
+            "analysis_type": "DC",
+            "backend_preference": "NGSPICE_WRDATA",
+            "expected_unit": "V",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "measurement_parameters": {}
+          },
+          {
+            "metric_name": "inverter_low_input_output_v",
+            "analysis_type": "DC",
+            "backend_preference": "NGSPICE_WRDATA",
+            "expected_unit": "V",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "measurement_parameters": {}
+          },
+          {
+            "metric_name": "inverter_output_separation_v",
+            "analysis_type": "DC",
+            "backend_preference": "NGSPICE_WRDATA",
+            "expected_unit": "V",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "measurement_parameters": {}
+          }
+        ],
+        "observed_nodes": [
+          "Vout"
+        ],
+        "simulation_parameters": {
+          "dc_source": "Vin",
+          "dc_start": 0.0,
+          "dc_step": 0.01,
+          "dc_stop": 5.0,
+          "frequency_start_hz": null,
+          "frequency_stop_hz": null,
+          "points_per_decade": null,
+          "start_time_s": null,
+          "stop_time_s": null,
+          "time_step_s": null
+        },
+        "stimuli": [
+          {
+            "source_name": "Vin",
+            "target_node": "Vin",
+            "stimulus_type": "DC",
+            "parameters": {
+              "start": 0.0,
+              "step": 0.01,
+              "stop": 5.0
+            },
+            "reference_node": "0"
+          }
+        ]
+      },
+      "parsed_plan": {
+        "case_id": "acp28-p06",
+        "analysis_type": "DC",
+        "provider_mode": "DEEPSEEK_LIVE",
+        "scientific_llm_evidence": true,
+        "knowledge_version": null,
+        "knowledge_bundle_sha256": null,
+        "stimuli": [
+          {
+            "source_name": "Vin",
+            "target_node": "Vin",
+            "reference_node": "0",
+            "stimulus_type": "DC",
+            "parameters": {
+              "start": 0.0,
+              "step": 0.01,
+              "stop": 5.0
+            }
+          }
+        ],
+        "observed_nodes": [
+          "Vout"
+        ],
+        "measurements": [
+          {
+            "metric_name": "inverter_high_input_output_v",
+            "analysis_type": "DC",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "expected_unit": "V",
+            "backend_preference": "NGSPICE_WRDATA",
+            "measurement_parameters": {}
+          },
+          {
+            "metric_name": "inverter_low_input_output_v",
+            "analysis_type": "DC",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "expected_unit": "V",
+            "backend_preference": "NGSPICE_WRDATA",
+            "measurement_parameters": {}
+          },
+          {
+            "metric_name": "inverter_output_separation_v",
+            "analysis_type": "DC",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "expected_unit": "V",
+            "backend_preference": "NGSPICE_WRDATA",
+            "measurement_parameters": {}
+          }
+        ],
+        "simulation_parameters": {
+          "start_time_s": null,
+          "stop_time_s": null,
+          "time_step_s": null,
+          "frequency_start_hz": null,
+          "frequency_stop_hz": null,
+          "points_per_decade": null,
+          "dc_source": "Vin",
+          "dc_start": 0.0,
+          "dc_stop": 5.0,
+          "dc_step": 0.01
+        },
+        "concise_rationale": "Corrected plan: add missing executable metric inverter_output_separation_v and use deterministic provenance."
+      }
+    }
+  ],
+  "stopping_condition": "verification_success",
+  "repair_summary": {
+    "attempt_count": 2,
+    "repair_attempt_count": 1,
+    "plan_validity_rate": 1.0,
+    "execution_success_rate": 1.0,
+    "repair_success_rate": 1.0,
+    "first_repair_success_rate": 1.0,
+    "mean_retries": 1.0,
+    "unsafe_repair_rejection_rate": 0.0
+  },
+  "final": {
+    "validation": {
+      "status": "VALID",
+      "issues": [],
+      "expected_case_id": "acp28-p06",
+      "specification_sha256": "f9ee31569b10ce48dea90c3baf01e96e22a861d3b174e1649bd8a2962c8677dd"
+    },
+    "contract_gate": {
+      "status": "VALID",
+      "issues": [],
+      "required_executable_metrics": [
+        "inverter_high_input_output_v",
+        "inverter_low_input_output_v",
+        "inverter_output_separation_v"
+      ],
+      "planned_metrics": [
+        "inverter_high_input_output_v",
+        "inverter_low_input_output_v",
+        "inverter_output_separation_v"
+      ],
+      "required_analysis_types": [
+        "DC"
+      ],
+      "plan_analysis_type": "DC"
+    },
+    "simulation": {
+      "execution_status": "SUCCESS",
+      "success": true,
+      "simulation_mode": "REAL",
+      "error_type": null,
+      "error_message": null,
+      "artifact_dir": "results/final_recovery/R2/F2_p06_contract/attempt_1/simulation",
+      "executed_deck_path": "results/final_recovery/R2/F2_p06_contract/attempt_1/simulation/executed_testbench.ckt",
+      "criterion_metrics": {
+        "inverter_high_input_output_v": 0.0573078657,
+        "inverter_low_input_output_v": 4.9999995,
+        "inverter_output_separation_v": 4.9426916343
+      }
+    },
+    "criteria": [
+      {
+        "case_id": "acp28-p06",
+        "requirement_id": "ACP_INV_HIGH",
+        "metric": "inverter_high_input_output_v",
+        "analysis": "dc_logic",
+        "implementation_status": "executable",
+        "criterion_status": "PASS",
+        "measured_value": 0.0573078657,
+        "unit": "V",
+        "operator": "<=",
+        "threshold": 2.5,
+        "minimum": null,
+        "maximum": null,
+        "criterion_source": "official_checker",
+        "equivalence": "exact",
+        "message": "inverter_high_input_output_v=0.0573078657 V -> PASS"
+      },
+      {
+        "case_id": "acp28-p06",
+        "requirement_id": "ACP_INV_LOW",
+        "metric": "inverter_low_input_output_v",
+        "analysis": "dc_logic",
+        "implementation_status": "executable",
+        "criterion_status": "PASS",
+        "measured_value": 4.9999995,
+        "unit": "V",
+        "operator": ">=",
+        "threshold": 2.5,
+        "minimum": null,
+        "maximum": null,
+        "criterion_source": "official_checker",
+        "equivalence": "exact",
+        "message": "inverter_low_input_output_v=4.9999995 V -> PASS"
+      },
+      {
+        "case_id": "acp28-p06",
+        "requirement_id": "ACP_INV_SEPARATION",
+        "metric": "inverter_output_separation_v",
+        "analysis": "dc_logic",
+        "implementation_status": "executable",
+        "criterion_status": "PASS",
+        "measured_value": 4.9426916343,
+        "unit": "V",
+        "operator": ">=",
+        "threshold": 1.0,
+        "minimum": null,
+        "maximum": null,
+        "criterion_source": "official_checker",
+        "equivalence": "exact",
+        "message": "inverter_output_separation_v=4.9426916343 V -> PASS"
+      }
+    ],
+    "compliance_status": "COMPLIANT"
+  },
+  "immutable_inputs": {
+    "specification_sha256_before": "f9ee31569b10ce48dea90c3baf01e96e22a861d3b174e1649bd8a2962c8677dd",
+    "netlist_sha256_before": "4169486f35384c778e8a8179bc7adb6124d4d1305cec48c76c01cf746b0d355f",
+    "expected_netlist_sha256": "4169486f35384c778e8a8179bc7adb6124d4d1305cec48c76c01cf746b0d355f",
+    "dut_hash_matches_frozen_spec": true,
+    "specification_sha256_after": "f9ee31569b10ce48dea90c3baf01e96e22a861d3b174e1649bd8a2962c8677dd",
+    "netlist_sha256_after": "4169486f35384c778e8a8179bc7adb6124d4d1305cec48c76c01cf746b0d355f",
+    "specification_unchanged": true,
+    "dut_unchanged": true
+  },
+  "safety_boundary": {
+    "dut_immutable": true,
+    "thresholds_immutable": true,
+    "verdict_deterministic_only": true,
+    "noncompliant_is_not_a_repair_trigger": true,
+    "max_retries_hard_limit": 2,
+    "mock_allowed": false
+  }
+}

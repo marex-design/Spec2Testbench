@@ -1,0 +1,22 @@
+* Spec2Testbench deterministic deck
+* TestBench: acp28-p06_llm_compiled
+* AnalogCoder-Pro p6: A NMOS inverter with resistive load R
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p6\p6.py
+* AnalogCoder-Pro type: Inverter
+* Inputs: Vin
+* Outputs: Vout
+
+.MODEL nmos NMOS (LEVEL=1 KP=0.0002 VTO=0.7)
+
+Vdd Vdd 0 5
+Vin Vin 0 DC 0.0
+Rload Vdd Vout 100k
+M1 Vout Vin 0 0 nmos
+.TEMP 25.0
+.control
+set wr_singlescale
+DC Vin 0.0 5.0 0.01
+wrdata /home/marex/S2T_REBUILT/Spec2Testbench/results/final_recovery/R2/F1_p06_validator/attempt_1/simulation/vectors.dat v(Vout) i(Vin) i(Vdd)
+quit
+.endc
+.end

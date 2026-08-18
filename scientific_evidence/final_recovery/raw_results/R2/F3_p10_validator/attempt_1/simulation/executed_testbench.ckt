@@ -1,0 +1,18 @@
+* Spec2Testbench deterministic deck
+* TestBench: acp28-p10_llm_compiled
+* AnalogCoder-Pro p10: a passive low-pass filter
+* Source: analogcoder\AnalogCoderPro-master\sample_design\p10\p10.py
+* AnalogCoder-Pro type: LowPass
+* Inputs: Vin
+* Outputs: Vout
+Vin Vin 0 DC 2.5 AC 1.0 0
+R1 Vin Vout 10k
+C1 Vout 0 10n
+.TEMP 25.0
+.control
+set wr_singlescale
+AC DEC 100 1.0 1000000000.0
+wrdata /home/marex/S2T_REBUILT/Spec2Testbench/results/final_recovery/R2/F3_p10_validator/attempt_1/simulation/vectors.dat v(Vin) v(Vout)
+quit
+.endc
+.end

@@ -1,0 +1,133 @@
+{
+  "experiment": "FINAL_CONTROLLED_RECOVERY",
+  "n_cases": 6,
+  "R0": {
+    "max_retries": 0,
+    "recovered": 0,
+    "recovery_rate": 0.0
+  },
+  "R2": {
+    "max_retries": 2,
+    "recovered": 6,
+    "recovery_rate": 1.0,
+    "mean_repairs": 1.0
+  },
+  "recovery_gain_percentage_points": 100.0,
+  "cases": [
+    {
+      "case": "F1_p06_validator",
+      "domain": "DC",
+      "fault": "unknown_node",
+      "R0": {
+        "recovered": false,
+        "attempts": 1,
+        "repairs": 0,
+        "stopping_condition": "max_retries_reached",
+        "final_compliance": "NOT_EVALUATED"
+      },
+      "R2": {
+        "recovered": true,
+        "attempts": 2,
+        "repairs": 1,
+        "stopping_condition": "verification_success",
+        "final_compliance": "COMPLIANT"
+      }
+    },
+    {
+      "case": "F2_p06_contract",
+      "domain": "DC",
+      "fault": "missing_metric",
+      "R0": {
+        "recovered": false,
+        "attempts": 1,
+        "repairs": 0,
+        "stopping_condition": "max_retries_reached",
+        "final_compliance": "NOT_EVALUATED"
+      },
+      "R2": {
+        "recovered": true,
+        "attempts": 2,
+        "repairs": 1,
+        "stopping_condition": "verification_success",
+        "final_compliance": "COMPLIANT"
+      }
+    },
+    {
+      "case": "F3_p10_validator",
+      "domain": "AC",
+      "fault": "unknown_node",
+      "R0": {
+        "recovered": false,
+        "attempts": 1,
+        "repairs": 0,
+        "stopping_condition": "max_retries_reached",
+        "final_compliance": "NOT_EVALUATED"
+      },
+      "R2": {
+        "recovered": true,
+        "attempts": 2,
+        "repairs": 1,
+        "stopping_condition": "verification_success",
+        "final_compliance": "COMPLIANT"
+      }
+    },
+    {
+      "case": "F4_p10_spice",
+      "domain": "AC",
+      "fault": "ngspice_execution_error",
+      "R0": {
+        "recovered": false,
+        "attempts": 1,
+        "repairs": 0,
+        "stopping_condition": "max_retries_reached",
+        "final_compliance": "NOT_EVALUATED"
+      },
+      "R2": {
+        "recovered": true,
+        "attempts": 2,
+        "repairs": 1,
+        "stopping_condition": "verification_success",
+        "final_compliance": "COMPLIANT"
+      }
+    },
+    {
+      "case": "F5_p24_validator",
+      "domain": "TRAN",
+      "fault": "unknown_node",
+      "R0": {
+        "recovered": false,
+        "attempts": 1,
+        "repairs": 0,
+        "stopping_condition": "max_retries_reached",
+        "final_compliance": "NOT_EVALUATED"
+      },
+      "R2": {
+        "recovered": true,
+        "attempts": 2,
+        "repairs": 1,
+        "stopping_condition": "verification_success",
+        "final_compliance": "COMPLIANT"
+      }
+    },
+    {
+      "case": "F6_p24_contract",
+      "domain": "TRAN",
+      "fault": "missing_metric",
+      "R0": {
+        "recovered": false,
+        "attempts": 1,
+        "repairs": 0,
+        "stopping_condition": "max_retries_reached",
+        "final_compliance": "NOT_EVALUATED"
+      },
+      "R2": {
+        "recovered": true,
+        "attempts": 2,
+        "repairs": 1,
+        "stopping_condition": "verification_success",
+        "final_compliance": "COMPLIANT"
+      }
+    }
+  ],
+  "interpretation_scope": "Controlled six-case robustness experiment; not general LLM accuracy."
+}

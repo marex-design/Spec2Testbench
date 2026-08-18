@@ -1,0 +1,286 @@
+{
+  "experiment": "H1_3_CONTROLLED_REPAIR",
+  "timestamp_utc": "2026-08-18T14:26:38.461947+00:00",
+  "case_id": "acp28-p24",
+  "protocol": {
+    "path": "scientific_evidence/protocol/H1_3_REPAIR_PROTOCOL.json",
+    "sha256": "a3ecb120ad9757ee89d57f0c752d4d449e23bbf0352721e8aa52e54348a3b1ec",
+    "max_retries": 0
+  },
+  "model": "deepseek-v4-flash",
+  "fault_injection": "validator_unknown_node_once",
+  "specification_sha256": "5a62f5f89ece8227cce12dc809a047b3cd55a0cc286951cd242b0742ec151b3c",
+  "netlist_sha256": "607bd54b1c7b7151c31838ba762ee0a31cab7af9f7486d4fc74785cf1f5fa132",
+  "deterministic_seed_plan": {
+    "case_id": "acp28-p24",
+    "analysis_type": "TRAN",
+    "provider_mode": "DETERMINISTIC",
+    "scientific_llm_evidence": false,
+    "knowledge_version": null,
+    "knowledge_bundle_sha256": null,
+    "stimuli": [
+      {
+        "source_name": "Vin",
+        "target_node": "Vin",
+        "reference_node": "0",
+        "stimulus_type": "PULSE",
+        "parameters": {
+          "v1": 2.0,
+          "v2": 3.0,
+          "delay": 1e-06,
+          "rise": 1e-06,
+          "fall": 1e-06,
+          "width": 0.01,
+          "period": 0.02,
+          "dc_value": 2.5
+        }
+      }
+    ],
+    "observed_nodes": [
+      "Vout"
+    ],
+    "measurements": [
+      {
+        "metric_name": "integrator_ramp_slope",
+        "analysis_type": "TRAN",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "expected_unit": "V/s",
+        "backend_preference": "NGSPICE_WRDATA",
+        "measurement_parameters": {}
+      }
+    ],
+    "simulation_parameters": {
+      "start_time_s": 0.8,
+      "stop_time_s": 1.0,
+      "time_step_s": 1e-06,
+      "frequency_start_hz": null,
+      "frequency_stop_hz": null,
+      "points_per_decade": null,
+      "dc_source": null,
+      "dc_start": null,
+      "dc_stop": null,
+      "dc_step": null
+    },
+    "concise_rationale": "Deterministic netlist-aware plan generated from the frozen verification contract."
+  },
+  "attempts": [
+    {
+      "attempt_id": 0,
+      "request_sha256": "231f4107fd666f3dc0f023680596bd80a0a6a790807155db9a56e321e8e23d79",
+      "response_sha256": "581cefc1e914dd517f08e0a99e053f0b385c712be71af4def8d528789c9ea84c",
+      "plan_sha256": "db048dfcbde46571d5ad44c148f6f5db3b0a908fd237949f976695a8d983923d",
+      "validation_status": "INVALID",
+      "validation_issues": [
+        {
+          "code": "UNKNOWN_NODE",
+          "node": "H1_CONTROLLED_UNKNOWN_NODE"
+        }
+      ],
+      "contract_gate_status": "NOT_RUN",
+      "contract_gate_issues": [],
+      "spice_execution_status": "NOT_RUN",
+      "spice_error_type": null,
+      "spice_error_message": null,
+      "metrics_obtained": {},
+      "incoming_repair_trigger": null,
+      "repair_trigger": "validator_rejection",
+      "repair_action": null,
+      "tokens": {
+        "prompt_tokens": 2748,
+        "completion_tokens": 395,
+        "total_tokens": 3143
+      },
+      "provider_metadata": {
+        "provider": "deepseek",
+        "provider_mode": "DEEPSEEK_LIVE",
+        "prompt_version": "h1-plan-v1",
+        "request_kind": "propose_testbench_plan",
+        "requested_model": "deepseek-v4-flash",
+        "response_model": "deepseek-v4-flash",
+        "base_url": "https://api.deepseek.com",
+        "thinking": false,
+        "timestamp_utc": "2026-08-18T14:26:38.459301+00:00",
+        "request_sha256": "231f4107fd666f3dc0f023680596bd80a0a6a790807155db9a56e321e8e23d79",
+        "response_sha256": "581cefc1e914dd517f08e0a99e053f0b385c712be71af4def8d528789c9ea84c",
+        "usage": {
+          "prompt_tokens": 2748,
+          "completion_tokens": 395,
+          "total_tokens": 3143
+        }
+      },
+      "fault_injection": {
+        "fault_id": "validator_unknown_node_once",
+        "stage": "validator",
+        "description": "Replace observed_nodes with one non-existent node on attempt 0 only."
+      },
+      "raw_response": {
+        "case_id": "acp28-p24",
+        "analysis_type": "TRAN",
+        "concise_rationale": "Plan derived from frozen specification for integrator test: TRAN analysis with square-wave stimulus, measure ramp slope and linearity on Vout.",
+        "measurements": [
+          {
+            "metric_name": "integrator_ramp_slope",
+            "analysis_type": "TRAN",
+            "backend_preference": "NGSPICE_WRDATA",
+            "expected_unit": "V/s",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "measurement_parameters": {}
+          },
+          {
+            "metric_name": "integrator_linearity",
+            "analysis_type": "TRAN",
+            "backend_preference": "NGSPICE_WRDATA",
+            "expected_unit": "",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "measurement_parameters": {}
+          }
+        ],
+        "observed_nodes": [
+          "Vout"
+        ],
+        "simulation_parameters": {
+          "start_time_s": 0.8,
+          "stop_time_s": 1.0,
+          "time_step_s": 1e-06
+        },
+        "stimuli": [
+          {
+            "source_name": "Vin",
+            "target_node": "Vin",
+            "stimulus_type": "PULSE",
+            "reference_node": "0",
+            "parameters": {
+              "dc_value": 2.5,
+              "delay": 1e-06,
+              "fall": 1e-06,
+              "period": 0.02,
+              "rise": 1e-06,
+              "v1": 2.0,
+              "v2": 3.0,
+              "width": 0.01
+            }
+          }
+        ]
+      },
+      "parsed_plan": {
+        "case_id": "acp28-p24",
+        "analysis_type": "TRAN",
+        "provider_mode": "DEEPSEEK_LIVE",
+        "scientific_llm_evidence": true,
+        "knowledge_version": null,
+        "knowledge_bundle_sha256": null,
+        "stimuli": [
+          {
+            "source_name": "Vin",
+            "target_node": "Vin",
+            "reference_node": "0",
+            "stimulus_type": "PULSE",
+            "parameters": {
+              "dc_value": 2.5,
+              "delay": 1e-06,
+              "fall": 1e-06,
+              "period": 0.02,
+              "rise": 1e-06,
+              "v1": 2.0,
+              "v2": 3.0,
+              "width": 0.01
+            }
+          }
+        ],
+        "observed_nodes": [
+          "H1_CONTROLLED_UNKNOWN_NODE"
+        ],
+        "measurements": [
+          {
+            "metric_name": "integrator_ramp_slope",
+            "analysis_type": "TRAN",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "expected_unit": "V/s",
+            "backend_preference": "NGSPICE_WRDATA",
+            "measurement_parameters": {}
+          },
+          {
+            "metric_name": "integrator_linearity",
+            "analysis_type": "TRAN",
+            "input_node": "Vin",
+            "output_node": "Vout",
+            "expected_unit": "",
+            "backend_preference": "NGSPICE_WRDATA",
+            "measurement_parameters": {}
+          }
+        ],
+        "simulation_parameters": {
+          "start_time_s": 0.8,
+          "stop_time_s": 1.0,
+          "time_step_s": 1e-06,
+          "frequency_start_hz": null,
+          "frequency_stop_hz": null,
+          "points_per_decade": null,
+          "dc_source": null,
+          "dc_start": null,
+          "dc_stop": null,
+          "dc_step": null
+        },
+        "concise_rationale": "Plan derived from frozen specification for integrator test: TRAN analysis with square-wave stimulus, measure ramp slope and linearity on Vout."
+      }
+    }
+  ],
+  "stopping_condition": "max_retries_reached",
+  "repair_summary": {
+    "attempt_count": 1,
+    "repair_attempt_count": 0,
+    "plan_validity_rate": 0.0,
+    "execution_success_rate": 0.0,
+    "repair_success_rate": null,
+    "first_repair_success_rate": null,
+    "mean_retries": 0.0,
+    "unsafe_repair_rejection_rate": 0.0
+  },
+  "final": {
+    "validation": {
+      "status": "INVALID",
+      "issues": [
+        {
+          "code": "UNKNOWN_NODE",
+          "node": "H1_CONTROLLED_UNKNOWN_NODE"
+        }
+      ],
+      "expected_case_id": "acp28-p24",
+      "specification_sha256": "5a62f5f89ece8227cce12dc809a047b3cd55a0cc286951cd242b0742ec151b3c"
+    },
+    "contract_gate": {
+      "status": "NOT_RUN",
+      "issues": []
+    },
+    "simulation": {
+      "execution_status": null,
+      "success": false,
+      "simulation_mode": null,
+      "error_type": null,
+      "error_message": null,
+      "artifact_dir": null,
+      "executed_deck_path": null,
+      "criterion_metrics": {}
+    },
+    "criteria": [],
+    "compliance_status": "NOT_EVALUATED"
+  },
+  "immutable_inputs": {
+    "specification_sha256_before": "5a62f5f89ece8227cce12dc809a047b3cd55a0cc286951cd242b0742ec151b3c",
+    "netlist_sha256_before": "607bd54b1c7b7151c31838ba762ee0a31cab7af9f7486d4fc74785cf1f5fa132",
+    "expected_netlist_sha256": "607bd54b1c7b7151c31838ba762ee0a31cab7af9f7486d4fc74785cf1f5fa132",
+    "dut_hash_matches_frozen_spec": true
+  },
+  "safety_boundary": {
+    "dut_immutable": true,
+    "thresholds_immutable": true,
+    "verdict_deterministic_only": true,
+    "noncompliant_is_not_a_repair_trigger": true,
+    "max_retries_hard_limit": 2,
+    "mock_allowed": false
+  }
+}
