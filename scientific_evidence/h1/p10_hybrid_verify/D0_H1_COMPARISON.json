@@ -1,0 +1,18 @@
+{
+  "experiment": "H1.2_D0_H1_EQUIVALENCE",
+  "case_id": "acp28-p10",
+  "D0": {
+    "compliance_status": "COMPLIANT",
+    "lowpass_attenuation_db": 115.96359565576498,
+    "lowpass_monotonicity_percent": 100.0
+  },
+  "H1": {
+    "compliance_status": "COMPLIANT",
+    "lowpass_attenuation_db": 115.96359565576498,
+    "lowpass_monotonicity_percent": 100.0
+  },
+  "verdict_preserved": true,
+  "dut_unchanged": true,
+  "specification_unchanged": true,
+  "llm_decides_verdict": false
+}
