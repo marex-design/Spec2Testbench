@@ -22,6 +22,7 @@ class DeepSeekPlanProvider:
     scientific_llm_evidence = True
     provider_name = "deepseek"
     prompt_version = "h1-plan-v1"
+    repair_prompt_version = "h1-repair-v1"
     default_base_url = "https://api.deepseek.com"
     default_model = "deepseek-v4-pro"
 
@@ -81,14 +82,15 @@ class DeepSeekPlanProvider:
             properties.pop(framework_owned, None)
             if framework_owned in schema.get("required", []):
                 schema["required"].remove(framework_owned)
+        repair = payload.get("repair")
         return {
-            "task": "propose_testbench_plan",
-            "prompt_version": self.prompt_version,
+            "task": "repair_testbench_plan" if repair else "propose_testbench_plan",
+            "prompt_version": self.repair_prompt_version if repair else self.prompt_version,
             "testbench_plan_json_schema": schema,
             "case_id": payload.get("case_id"),
             "specification": payload.get("specification"),
             "deterministic_seed_plan": payload.get("deterministic_plan"),
-            "repair": payload.get("repair"),
+            "repair": repair,
             "constraints": {
                 "dut_immutable": True,
                 "thresholds_immutable": True,
@@ -124,7 +126,8 @@ class DeepSeekPlanProvider:
         self.last_call_metadata = {
             "provider": self.provider_name,
             "provider_mode": self.mode,
-            "prompt_version": self.prompt_version,
+            "prompt_version": user_obj.get("prompt_version"),
+            "request_kind": user_obj.get("task"),
             "requested_model": self.model,
             "response_model": getattr(response, "model", None),
             "base_url": self.base_url,
