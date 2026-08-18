@@ -1,0 +1,189 @@
+{
+  "experiment": "H1_DEEPSEEK_PLAN_SMOKE",
+  "timestamp_utc": "2026-08-18T11:13:59.854655+00:00",
+  "case_id": "acp28-p10",
+  "specification_sha256": "835ff8196290bcd30960e5b297e5d43199f5bfe6dec11c86794c0c225adc9d47",
+  "netlist_sha256": "6051b20abdae27ed489e01671145745fc4b1a3d2d77cb7da7a3929cf5355651c",
+  "deterministic_seed_plan": {
+    "case_id": "acp28-p10",
+    "analysis_type": "AC",
+    "provider_mode": "DETERMINISTIC",
+    "scientific_llm_evidence": false,
+    "knowledge_version": null,
+    "knowledge_bundle_sha256": null,
+    "stimuli": [
+      {
+        "source_name": "Vin",
+        "target_node": "Vin",
+        "reference_node": "0",
+        "stimulus_type": "AC",
+        "parameters": {
+          "magnitude": 1.0,
+          "phase": 0,
+          "dc_value": 2.5
+        }
+      }
+    ],
+    "observed_nodes": [
+      "Vout"
+    ],
+    "measurements": [
+      {
+        "metric_name": "lowpass_attenuation_db",
+        "analysis_type": "AC",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "expected_unit": "dB",
+        "backend_preference": "NGSPICE_WRDATA",
+        "measurement_parameters": {}
+      }
+    ],
+    "simulation_parameters": {
+      "start_time_s": null,
+      "stop_time_s": null,
+      "time_step_s": null,
+      "frequency_start_hz": 1.0,
+      "frequency_stop_hz": 1000000000.0,
+      "points_per_decade": 100,
+      "dc_source": null,
+      "dc_start": null,
+      "dc_stop": null,
+      "dc_step": null
+    },
+    "concise_rationale": "Deterministic netlist-aware plan generated from the frozen verification contract."
+  },
+  "raw_response": {
+    "case_id": "acp28-p10",
+    "analysis_type": "AC",
+    "concise_rationale": "Deterministic netlist-aware plan generated from the frozen verification contract.",
+    "knowledge_bundle_sha256": null,
+    "knowledge_version": null,
+    "measurements": [
+      {
+        "metric_name": "lowpass_attenuation_db",
+        "analysis_type": "AC",
+        "backend_preference": "NGSPICE_WRDATA",
+        "expected_unit": "dB",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "measurement_parameters": {}
+      }
+    ],
+    "observed_nodes": [
+      "Vout"
+    ],
+    "simulation_parameters": {
+      "frequency_start_hz": 1.0,
+      "frequency_stop_hz": 1000000000.0,
+      "points_per_decade": 100,
+      "dc_source": null,
+      "dc_start": null,
+      "dc_step": null,
+      "dc_stop": null,
+      "start_time_s": null,
+      "stop_time_s": null,
+      "time_step_s": null
+    },
+    "stimuli": [
+      {
+        "source_name": "Vin",
+        "target_node": "Vin",
+        "stimulus_type": "AC",
+        "reference_node": "0",
+        "parameters": {
+          "dc_value": 2.5,
+          "magnitude": 1.0,
+          "phase": 0
+        }
+      }
+    ]
+  },
+  "parsed_plan": {
+    "case_id": "acp28-p10",
+    "analysis_type": "AC",
+    "provider_mode": "DEEPSEEK_LIVE",
+    "scientific_llm_evidence": true,
+    "knowledge_version": null,
+    "knowledge_bundle_sha256": null,
+    "stimuli": [
+      {
+        "source_name": "Vin",
+        "target_node": "Vin",
+        "reference_node": "0",
+        "stimulus_type": "AC",
+        "parameters": {
+          "dc_value": 2.5,
+          "magnitude": 1.0,
+          "phase": 0
+        }
+      }
+    ],
+    "observed_nodes": [
+      "Vout"
+    ],
+    "measurements": [
+      {
+        "metric_name": "lowpass_attenuation_db",
+        "analysis_type": "AC",
+        "input_node": "Vin",
+        "output_node": "Vout",
+        "expected_unit": "dB",
+        "backend_preference": "NGSPICE_WRDATA",
+        "measurement_parameters": {}
+      }
+    ],
+    "simulation_parameters": {
+      "start_time_s": null,
+      "stop_time_s": null,
+      "time_step_s": null,
+      "frequency_start_hz": 1.0,
+      "frequency_stop_hz": 1000000000.0,
+      "points_per_decade": 100,
+      "dc_source": null,
+      "dc_start": null,
+      "dc_stop": null,
+      "dc_step": null
+    },
+    "concise_rationale": "Deterministic netlist-aware plan generated from the frozen verification contract."
+  },
+  "validation": {
+    "status": "VALID",
+    "issues": [],
+    "expected_case_id": "acp28-p10",
+    "specification_sha256": "835ff8196290bcd30960e5b297e5d43199f5bfe6dec11c86794c0c225adc9d47"
+  },
+  "repair_history": [],
+  "provider_metadata": {
+    "provider": "deepseek",
+    "provider_mode": "DEEPSEEK_LIVE",
+    "prompt_version": "h1-plan-v1",
+    "requested_model": "deepseek-v4-flash",
+    "response_model": "deepseek-v4-flash",
+    "base_url": "https://api.deepseek.com",
+    "thinking": false,
+    "timestamp_utc": "2026-08-18T11:13:59.805200+00:00",
+    "request_sha256": "d2cadce6f8c21eff3c33388de3a70010b5229ece93aced4883192daf3bc32376",
+    "response_sha256": "d92360675392eda903e5f1d8f49b5a124e082a2265d90ef5b0820ccb3abee6a8",
+    "usage": {
+      "prompt_tokens": 2502,
+      "completion_tokens": 336,
+      "total_tokens": 2838
+    }
+  },
+  "provenance_normalization": {
+    "framework_owned_fields": [
+      "provider_mode",
+      "scientific_llm_evidence"
+    ],
+    "raw_provider_mode": null,
+    "raw_scientific_llm_evidence": null,
+    "parsed_provider_mode": "DEEPSEEK_LIVE",
+    "parsed_scientific_llm_evidence": true
+  },
+  "safety_boundary": {
+    "dut_immutable": true,
+    "thresholds_immutable": true,
+    "verdict_deterministic_only": true,
+    "spice_executed": false
+  }
+}
