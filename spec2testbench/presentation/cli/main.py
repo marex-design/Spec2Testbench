@@ -61,7 +61,7 @@ def verify(
     
     LLM Providers:
     - openai: GPT-4, GPT-4V (API key: OPENAI_API_KEY)
-    - deepseek: DeepSeek-V3, DeepSeek-VL (API key: DEEPSEEK_API_KEY) - Plus économique
+    - deepseek: DeepSeek V4 Pro/Flash (API key: DEEPSEEK_API_KEY) - Plus économique
     - gemini: Google Gemini 1.5 Pro (API key: GOOGLE_API_KEY)
     - anthropic: Claude 3 (API key: ANTHROPIC_API_KEY)
     """
@@ -252,6 +252,73 @@ def generate(
         console.print(f"   Stimuli: {len(testbench.stimuli)}")
     
     console.print("\n[dim]Tip: Use 'spec2testbench verify' to run simulation and checks[/dim]")
+
+
+@app.command("deepseek-plan")
+def deepseek_plan(
+    specs: Path = typer.Option(..., "--specs", "-s", help="Strict schema-v2 specification YAML"),
+    netlist: Path = typer.Option(..., "--netlist", "-n", help="Immutable DUT SPICE netlist"),
+    output: Path = typer.Option(Path("results/deepseek_plan_smoke"), "--output", "-o", help="Evidence output directory"),
+    model: str = typer.Option("deepseek-v4-pro", "--model", help="deepseek-v4-pro or deepseek-v4-flash"),
+    max_retries: int = typer.Option(1, "--max-retries", min=0, max=3),
+    thinking: bool = typer.Option(False, "--thinking/--no-thinking", help="Enable DeepSeek thinking mode for planning"),
+):
+    """Generate and validate one live DeepSeek TestbenchPlan without running SPICE."""
+    import os
+    import hashlib
+    from datetime import datetime, timezone
+    from ...infrastructure.llm.deepseek_plan_provider import DeepSeekPlanProvider
+    from ...infrastructure.testbench.llm_guided_synthesis import FrameworkGenerator
+    from ...application.services.llm_generation_service import LLMGenerationService
+
+    if not specs.exists() or not netlist.exists():
+        console.print("[red]Specs and immutable DUT netlist must both exist.[/red]")
+        raise typer.Exit(2)
+    if not os.getenv("DEEPSEEK_API_KEY"):
+        console.print("[red]DEEPSEEK_API_KEY is not set in this shell.[/red]")
+        raise typer.Exit(2)
+
+    specification = Specification.from_yaml(specs)
+    if not specification.is_v2:
+        console.print("[red]H1 live planning requires strict schema v2.[/red]")
+        raise typer.Exit(2)
+
+    deterministic_seed = FrameworkGenerator().build_plan(specification)
+    provider_obj = DeepSeekPlanProvider(model=model, thinking=thinking)
+    outcome = LLMGenerationService(provider_obj, max_retries=max_retries).generate_plan(
+        specification,
+        netlist,
+        deterministic_seed.model_dump(mode="json"),
+    )
+
+    output.mkdir(parents=True, exist_ok=True)
+    artifact = {
+        "experiment": "H1_DEEPSEEK_PLAN_SMOKE",
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "case_id": specification.case_id,
+        "specification_sha256": specification.sha256(),
+        "netlist_sha256": hashlib.sha256(netlist.read_bytes()).hexdigest(),
+        "deterministic_seed_plan": deterministic_seed.model_dump(mode="json"),
+        "raw_response": outcome.raw_response,
+        "parsed_plan": outcome.parsed_plan.model_dump(mode="json") if outcome.parsed_plan else None,
+        "validation": outcome.validation,
+        "repair_history": outcome.repair_history,
+        "provider_metadata": outcome.provider_metadata,
+        "safety_boundary": {
+            "dut_immutable": True,
+            "thresholds_immutable": True,
+            "verdict_deterministic_only": True,
+            "spice_executed": False,
+        },
+    }
+    evidence_file = output / "deepseek_plan_evidence.json"
+    evidence_file.write_text(json.dumps(artifact, indent=2, default=str) + "\n", encoding="utf-8")
+
+    console.print(f"Validation: {outcome.validation['status']}")
+    console.print(f"Model: {outcome.provider_metadata.get('response_model') or model}")
+    console.print(f"Repairs: {len(outcome.repair_history)}")
+    console.print(f"Evidence: {evidence_file}")
+    raise typer.Exit(0 if outcome.validation['status']=="VALID" else 1)
 
 
 @app.command()

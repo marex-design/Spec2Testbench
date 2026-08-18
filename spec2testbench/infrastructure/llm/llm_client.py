@@ -27,14 +27,14 @@ class LLMClient:
     
     Supports:
     - OpenAI (GPT-4, GPT-4V for vision)
-    - DeepSeek (DeepSeek-V3, DeepSeek-Coder)
+    - DeepSeek (DeepSeek V4 Pro/Flash)
     - Google Gemini (Gemini 1.5 Pro, Gemini 1.5 Flash)
     - Anthropic (Claude 3 Opus, Sonnet, Haiku)
     """
     
     # API endpoints
-    DEEPSEEK_API_URL = "https://api.deepseek.com/v1"
-    DEEPSEEK_VISION_URL = "https://api.deepseek.com/v1/chat/completions"
+    DEEPSEEK_API_URL = "https://api.deepseek.com"
+    DEEPSEEK_VISION_URL = "https://api.deepseek.com/chat/completions"
     
     def __init__(self, 
                  provider: str = "openai",
@@ -66,7 +66,7 @@ class LLMClient:
         """Get default model for each provider."""
         defaults = {
             LLMProvider.OPENAI: "gpt-4-turbo-preview",
-            LLMProvider.DEEPSEEK: "deepseek-chat",
+            LLMProvider.DEEPSEEK: "deepseek-v4-pro",
             LLMProvider.GEMINI: "gemini-1.5-pro",
             LLMProvider.ANTHROPIC: "claude-3-sonnet-20240229",
         }
