@@ -1,0 +1,97 @@
+{
+  "E3_dc": {
+    "balance_point": {
+      "collector_difference_v": 0.00018905000000124517,
+      "ic1_a": 0.0005630632029411764,
+      "ic2_a": 0.0005630910044117648,
+      "v01_v": 8.17117022,
+      "v02_v": 8.17098117,
+      "vin1_v": 7.52869989e-16
+    },
+    "samples": 201,
+    "sweep_start_v": -1.0,
+    "sweep_stop_v": 1.0,
+    "v01_max_v": 11.9999995,
+    "v01_min_v": 3.68849436,
+    "v02_max_v": 11.9999995,
+    "v02_min_v": 4.35918895
+  },
+  "E4_transient": {
+    "differential_gain_db": 42.29853530096075,
+    "differential_gain_v_per_v": 130.29470443454636,
+    "differential_output_amplitude_v": 1.1318775200673832,
+    "differential_phase_deg": -0.04465299176769122,
+    "experiment": "BJT-E4",
+    "frequency_hz": 1000.0,
+    "samples": 8001,
+    "single_ended_gain_db": 36.277935388127716,
+    "single_ended_gain_v_per_v": 65.14735222062276,
+    "single_ended_phase_deg": 179.95534594645505,
+    "v01_amplitude_v": 0.5659387600627896,
+    "v01_dc_offset_v": 8.171031225081894,
+    "vid_amplitude_v": 0.008687056968120931
+  },
+  "E5_fft": {
+    "experiment": "BJT-E5",
+    "fft_samples": 8000,
+    "frequency_resolution_hz": 125.00437515315049,
+    "fundamental_amplitude_v": 0.5659472972420079,
+    "fundamental_frequency_hz": 1000.035001225204,
+    "fundamental_nominal_hz": 1000.0,
+    "harmonics": {
+      "H2": {
+        "amplitude_v": 4.925232412784048e-05,
+        "frequency_hz": 2000.070002450408,
+        "relative_to_fundamental_db": -81.20698522686907
+      },
+      "H3": {
+        "amplitude_v": 0.0008206873121056468,
+        "frequency_hz": 3000.1050036756124,
+        "relative_to_fundamental_db": -56.77196541966579
+      },
+      "H4": {
+        "amplitude_v": 1.065691143100116e-05,
+        "frequency_hz": 4000.140004900816,
+        "relative_to_fundamental_db": -94.50289267668524
+      },
+      "H5": {
+        "amplitude_v": 9.119019815924204e-06,
+        "frequency_hz": 5000.17500612602,
+        "relative_to_fundamental_db": -95.85655661568103
+      }
+    },
+    "method": "FFT after linear interpolation onto uniform grid",
+    "raw_samples": 8001,
+    "record_duration_s": 0.00799972,
+    "record_start_s": 0.00200028,
+    "record_stop_s": 0.01,
+    "sample_interval_s": 9.99964999999839e-07,
+    "sampling_frequency_hz": 1000035.001225204,
+    "signal": "V01",
+    "source_experiment": "BJT-E4",
+    "thd_h2_h5_percent": 0.14529330218315717
+  },
+  "cross_validation": {
+    "absolute_difference_db": 0.0423656700702324,
+    "ac_gain_db": 36.32030105819795,
+    "transient_gain_db": 36.277935388127716
+  },
+  "framework_verification": {
+    "case_id": "external-bc547-differential-pair",
+    "compliance_status": "COMPLIANT",
+    "criterion_status": "PASS",
+    "dut_hash_ok": true,
+    "execution_status": "SUCCESS",
+    "measured_value": 36.32030105819795,
+    "metric": "differential_gain_db",
+    "netlist_sha256": "bbb71728d1e3d13a13d6be14d5ac2983c800542e25b824ccca0fe740293db49c",
+    "operator": ">=",
+    "simulation_mode": "REAL",
+    "simulation_success": true,
+    "threshold": 35.0,
+    "unit": "dB"
+  },
+  "scope": "External pedagogical case; not part of the frozen ACP-28 subset.",
+  "simulation_engine": "ngspice-42",
+  "study": "BC547A external differential-pair study"
+}

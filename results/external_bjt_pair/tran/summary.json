@@ -1,0 +1,15 @@
+{
+  "experiment": "BJT-E4",
+  "frequency_hz": 1000.0,
+  "samples": 8001,
+  "vid_amplitude_v": 0.008687056968120931,
+  "v01_dc_offset_v": 8.171031225081894,
+  "v01_amplitude_v": 0.5659387600627896,
+  "single_ended_gain_v_per_v": 65.14735222062276,
+  "single_ended_gain_db": 36.277935388127716,
+  "single_ended_phase_deg": 179.95534594645505,
+  "differential_output_amplitude_v": 1.1318775200673832,
+  "differential_gain_v_per_v": 130.29470443454636,
+  "differential_gain_db": 42.29853530096075,
+  "differential_phase_deg": -0.04465299176769122
+}

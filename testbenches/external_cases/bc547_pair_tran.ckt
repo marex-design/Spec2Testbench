@@ -1,0 +1,28 @@
+* ============================================================
+* BJT-E4 - BC547A differential pair - transient response
+* ============================================================
+
+.include benchmark/external_cases/bc547_differential_pair.ckt
+
+* Supplies
+VCC VCC 0 DC 12
+VEE VEE 0 DC -12
+
+* Symmetric differential excitation
+* 10 mV differential peak at 1 kHz at source level.
+Vin1 Vin1 0 DC 0 SIN(0 5m 1k 0 0 0)
+Vin2 Vin2 0 DC 0 SIN(0 5m 1k 0 0 180)
+
+.control
+set wr_singlescale
+
+* 1 us output step, discard first 2 ms, finish at 10 ms
+tran 1u 10m 2m
+
+* time, b1, b2, V01, V02
+wrdata results/external_bjt_pair/tran/vectors.dat v(b1) v(b2) v(V01) v(V02)
+
+quit
+.endc
+
+.end

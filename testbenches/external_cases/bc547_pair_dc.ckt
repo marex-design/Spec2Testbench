@@ -1,0 +1,31 @@
+* ============================================================
+* BJT-E3 - BC547A differential pair - DC transfer
+* ============================================================
+
+.include benchmark/external_cases/bc547_differential_pair.ckt
+
+* Supplies
+VCC VCC 0 DC 12
+VEE VEE 0 DC -12
+
+* Differential input
+* Vin2 remains at 0 V while Vin1 is swept.
+Vin1 Vin1 0 DC 0
+Vin2 Vin2 0 DC 0
+
+.control
+set wr_singlescale
+
+* Sweep Vin1 from -1 V to +1 V
+dc Vin1 -1 1 0.01
+
+* With wr_singlescale:
+* column 0 = swept Vin1
+* column 1 = V01
+* column 2 = V02
+wrdata results/external_bjt_pair/dc/vectors.dat v(V01) v(V02)
+
+quit
+.endc
+
+.end

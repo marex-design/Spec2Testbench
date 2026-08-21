@@ -1,0 +1,40 @@
+{
+  "experiment": "BJT-E5",
+  "method": "FFT after linear interpolation onto uniform grid",
+  "source_experiment": "BJT-E4",
+  "signal": "V01",
+  "fundamental_nominal_hz": 1000.0,
+  "raw_samples": 8001,
+  "fft_samples": 8000,
+  "record_start_s": 0.00200028,
+  "record_stop_s": 0.01,
+  "record_duration_s": 0.00799972,
+  "sample_interval_s": 9.99964999999839e-07,
+  "sampling_frequency_hz": 1000035.001225204,
+  "frequency_resolution_hz": 125.00437515315049,
+  "fundamental_frequency_hz": 1000.035001225204,
+  "fundamental_amplitude_v": 0.5659472972420079,
+  "harmonics": {
+    "H2": {
+      "frequency_hz": 2000.070002450408,
+      "amplitude_v": 4.925232412784048e-05,
+      "relative_to_fundamental_db": -81.20698522686907
+    },
+    "H3": {
+      "frequency_hz": 3000.1050036756124,
+      "amplitude_v": 0.0008206873121056468,
+      "relative_to_fundamental_db": -56.77196541966579
+    },
+    "H4": {
+      "frequency_hz": 4000.140004900816,
+      "amplitude_v": 1.065691143100116e-05,
+      "relative_to_fundamental_db": -94.50289267668524
+    },
+    "H5": {
+      "frequency_hz": 5000.17500612602,
+      "amplitude_v": 9.119019815924204e-06,
+      "relative_to_fundamental_db": -95.85655661568103
+    }
+  },
+  "thd_h2_h5_percent": 0.14529330218315717
+}
