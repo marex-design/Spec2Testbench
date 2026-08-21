@@ -1,0 +1,36 @@
+* Spec2Testbench deterministic deck
+* TestBench: external-bc547-differential-pair_deterministic_ac_differential
+* ============================================================
+* BC547A differential pair
+* External pedagogical case for Spec2Testbench
+* DUT only - no analysis commands
+* ============================================================
+
+.include benchmark/external_cases/models/bc547.txt
+
+Q1 c1 b1 e bc547a
+Q2 c2 b2 e bc547a
+
+VC1 V01 c1 0
+VC2 V02 c2 0
+VE  e VdE 0
+
+RC1 VCC c1 6.8k
+RC2 VCC c2 6.8k
+
+RB1 b1 Vin1 1k
+RB2 b2 Vin2 1k
+
+RE VdE VEE 10k
+VCC VCC 0 DC 12.0
+VEE VEE 0 DC -12.0
+Vin1 Vin1 0 DC 0.0 AC 0.005 0
+Vin2 Vin2 0 DC 0.0 AC 0.005 180
+.TEMP 27.0
+.control
+set wr_singlescale
+AC dec 100 1.0 5.0e8
+wrdata /home/marex/S2T_REBUILT/Spec2Testbench/results/external_bjt_pair/framework_verify/simulation/ac_differential/vectors.dat v(b1) v(b2) v(V01)
+quit
+.endc
+.end

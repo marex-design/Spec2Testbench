@@ -1,0 +1,57 @@
+* ============================================================
+* BC547A differential pair
+* BJT-E2: symmetric differential AC excitation
+* ============================================================
+
+.include benchmark/external_cases/models/bc547.txt
+
+VCC VCC 0 DC 12
+VEE VEE 0 DC -12
+
+* Symmetric differential excitation:
+* source differential amplitude = 5m - (-5m) = 10mV
+Vin1 Vin1 0 DC 0 AC 5m 0
+Vin2 Vin2 0 DC 0 AC 5m 180
+
+.include benchmark/external_cases/bc547_differential_pair.ckt
+
+.ac DEC 100 1 500Meg
+
+.control
+set filetype=ascii
+set wr_singlescale
+
+run
+setplot ac1
+
+* Actual differential voltage at transistor bases
+let vid = v(b1)-v(b2)
+
+* Single-ended output, taken at collector Q1
+let ad_se = v(V01)/vid
+let ad_se_db = db(ad_se)
+let ad_se_phase = ph(ad_se)*180/pi
+
+* Differential output convention: V02 - V01
+let vod = v(V02)-v(V01)
+let ad_diff = vod/vid
+let ad_diff_db = db(ad_diff)
+let ad_diff_phase = ph(ad_diff)*180/pi
+
+wrdata results/external_bjt_pair/ac_diff/vectors.dat v(b1) v(b2) v(V01) v(V02)
+wrdata results/external_bjt_pair/ac_diff/transfer.dat vid ad_se ad_se_db ad_se_phase vod ad_diff ad_diff_db ad_diff_phase
+
+meas ac AdSeDb1k FIND ad_se_db AT=1k
+meas ac AdSePhase1k FIND ad_se_phase AT=1k
+meas ac AdDiffDb1k FIND ad_diff_db AT=1k
+meas ac AdDiffPhase1k FIND ad_diff_phase AT=1k
+
+print AdSeDb1k
+print AdSePhase1k
+print AdDiffDb1k
+print AdDiffPhase1k
+
+quit
+.endc
+
+.end

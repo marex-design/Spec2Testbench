@@ -25,6 +25,7 @@ SUPPORTED_METRICS = {
     "integrator_linearity", "integrator_ramp_slope",
     "differentiator_output_amplitude_v",
     "minimum_device_drain_current_a",
+    "differential_gain_db",
 }
 
 # Deliberately not implemented in the frozen deterministic baseline.

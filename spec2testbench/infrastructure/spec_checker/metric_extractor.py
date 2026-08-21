@@ -132,6 +132,7 @@ class MetricExtractor:
             "thd": ["thd_percent"],
             "pvt_vout_variation": ["vout_variation"],
             "pvt_dc_gain_variation": ["gain_variation"],
+            "differential_gain_db": ["differential_gain_db"],
             "pvt_power_variation": ["power_variation"],
         }
         return [metric_name, metric_lower, *aliases.get(metric_lower, [])]

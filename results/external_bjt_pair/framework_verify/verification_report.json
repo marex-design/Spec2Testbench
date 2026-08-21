@@ -1,0 +1,51 @@
+{
+  "analysis_runs": [
+    {
+      "analysis_id": "op_bias",
+      "artifact_dir": "results/external_bjt_pair/framework_verify/simulation/op_bias",
+      "error_type": null,
+      "execution_status": "SUCCESS",
+      "success": true
+    },
+    {
+      "analysis_id": "ac_differential",
+      "artifact_dir": "results/external_bjt_pair/framework_verify/simulation/ac_differential",
+      "error_type": null,
+      "execution_status": "SUCCESS",
+      "success": true
+    }
+  ],
+  "case_id": "external-bc547-differential-pair",
+  "circuit_name": "external_bc547_differential_pair",
+  "compliance_status": "COMPLIANT",
+  "criteria": [
+    {
+      "analysis": "ac_differential",
+      "case_id": "external-bc547-differential-pair",
+      "criterion_source": "external_case_definition",
+      "criterion_status": "PASS",
+      "equivalence": "exact",
+      "implementation_status": "executable",
+      "maximum": null,
+      "measured_value": 36.32030105819795,
+      "message": "differential_gain_db=36.3203010582 dB -> PASS",
+      "metric": "differential_gain_db",
+      "minimum": null,
+      "operator": ">=",
+      "requirement_id": "BJT_DIFF_GAIN_1K",
+      "threshold": 35.0,
+      "unit": "dB"
+    }
+  ],
+  "dut_hash_ok": true,
+  "error_message": null,
+  "error_type": null,
+  "execution_status": "SUCCESS",
+  "metrics": {
+    "differential_gain_db": 36.32030105819795
+  },
+  "native_metrics": {},
+  "netlist_sha256": "bbb71728d1e3d13a13d6be14d5ac2983c800542e25b824ccca0fe740293db49c",
+  "simulation_mode": "REAL",
+  "simulation_success": true
+}

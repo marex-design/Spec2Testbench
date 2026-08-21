@@ -21,6 +21,17 @@ for n in ['inverter_low_input_output_v','inverter_high_input_output_v','inverter
 _add('comparator_monotonicity_percent',[AnalysisType.DC],'%')
 for n in ['current_stability_delta_a','minimum_output_current_a']:_add(n,[AnalysisType.DC],'A')
 _add('dc_gain_db',[AnalysisType.AC],'dB')
+
+_add(
+    'differential_gain_db',
+    [AnalysisType.AC],
+    'dB',
+    MeasurementBackendPreference.NGSPICE_WRDATA,
+    'single-ended differential gain at reference frequency: '
+    '20*log10(abs(Vout/(Vin_pos-Vin_neg)))'
+)
+
+
 for n in ['lowpass_attenuation_db','highpass_attenuation_db','bandpass_peak_separation_db','bandstop_notch_depth_db']:_add(n,[AnalysisType.AC],'dB')
 for n in ['lowpass_monotonicity_percent','highpass_monotonicity_percent']:_add(n,[AnalysisType.AC],'%')
 for n in ['oscillation_cycle_count','oscillation_period_cv']:_add(n,[AnalysisType.TRAN],'')

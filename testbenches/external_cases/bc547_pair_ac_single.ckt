@@ -1,0 +1,55 @@
+* ============================================================
+* BC547A differential pair
+* AC experiment A: single-ended excitation
+* ============================================================
+
+.include benchmark/external_cases/models/bc547.txt
+
+VCC VCC 0 DC 12
+VEE VEE 0 DC -12
+
+Vin1 Vin1 0 DC 0 AC 10m
+Vin2 Vin2 0 DC 0 AC 0
+
+.include benchmark/external_cases/bc547_differential_pair.ckt
+
+.ac DEC 100 1 500Meg
+
+.control
+set filetype=ascii
+set wr_singlescale
+
+run
+setplot ac1
+
+let vin = v(Vin1)
+let vout1 = v(V01)
+let vout2 = v(V02)
+
+let gain1 = vout1/vin
+let gain2 = vout2/vin
+
+let gain1_db = db(gain1)
+let gain2_db = db(gain2)
+
+let phase1_deg = ph(gain1)*180/pi
+let phase2_deg = ph(gain2)*180/pi
+
+wrdata results/external_bjt_pair/ac_single/vectors.dat v(Vin1) v(V01) v(V02)
+wrdata results/external_bjt_pair/ac_single/transfer.dat gain1 gain1_db phase1_deg gain2 gain2_db phase2_deg
+
+meas ac Vout1Db1k FIND vdb(V01) AT=1k
+meas ac VinDb1k FIND vdb(Vin1) AT=1k
+
+let GainDb1k = Vout1Db1k - VinDb1k
+
+print GainDb1k
+
+print gain1[0]
+print gain1_db[0]
+print phase1_deg[0]
+
+quit
+.endc
+
+.end

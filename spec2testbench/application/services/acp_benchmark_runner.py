@@ -113,6 +113,52 @@ def simulate_spec(spec: Specification, netlist: Path, output_dir: Path, simulato
                           metadata=dict(full.metadata))
         pass_tb.metadata['required_metrics']=[m.name for m in measurements]
         pass_tb.metadata['needs_op_bias_probe']='minimum_device_drain_current_a' in pass_tb.metadata['required_metrics']
+
+        # External differential AC metric (post-freeze extension).
+        # ACP-28 metadata-only differential criteria remain unchanged.
+        if 'differential_gain_db' in metrics:
+            input_nodes = spec.ports.get('input') or []
+            output_nodes = spec.ports.get('output') or []
+
+            if len(input_nodes) < 2:
+                raise ValueError(
+                    'differential_gain_db requires two input nodes'
+                )
+
+            if not output_nodes:
+                raise ValueError(
+                    'differential_gain_db requires one output node'
+                )
+
+            declared_parameters = dict(
+                analysis_decl.get('parameters') or {}
+            )
+
+            reference_frequency_hz = float(
+                declared_parameters.get(
+                    'reference_frequency_hz',
+                    1000.0,
+                )
+            )
+
+            pass_tb.metadata['measurement_requests'] = [
+                {
+                    'metric_name': 'differential_gain_db',
+                    'analysis_type': 'AC',
+                    'input_positive_node': input_nodes[0],
+                    'input_negative_node': input_nodes[1],
+                    'output_node': output_nodes[0],
+                    'expected_unit': 'dB',
+                    'reference_frequency_hz': reference_frequency_hz,
+                    'in_pos_real_column': 1,
+                    'in_pos_imag_column': 2,
+                    'in_neg_real_column': 3,
+                    'in_neg_imag_column': 4,
+                    'out_real_column': 5,
+                    'out_imag_column': 6,
+                }
+            ]
+
         run_dir=Path(output_dir)/'simulation'/analysis_id
         result=simulator.run(netlist,pass_tb,output_dir=run_dir)
         _merge_results(aggregated,result)
@@ -146,7 +192,19 @@ def summarize_runs(runs: list[dict], criteria: list[CriterionEvidence]) -> Dict[
 
 def run_single_case(spec_path: Path, netlist_path: Path, output_dir: Path, *, ngspice_path: Optional[str]=None, allow_mock: bool=False, timeout_seconds: float=300) -> Dict[str,Any]:
     spec_path=Path(spec_path); netlist_path=Path(netlist_path); output_dir=Path(output_dir); output_dir.mkdir(parents=True,exist_ok=True)
-    spec=Specification.from_yaml(spec_path); simulator=PySpiceSimulator(ngspice_path=ngspice_path,allow_mock=allow_mock,timeout_seconds=timeout_seconds)
+    spec=Specification.from_yaml(spec_path)
+
+    # Prefer an ngspice executable available in the active OS PATH.
+    # This avoids carrying a stale Windows path into Ubuntu/WSL.
+    if ngspice_path is None:
+        import shutil
+        ngspice_path = shutil.which('ngspice')
+
+    simulator=PySpiceSimulator(
+        ngspice_path=ngspice_path,
+        allow_mock=allow_mock,
+        timeout_seconds=timeout_seconds,
+    )
     expected=(spec.provenance.get('dut') or {}).get('sha256'); actual=sha256_file(netlist_path); hash_ok=(expected is None or expected==actual)
     if hash_ok: result=simulate_spec(spec,netlist_path,output_dir,simulator)
     else: result={'success':False,'execution_status':ExecutionStatus.ERROR.value,'simulation_mode':'NONE','error_type':'dut_hash_mismatch','metrics':{}}

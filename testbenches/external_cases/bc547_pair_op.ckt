@@ -1,0 +1,34 @@
+* BC547 differential pair - operating point
+
+.include benchmark/external_cases/models/bc547.txt
+
+VCC VCC 0 DC 12
+VEE VEE 0 DC -12
+
+Vin1 Vin1 0 DC 0
+Vin2 Vin2 0 DC 0
+
+.include benchmark/external_cases/bc547_differential_pair.ckt
+
+.op
+
+.control
+run
+
+print v(Vin1)
+print v(Vin2)
+print v(b1)
+print v(b2)
+print v(e)
+print v(V01)
+print v(V02)
+
+print @q1[ic]
+print @q2[ic]
+print @q1[ib]
+print @q2[ib]
+
+quit
+.endc
+
+.end

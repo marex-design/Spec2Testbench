@@ -20,6 +20,7 @@ from ...domain.entities.testbench import TestBench, AnalysisType
 from ...domain.interfaces.icircuit_simulator import ICircuitSimulator
 from ...domain.value_objects.scientific_status import ExecutionStatus, SimulationMode
 from .op_bias_probe import needs_op_bias_probe, run_op_bias_probe
+from .result_backends import WRDATA_EXTRACTORS
 
 logger = logging.getLogger(__name__)
 
@@ -305,10 +306,66 @@ class PySpiceSimulator(ICircuitSimulator):
         vectors: List[str] = []
 
         if analysis.type == AnalysisType.AC:
-            if input_node:
-                vectors.append(f"v({input_node})")
-            if output_node and str(output_node).lower() != str(input_node).lower():
-                vectors.append(f"v({output_node})")
+            # Differential AC metrics require three complex vectors:
+            # Vin+, Vin-, and the selected output.
+            #
+            # The measurement request is produced by TestbenchPlanCompiler.
+            # Existing single-ended AC metrics retain the original Vin/Vout
+            # behaviour unchanged.
+            measurement_requests = list(
+                testbench.metadata.get("measurement_requests") or []
+            )
+
+            differential_request = next(
+                (
+                    request
+                    for request in measurement_requests
+                    if request.get("metric_name") == "differential_gain_db"
+                ),
+                None,
+            )
+
+            if differential_request is not None:
+                input_positive_node = differential_request.get(
+                    "input_positive_node"
+                )
+                input_negative_node = differential_request.get(
+                    "input_negative_node"
+                )
+                differential_output_node = differential_request.get(
+                    "output_node"
+                )
+
+                if not input_positive_node:
+                    raise ValueError(
+                        "DIFFERENTIAL_INPUT_POSITIVE_NODE_MISSING"
+                    )
+
+                if not input_negative_node:
+                    raise ValueError(
+                        "DIFFERENTIAL_INPUT_NEGATIVE_NODE_MISSING"
+                    )
+
+                if not differential_output_node:
+                    raise ValueError(
+                        "DIFFERENTIAL_OUTPUT_NODE_MISSING"
+                    )
+
+                vectors.append(f"v({input_positive_node})")
+                vectors.append(f"v({input_negative_node})")
+                vectors.append(f"v({differential_output_node})")
+
+            else:
+                # Existing single-ended AC behaviour.
+                if input_node:
+                    vectors.append(f"v({input_node})")
+
+                if (
+                    output_node
+                    and str(output_node).lower()
+                    != str(input_node).lower()
+                ):
+                    vectors.append(f"v({output_node})")
         elif analysis.type == AnalysisType.DC:
             if output_node:
                 vectors.append(f"v({output_node})")
@@ -361,6 +418,127 @@ class PySpiceSimulator(ICircuitSimulator):
         input_node = str(ctx.get("input_node") or testbench.metadata.get("input_node") or "vin")
         output_node = str(ctx.get("output_node") or testbench.metadata.get("output_node") or "vout")
 
+        # --------------------------------------------------------------
+        # Differential AC WRDATA path.
+        #
+        # Expected layout:
+        #   col 0 : frequency
+        #   col 1 : Re(Vin+)
+        #   col 2 : Im(Vin+)
+        #   col 3 : Re(Vin-)
+        #   col 4 : Im(Vin-)
+        #   col 5 : Re(Vout)
+        #   col 6 : Im(Vout)
+        #
+        # This path is evaluated even when the ngspice raw parser has already
+        # populated results["ac"], because differential_gain_db requires
+        # Vin+ and Vin- separately.
+        # --------------------------------------------------------------
+        measurement_requests = list(
+            testbench.metadata.get("measurement_requests") or []
+        )
+
+        differential_request = next(
+            (
+                request
+                for request in measurement_requests
+                if request.get("metric_name") == "differential_gain_db"
+            ),
+            None,
+        )
+
+        if (
+            AnalysisType.AC in analysis_types
+            and differential_request is not None
+        ):
+            if data.shape[1] < 7:
+                logger.warning(
+                    "Differential WRDATA requires at least 7 columns; "
+                    "received %d",
+                    data.shape[1],
+                )
+                return
+
+            extractor = WRDATA_EXTRACTORS.get(
+                "differential_gain_db"
+            )
+
+            if extractor is None:
+                logger.warning(
+                    "No WRDATA extractor registered for "
+                    "differential_gain_db"
+                )
+                return
+
+            try:
+                metric_value = float(
+                    extractor(
+                        {"data": data},
+                        differential_request,
+                    )
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Failed to extract differential_gain_db "
+                    "from WRDATA %s: %s",
+                    vectors_path,
+                    exc,
+                )
+                return
+
+            results.setdefault("metrics", {})[
+                "differential_gain_db"
+            ] = metric_value
+
+            ac_results = results.setdefault("ac", {})
+            ac_results["differential_gain_db"] = metric_value
+            ac_results["reference_frequency_hz"] = float(
+                differential_request.get(
+                    "reference_frequency_hz",
+                    1000.0,
+                )
+            )
+            ac_results["wrdata_columns"] = {
+                "frequency": 0,
+                "input_positive_real": int(
+                    differential_request.get(
+                        "in_pos_real_column", 1
+                    )
+                ),
+                "input_positive_imag": int(
+                    differential_request.get(
+                        "in_pos_imag_column", 2
+                    )
+                ),
+                "input_negative_real": int(
+                    differential_request.get(
+                        "in_neg_real_column", 3
+                    )
+                ),
+                "input_negative_imag": int(
+                    differential_request.get(
+                        "in_neg_imag_column", 4
+                    )
+                ),
+                "output_real": int(
+                    differential_request.get(
+                        "out_real_column", 5
+                    )
+                ),
+                "output_imag": int(
+                    differential_request.get(
+                        "out_imag_column", 6
+                    )
+                ),
+            }
+
+            # Do not reinterpret the 7-column differential file as the
+            # ordinary 5-column Vin/Vout WRDATA format.
+            return
+
+        # --------------------------------------------------------------
+        # Existing single-ended AC hydration.
+        # --------------------------------------------------------------
         if AnalysisType.AC in analysis_types and not results.get("ac"):
             # With wr_singlescale, complex Vin/Vout are emitted as
             # frequency, Re(Vin), Im(Vin), Re(Vout), Im(Vout).
